@@ -166,40 +166,40 @@ This implementation plan breaks down the Personal Finance Tracker into increment
 - [x] 7. Checkpoint - Cashflow Service Complete
   - Ensure all cashflow tests pass, ask the user if questions arise.
 
-- [ ] 8. Investment Service
-  - [ ] 8.1 Implement gain/loss calculation function
+- [x] 8. Investment Service
+  - [x] 8.1 Implement gain/loss calculation function
     - Create calculateGainLoss function
     - _Requirements: 3.3_
 
-  - [ ] 8.2 Write property test for gain/loss calculation
+  - [x] 8.2 Write property test for gain/loss calculation
     - **Property 12: Gain/Loss Calculation Invariant**
     - **Validates: Requirements 3.3**
 
-  - [ ] 8.3 Implement investment and snapshot persistence with encryption
+  - [x] 8.3 Implement investment and snapshot persistence with encryption
     - Create saveSnapshot function with upsert logic
     - Encrypt invested_amount and current_value before storing
     - Auto-create investment record if not exists
     - _Requirements: 3.2, 3.5, 10.2_
 
-  - [ ] 8.4 Write property test for snapshot persistence round-trip
+  - [x] 8.4 Write property test for snapshot persistence round-trip
     - **Property 11: Investment Snapshot Persistence Round-Trip**
     - **Validates: Requirements 3.2**
 
-  - [ ] 8.5 Write property test for snapshot upsert idempotence
+  - [x] 8.5 Write property test for snapshot upsert idempotence
     - **Property 14: Snapshot Upsert Idempotence**
     - **Validates: Requirements 3.5**
 
-  - [ ] 8.6 Implement investment history retrieval with decryption
+  - [x] 8.6 Implement investment history retrieval with decryption
     - Create getSnapshotsByInvestment function
     - Create getSnapshotsByUserAndType function
     - Decrypt monetary values when retrieving
     - _Requirements: 3.4, 10.3, 10.5_
 
-  - [ ] 8.7 Write property test for investment history completeness
+  - [x] 8.7 Write property test for investment history completeness
     - **Property 13: Investment History Completeness**
     - **Validates: Requirements 3.4**
 
-- [ ] 9. Checkpoint - Investment Service Complete
+- [-] 9. Checkpoint - Investment Service Complete
   - Ensure all investment tests pass, ask the user if questions arise.
 
 - [ ] 10. Analytics Service
