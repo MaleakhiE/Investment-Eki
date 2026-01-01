@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        BigInt            @id @default(autoincrement())
+  email                     String            @unique @db.VarChar(512)
+  password_hash             String            @db.VarChar(255)
+  ai_recommendation_enabled Boolean           @default(true)
+  created_at                DateTime          @default(now())
+  updated_at                DateTime          @updatedAt
+
+  cashflows     MonthlyCashflow[]
+  investments   Investment[]
+  notifications NotificationLog[]
+
+  @@map("users")
+}
+
+model MonthlyCashflow {
+  id             BigInt   @id @default(autoincrement())
+  user_id        BigInt
+  month          String   @db.VarChar(7)
+  income         String   @db.VarChar(255)
+  expense_rent   String   @db.VarChar(255)
+  expense_living String   @db.VarChar(255)
+  expense_other  String   @db.VarChar(255)
+  total_expense  String   @db.VarChar(255)
+  net_cashflow   String   @db.VarChar(255)
+  created_at     DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, month])
+  @@map("monthly_cashflow")
+}
+
+model Investment {
+  id         BigInt         @id @default(autoincrement())
+  user_id    BigInt
+  type       InvestmentType
+  created_at DateTime       @default(now())
+
+  user      User                 @relation(fields: [user_id], references: [id])
+  snapshots InvestmentSnapshot[]
+
+  @@unique([user_id, type])
+  @@map("investments")
+}
+
+model InvestmentSnapshot {
+  id              BigInt   @id @default(autoincrement())
+  investment_id   BigInt
+  month           String   @db.VarChar(7)
+  invested_amount String   @db.VarChar(255)
+  current_value   String   @db.VarChar(255)
+  created_at      DateTime @default(now())
+
+  investment Investment @relation(fields: [investment_id], references: [id])
+
+  @@unique([investment_id, month])
+  @@map("investment_snapshots")
+}
+
+model NotificationLog {
+  id      BigInt           @id @default(autoincrement())
+  user_id BigInt
+  month   String           @db.VarChar(7)
+  type    NotificationType
+  sent_at DateTime         @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("notification_logs")
+}
+
+enum InvestmentType {
+  GOLD
+  MUTUAL_FUND
+}
+
+enum NotificationType {
+  REMINDER
+  SUMMARY
+}

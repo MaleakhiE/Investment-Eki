@@ -6,54 +6,54 @@ This implementation plan breaks down the Personal Finance Tracker into increment
 
 ## Tasks
 
-- [-] 1. Project Setup and Core Infrastructure
-  - [ ] 1.1 Initialize Next.js project with TypeScript and configure dependencies
+- [x] 1. Project Setup and Core Infrastructure
+  - [x] 1.1 Initialize Next.js project with TypeScript and configure dependencies
     - Create Next.js app with App Router
     - Install dependencies: prisma, @prisma/client, next-auth, bcrypt, nodemailer, fast-check, jest
     - Configure TypeScript strict mode
     - Set up Jest with TypeScript support
     - _Requirements: 8.1_
 
-  - [ ] 1.2 Create Prisma schema and database configuration
+  - [x] 1.2 Create Prisma schema and database configuration
     - Define User, MonthlyCashflow, Investment, InvestmentSnapshot, NotificationLog models
     - Use String type for encrypted fields (email, monetary values)
     - Configure MySQL connection via DATABASE_URL
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-  - [ ] 1.3 Run database migration
+  - [x] 1.3 Run database migration
     - Create initial Prisma migration
     - Run `prisma migrate dev` to create all tables
     - Verify tables created correctly in MySQL
     - _Requirements: 9.1_
 
-  - [ ] 1.4 Implement encryption utility
+  - [x] 1.4 Implement encryption utility
     - Create encrypt/decrypt functions using AES-256-GCM
     - Create encryptNumber/decryptNumber for monetary values
     - Use ENCRYPTION_KEY from environment variables
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
 
-  - [ ] 1.5 Write property test for encryption round-trip
+  - [x] 1.5 Write property test for encryption round-trip
     - **Property 23: Encryption Round-Trip**
     - **Validates: Requirements 10.1, 10.2, 10.3**
 
-  - [ ] 1.6 Implement API response helper utility
+  - [x] 1.6 Implement API response helper utility
     - Create responseAPI function with typed interface
     - Ensure all four fields are always present
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-  - [ ] 1.7 Write property test for API response structure
+  - [x] 1.7 Write property test for API response structure
     - **Property 16: API Response Structure Consistency**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 5.6**
 
-  - [ ] 1.8 Create database seed script
+  - [x] 1.8 Create database seed script
     - Create seed script with default admin user (hashed password)
     - Add sample cashflow data (encrypted)
     - Add sample investment snapshots (encrypted)
     - Configure `prisma db seed` command
     - _Requirements: 9.2, 9.3, 9.4_
 
-- [ ] 2. Validation Utilities
-  - [ ] 2.1 Implement validation functions
+- [x] 2. Validation Utilities
+  - [x] 2.1 Implement validation functions
     - Create validateMonth for YYYY-MM format
     - Create validateMonetaryValue for non-negative decimals
     - Create validateInvestmentType for GOLD/MUTUAL_FUND enum
@@ -61,109 +61,109 @@ This implementation plan breaks down the Personal Finance Tracker into increment
     - Create validateCashflowInput and validateSnapshotInput
     - _Requirements: 2.6, 3.1, 3.6, 7.1, 7.2, 7.3_
 
-  - [ ] 2.2 Write property test for month format validation
+  - [x] 2.2 Write property test for month format validation
     - **Property 20: Month Format Validation**
     - **Validates: Requirements 7.3**
 
-  - [ ] 2.3 Write property test for monetary value validation
+  - [x] 2.3 Write property test for monetary value validation
     - **Property 9: Monetary Value Validation**
     - **Validates: Requirements 2.6, 3.6**
 
-  - [ ] 2.4 Write property test for investment type validation
+  - [x] 2.4 Write property test for investment type validation
     - **Property 10: Investment Type Validation**
     - **Validates: Requirements 3.1**
 
-  - [ ] 2.5 Write property test for invalid input rejection
+  - [x] 2.5 Write property test for invalid input rejection
     - **Property 21: Invalid Input Rejection**
     - **Validates: Requirements 7.1, 7.2**
 
-- [ ] 3. Checkpoint - Validation Layer Complete
+- [x] 3. Checkpoint - Validation Layer Complete
   - Ensure all validation tests pass, ask the user if questions arise.
 
-- [ ] 4. Authentication Service
-  - [ ] 4.1 Implement password hashing and verification
+- [x] 4. Authentication Service
+  - [x] 4.1 Implement password hashing and verification
     - Create hashPassword function using bcrypt
     - Create verifyPassword function
     - _Requirements: 1.1_
 
-  - [ ] 4.2 Write property test for password hashing round-trip
+  - [x] 4.2 Write property test for password hashing round-trip
     - **Property 1: Password Hashing Round-Trip**
     - **Validates: Requirements 1.1, 1.3**
 
-  - [ ] 4.3 Implement user registration service with email encryption
+  - [x] 4.3 Implement user registration service with email encryption
     - Create register function that hashes password and encrypts email
     - Check for duplicate email before creation (compare encrypted values)
     - _Requirements: 1.1, 1.2, 10.1_
 
-  - [ ] 4.4 Write property test for duplicate email rejection
+  - [x] 4.4 Write property test for duplicate email rejection
     - **Property 2: Duplicate Email Rejection**
     - **Validates: Requirements 1.2**
 
-  - [ ] 4.5 Implement credential validation service
+  - [x] 4.5 Implement credential validation service
     - Create validateCredentials function
     - Return user if valid, null if invalid
     - _Requirements: 1.3, 1.4_
 
-  - [ ] 4.6 Write property test for invalid credentials rejection
+  - [x] 4.6 Write property test for invalid credentials rejection
     - **Property 3: Invalid Credentials Rejection**
     - **Validates: Requirements 1.4**
 
-  - [ ] 4.7 Configure NextAuth.js with Credentials Provider
+  - [x] 4.7 Configure NextAuth.js with Credentials Provider
     - Set up NextAuth configuration
     - Implement JWT session strategy
     - Create auth middleware for protected routes
     - _Requirements: 1.3, 1.5_
 
-  - [ ] 4.8 Write property test for unauthorized request rejection
+  - [x] 4.8 Write property test for unauthorized request rejection
     - **Property 22: Unauthorized Request Rejection**
     - **Validates: Requirements 7.5**
 
-- [ ] 5. Checkpoint - Authentication Complete
+- [x] 5. Checkpoint - Authentication Complete
   - Ensure all authentication tests pass, ask the user if questions arise.
 
-- [ ] 6. Cashflow Service
-  - [ ] 6.1 Implement cashflow calculation functions
+- [x] 6. Cashflow Service
+  - [x] 6.1 Implement cashflow calculation functions
     - Create calculateTotalExpense function
     - Create calculateNetCashflow function
     - _Requirements: 2.1, 2.2_
 
-  - [ ] 6.2 Write property test for total expense calculation
+  - [x] 6.2 Write property test for total expense calculation
     - **Property 4: Total Expense Calculation Invariant**
     - **Validates: Requirements 2.1**
 
-  - [ ] 6.3 Write property test for net cashflow calculation
+  - [x] 6.3 Write property test for net cashflow calculation
     - **Property 5: Net Cashflow Calculation Invariant**
     - **Validates: Requirements 2.2**
 
-  - [ ] 6.4 Implement cashflow persistence (save/update) with encryption
+  - [x] 6.4 Implement cashflow persistence (save/update) with encryption
     - Create saveCashflow function with upsert logic
     - Encrypt all monetary values before storing
     - Calculate and store total_expense and net_cashflow (encrypted)
     - _Requirements: 2.3, 2.5, 10.2_
 
-  - [ ] 6.5 Write property test for cashflow persistence round-trip
+  - [x] 6.5 Write property test for cashflow persistence round-trip
     - **Property 6: Cashflow Persistence Round-Trip**
     - **Validates: Requirements 2.3**
 
-  - [ ] 6.6 Write property test for cashflow upsert idempotence
+  - [x] 6.6 Write property test for cashflow upsert idempotence
     - **Property 8: Cashflow Upsert Idempotence**
     - **Validates: Requirements 2.5**
 
-  - [ ] 6.7 Implement cashflow history retrieval with decryption
+  - [x] 6.7 Implement cashflow history retrieval with decryption
     - Create getCashflowHistory function
     - Decrypt monetary values when retrieving
     - Return all records for user ordered by month
     - _Requirements: 2.4, 10.3, 10.5_
 
-  - [ ] 6.8 Write property test for cashflow history completeness
+  - [x] 6.8 Write property test for cashflow history completeness
     - **Property 7: Cashflow History Completeness**
     - **Validates: Requirements 2.4**
 
-  - [ ] 6.9 Write property test for encrypted data at rest
+  - [x] 6.9 Write property test for encrypted data at rest
     - **Property 24: Encrypted Data at Rest**
     - **Validates: Requirements 10.2, 10.6**
 
-- [ ] 7. Checkpoint - Cashflow Service Complete
+- [x] 7. Checkpoint - Cashflow Service Complete
   - Ensure all cashflow tests pass, ask the user if questions arise.
 
 - [ ] 8. Investment Service
