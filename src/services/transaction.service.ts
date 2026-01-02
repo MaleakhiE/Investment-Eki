@@ -213,7 +213,8 @@ export async function deleteTransaction(
 export async function getTransactions(
   userId: bigint,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  limit?: number
 ): Promise<TransactionRecord[]> {
   const where: { user_id: bigint; date?: { gte?: Date; lte?: Date } } = { user_id: userId };
 
@@ -226,9 +227,10 @@ export async function getTransactions(
   const records = await prisma.transaction.findMany({
     where,
     orderBy: { date: 'desc' },
+    ...(limit && limit > 0 ? { take: limit } : {}),
   });
 
-  return records.map((record) => ({
+  return records.map((record: { id: bigint; user_id: bigint; date: Date; type: string; category: string; description: string; amount: string; created_at: Date; updated_at: Date }) => ({
     id: record.id,
     user_id: record.user_id,
     date: record.date,

@@ -5,11 +5,13 @@
  * - Gain/loss calculation
  * - Investment snapshot persistence with encryption
  * - Investment history retrieval with decryption
+ * - Auto-create expense transaction when adding new investment
  */
 
 import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
 import { validateSnapshotInput, InvestmentSnapshotInput, InvestmentType } from '@/lib/validation';
+import { createTransaction } from './transaction.service';
 
 /**
  * Investment snapshot record with decrypted values
@@ -42,19 +44,28 @@ export interface SaveSnapshotResult {
   success: boolean;
   snapshot?: InvestmentSnapshotRecord;
   error?: string;
+  isNewSnapshot?: boolean;
+  transactionCreated?: boolean;
 }
 
 /**
  * Save or update investment snapshot for a user, type, and month
  * Uses upsert logic - creates new record or updates existing
  * Auto-creates investment record if not exists
+ * Optionally creates expense transaction for new investments
  * All monetary values are encrypted before storing
  * 
  * Requirements: 3.2, 3.5, 10.2
  */
 export async function saveSnapshot(
   userId: bigint,
-  input: InvestmentSnapshotInput & { platform?: string; product_name?: string; units?: string; nav_per_unit?: string }
+  input: InvestmentSnapshotInput & { 
+    platform?: string; 
+    product_name?: string; 
+    units?: string; 
+    nav_per_unit?: string;
+    createTransaction?: boolean; // If true, create expense transaction
+  }
 ): Promise<SaveSnapshotResult> {
   // Validate input
   const validation = validateSnapshotInput(input);
@@ -81,12 +92,30 @@ export async function saveSnapshot(
     });
   }
 
+  // Check if this is a new snapshot or update
+  const existingSnapshot = await prisma.investmentSnapshot.findUnique({
+    where: {
+      investment_id_month: {
+        investment_id: investment.id,
+        month: input.month,
+      },
+    },
+  });
+
+  const isNewSnapshot = !existingSnapshot;
+  let previousInvestedAmount = 0;
+  
+  if (existingSnapshot) {
+    previousInvestedAmount = decryptNumber(existingSnapshot.invested_amount);
+  }
+
   // Encrypt monetary values
   const encryptedInvestedAmount = encryptNumber(input.invested_amount);
   const encryptedCurrentValue = encryptNumber(input.current_value);
 
   // Upsert snapshot record
-  const record = await prisma.investmentSnapshot.upsert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const record = await (prisma.investmentSnapshot as any).upsert({
     where: {
       investment_id_month: {
         investment_id: investment.id,
@@ -113,10 +142,34 @@ export async function saveSnapshot(
     },
   });
 
+  // Create expense transaction if requested and there's a difference in invested amount
+  if (input.createTransaction !== false) {
+    const investmentDifference = input.invested_amount - previousInvestedAmount;
+    
+    if (investmentDifference > 0) {
+      // Create expense transaction for the new investment amount
+      const [year, monthNum] = input.month.split('-');
+      const transactionDate = `${year}-${monthNum}-01`;
+      const category = input.type === 'GOLD' ? 'Investment' : 'Investment';
+      const description = input.type === 'GOLD' 
+        ? 'Gold Investment' 
+        : `${input.platform || 'Mutual Fund'} - ${input.product_name || 'Reksa Dana'}`;
+
+      await createTransaction(userId, {
+        date: transactionDate,
+        type: 'EXPENSE',
+        category,
+        description,
+        amount: investmentDifference,
+      });
+    }
+  }
+
   // Calculate gain/loss
   const gainLoss = calculateGainLoss(input.invested_amount, input.current_value);
 
   // Return decrypted record
+  const snapshotRecord = record as Record<string, unknown>;
   return {
     success: true,
     snapshot: {
@@ -126,12 +179,14 @@ export async function saveSnapshot(
       invested_amount: input.invested_amount,
       current_value: input.current_value,
       gain_loss: gainLoss,
-      platform: record.platform || undefined,
-      product_name: record.product_name || undefined,
-      units: record.units || undefined,
-      nav_per_unit: record.nav_per_unit || undefined,
+      platform: (snapshotRecord.platform as string) || undefined,
+      product_name: (snapshotRecord.product_name as string) || undefined,
+      units: (snapshotRecord.units as string) || undefined,
+      nav_per_unit: (snapshotRecord.nav_per_unit as string) || undefined,
       created_at: record.created_at,
     },
+    isNewSnapshot,
+    transactionCreated: input.createTransaction !== false && (input.invested_amount - previousInvestedAmount) > 0,
   };
 }
 
@@ -221,6 +276,7 @@ export async function getSnapshotsByInvestment(investmentId: bigint): Promise<In
   return records.map((record) => {
     const investedAmount = decryptNumber(record.invested_amount);
     const currentValue = decryptNumber(record.current_value);
+    const rec = record as Record<string, unknown>;
     return {
       id: record.id,
       investment_id: record.investment_id,
@@ -228,10 +284,10 @@ export async function getSnapshotsByInvestment(investmentId: bigint): Promise<In
       invested_amount: investedAmount,
       current_value: currentValue,
       gain_loss: calculateGainLoss(investedAmount, currentValue),
-      platform: record.platform || undefined,
-      product_name: record.product_name || undefined,
-      units: record.units || undefined,
-      nav_per_unit: record.nav_per_unit || undefined,
+      platform: (rec.platform as string) || undefined,
+      product_name: (rec.product_name as string) || undefined,
+      units: (rec.units as string) || undefined,
+      nav_per_unit: (rec.nav_per_unit as string) || undefined,
       created_at: record.created_at,
     };
   });

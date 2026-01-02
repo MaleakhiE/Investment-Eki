@@ -26,7 +26,6 @@ export function formatNumber(value: number | string): string {
 }
 
 export function parseFormattedNumber(value: string): string {
-  // Remove all non-digit characters
   return value.replace(/[^\d]/g, '');
 }
 
@@ -39,20 +38,17 @@ export default function CurrencyInput({
   className = '',
 }: CurrencyInputProps) {
   
-  // Always show formatted value
   const displayValue = value ? formatNumber(value) : '';
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    // Parse to get raw number string
     const rawValue = parseFormattedNumber(inputValue);
-    // Update parent with raw value
     onChange(rawValue);
   }, [onChange]);
 
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 text-sm pointer-events-none">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none">
         Rp
       </span>
       <input
@@ -63,7 +59,7 @@ export default function CurrencyInput({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
-        className={`pl-10 ${className}`}
+        className={`pl-10 text-zinc-900 ${className}`}
       />
     </div>
   );

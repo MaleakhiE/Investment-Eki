@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/transactions - Get transactions with optional date filter
- * Query params: startDate, endDate (YYYY-MM-DD format)
+ * Query params: startDate, endDate (YYYY-MM-DD format), limit (number)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -76,8 +76,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate') || undefined;
     const endDate = searchParams.get('endDate') || undefined;
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
-    const transactions = await getTransactions(userId, startDate, endDate);
+    const transactions = await getTransactions(userId, startDate, endDate, limit);
 
     const transactionsResponse = transactions.map((t) => ({
       ...t,
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json(
-      successResponse(transactionsResponse, 'Transactions retrieved successfully')
+      successResponse({ transactions: transactionsResponse }, 'Transactions retrieved successfully')
     );
   } catch (error) {
     console.error('Error getting transactions:', error);
