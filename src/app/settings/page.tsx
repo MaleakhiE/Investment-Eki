@@ -101,6 +101,7 @@ export default function SettingsPage() {
     if (!confirm('Reset SMTP?')) return;
     try { const res = await fetch('/api/settings/smtp', { method: 'DELETE' }); const d = await res.json(); if (res.ok) { setSmtpSettings(d.responseDetails); setSmtpSuccess('Reset'); setTimeout(() => setSmtpSuccess(''), 3000); } } catch { setSmtpError('Failed'); }
   }
+
   async function updateNotifSetting(key: string, value: unknown) {
     if (!notifSettings) return;
     setNotifError(''); setNotifSuccess(''); setIsSavingNotif(true);
@@ -199,7 +200,7 @@ export default function SettingsPage() {
                     <div><label className="block text-[10px] font-medium text-zinc-700 mb-1">Host</label><input type="text" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} required placeholder="smtp.gmail.com" className="w-full px-2 py-1.5 rounded-lg border border-zinc-200 text-xs" /></div>
                     <div><label className="block text-[10px] font-medium text-zinc-700 mb-1">Port</label><input type="text" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} required placeholder="587" className="w-full px-2 py-1.5 rounded-lg border border-zinc-200 text-xs" /></div>
                     <div><label className="block text-[10px] font-medium text-zinc-700 mb-1">Username</label><input type="text" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} required placeholder="email@gmail.com" className="w-full px-2 py-1.5 rounded-lg border border-zinc-200 text-xs" /></div>
-                    <div><label className="block text-[10px] font-medium text-zinc-700 mb-1">Password</label><input type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} required placeholder="********" className="w-full px-2 py-1.5 rounded-lg border border-zinc-200 text-xs" /></div>
+                    <div><label className="block text-[10px] font-medium text-zinc-700 mb-1">Password</label><input type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} required placeholder="••••••••" className="w-full px-2 py-1.5 rounded-lg border border-zinc-200 text-xs" /></div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div><label className="block text-[10px] font-medium text-zinc-700 mb-1">From Email</label><input type="email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} required placeholder="noreply@domain.com" className="w-full px-2 py-1.5 rounded-lg border border-zinc-200 text-xs" /></div>
