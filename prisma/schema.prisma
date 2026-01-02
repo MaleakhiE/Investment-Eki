@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        BigInt            @id @default(autoincrement())
+  email                     String            @unique @db.VarChar(512)
+  password_hash             String            @db.VarChar(255)
+  ai_recommendation_enabled Boolean           @default(true)
+  created_at                DateTime          @default(now())
+  updated_at                DateTime          @updatedAt
+
+  cashflows            MonthlyCashflow[]
+  transactions         Transaction[]
+  investments          Investment[]
+  notifications        NotificationLog[]
+  smtpSettings         SmtpSettings?
+  notificationSettings NotificationSettings?
+
+  @@map("users")
+}
+
+model MonthlyCashflow {
+  id             BigInt   @id @default(autoincrement())
+  user_id        BigInt
+  month          String   @db.VarChar(7)
+  income         String   @db.VarChar(255)
+  expense_rent   String   @db.VarChar(255)
+  expense_living String   @db.VarChar(255)
+  expense_other  String   @db.VarChar(255)
+  total_expense  String   @db.VarChar(255)
+  net_cashflow   String   @db.VarChar(255)
+  created_at     DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, month])
+  @@map("monthly_cashflow")
+}
+
+model Transaction {
+  id          BigInt          @id @default(autoincrement())
+  user_id     BigInt
+  date        DateTime        @db.Date
+  type        TransactionType
+  category    String          @db.VarChar(50)
+  description String          @db.VarChar(512)
+  amount      String          @db.VarChar(255)
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, date])
+  @@map("transactions")
+}
+
+model SmtpSettings {
+  id         BigInt   @id @default(autoincrement())
+  user_id    BigInt   @unique
+  host       String   @db.VarChar(255)
+  port       String   @db.VarChar(10)
+  smtp_user  String   @db.VarChar(512)
+  smtp_pass  String   @db.VarChar(512)
+  from_email String   @db.VarChar(255)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  owner User @relation(fields: [user_id], references: [id])
+
+  @@map("smtp_settings")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Investment {
+  id         BigInt         @id @default(autoincrement())
+  user_id    BigInt
+  type       InvestmentType
+  created_at DateTime       @default(now())
+
+  user      User                 @relation(fields: [user_id], references: [id])
+  snapshots InvestmentSnapshot[]
+
+  @@unique([user_id, type])
+  @@map("investments")
+}
+
+model InvestmentSnapshot {
+  id              BigInt   @id @default(autoincrement())
+  investment_id   BigInt
+  month           String   @db.VarChar(7)
+  invested_amount String   @db.VarChar(255)
+  current_value   String   @db.VarChar(255)
+  platform        String?  @db.VarChar(100)
+  product_name    String?  @db.VarChar(255)
+  units           String?  @db.VarChar(50)
+  nav_per_unit    String?  @db.VarChar(50)
+  created_at      DateTime @default(now())
+
+  investment Investment @relation(fields: [investment_id], references: [id])
+
+  @@unique([investment_id, month])
+  @@map("investment_snapshots")
+}
+
+model NotificationLog {
+  id      BigInt           @id @default(autoincrement())
+  user_id BigInt
+  month   String           @db.VarChar(7)
+  type    NotificationType
+  sent_at DateTime         @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("notification_logs")
+}
+
+model NotificationSettings {
+  id                      BigInt   @id @default(autoincrement())
+  user_id                 BigInt   @unique
+  monthly_reminder        Boolean  @default(true)
+  monthly_reminder_day    Int      @default(25)
+  monthly_summary         Boolean  @default(true)
+  low_balance_alert       Boolean  @default(false)
+  low_balance_threshold   String   @db.VarChar(255) @default("0")
+  custom_alerts           String?  @db.Text
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("notification_settings")
+}
+
+enum InvestmentType {
+  GOLD
+  MUTUAL_FUND
+}
+
+enum NotificationType {
+  REMINDER
+  SUMMARY
+  LOW_BALANCE
+  CUSTOM
+}

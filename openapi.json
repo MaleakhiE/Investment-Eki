@@ -1,0 +1,1530 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Personal Finance & Investment Tracker API",
+    "description": "API for tracking personal finances, investments (Gold and Mutual Funds), and receiving AI-powered investment recommendations.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User registration and authentication"
+    },
+    {
+      "name": "Cashflow",
+      "description": "Monthly income and expense tracking"
+    },
+    {
+      "name": "Investments",
+      "description": "Investment portfolio management"
+    },
+    {
+      "name": "Analytics",
+      "description": "Financial analytics and insights"
+    },
+    {
+      "name": "Settings",
+      "description": "User settings management"
+    },
+    {
+      "name": "Notifications",
+      "description": "Email notification triggers"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a new user",
+        "description": "Creates a new user account with encrypted email and hashed password.",
+        "operationId": "registerUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "securepassword123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                },
+                "example": {
+                  "responseCode": 201,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "User registered successfully",
+                  "responseDetails": {
+                    "id": "1",
+                    "email": "user@example.com",
+                    "created_at": "2026-01-02T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/callback/credentials": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Login with credentials",
+        "description": "Authenticates a user with email and password using NextAuth.js Credentials provider. On success, sets a session cookie for subsequent authenticated requests.",
+        "operationId": "loginUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "securepassword123",
+                "csrfToken": "token-from-csrf-endpoint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful - redirects to callback URL or home page. Session cookie is set.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Session cookie for authentication",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials - redirects to login page with error"
+          }
+        }
+      }
+    },
+    "/api/auth/csrf": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get CSRF token",
+        "description": "Retrieves a CSRF token required for login and signout requests.",
+        "operationId": "getCsrfToken",
+        "responses": {
+          "200": {
+            "description": "CSRF token retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "csrfToken": {
+                      "type": "string",
+                      "description": "CSRF token to include in login/signout requests"
+                    }
+                  }
+                },
+                "example": {
+                  "csrfToken": "abc123def456..."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get current session",
+        "description": "Retrieves the current user's session information if authenticated.",
+        "operationId": "getSession",
+        "responses": {
+          "200": {
+            "description": "Session information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                },
+                "example": {
+                  "user": {
+                    "id": "1",
+                    "email": "user@example.com",
+                    "ai_recommendation_enabled": true
+                  },
+                  "expires": "2026-02-01T10:00:00.000Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign out",
+        "description": "Signs out the current user and invalidates the session.",
+        "operationId": "signOut",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "csrfToken": {
+                    "type": "string",
+                    "description": "CSRF token from /api/auth/csrf"
+                  }
+                },
+                "required": ["csrfToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully signed out"
+          }
+        }
+      }
+    },
+    "/api/cashflow": {
+      "get": {
+        "tags": ["Cashflow"],
+        "summary": "Get cashflow history",
+        "description": "Retrieves all monthly cashflow records for the authenticated user.",
+        "operationId": "getCashflowHistory",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Cashflow history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashflowHistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Cashflow"],
+        "summary": "Create or update cashflow",
+        "description": "Creates a new cashflow record or updates an existing one for the specified month. Automatically calculates total_expense and net_cashflow.",
+        "operationId": "saveCashflow",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashflowInput"
+              },
+              "example": {
+                "month": "2026-01",
+                "income": 10000000,
+                "expense_rent": 2000000,
+                "expense_living": 3000000,
+                "expense_other": 1000000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cashflow saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cashflow/{month}": {
+      "get": {
+        "tags": ["Cashflow"],
+        "summary": "Get cashflow for a specific month",
+        "description": "Retrieves the cashflow record for a specific month.",
+        "operationId": "getCashflowByMonth",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "description": "Month in YYYY-MM format",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            },
+            "example": "2026-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cashflow retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid month format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cashflow not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/investments": {
+      "get": {
+        "tags": ["Investments"],
+        "summary": "List all investments",
+        "description": "Retrieves all investment records for the authenticated user.",
+        "operationId": "getInvestments",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Investments retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestmentsListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/investments/snapshot": {
+      "post": {
+        "tags": ["Investments"],
+        "summary": "Create or update investment snapshot",
+        "description": "Creates a new investment snapshot or updates an existing one for the specified investment type and month. Automatically creates the investment record if it doesn't exist.",
+        "operationId": "saveSnapshot",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestmentSnapshotInput"
+              },
+              "example": {
+                "type": "GOLD",
+                "month": "2026-01",
+                "invested_amount": 5000000,
+                "current_value": 5500000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Investment snapshot saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestmentSnapshotResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/investments/{type}/history": {
+      "get": {
+        "tags": ["Investments"],
+        "summary": "Get investment history by type",
+        "description": "Retrieves all snapshots for a specific investment type (GOLD or MUTUAL_FUND).",
+        "operationId": "getInvestmentHistory",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "description": "Investment type",
+            "schema": {
+              "type": "string",
+              "enum": ["GOLD", "MUTUAL_FUND"]
+            },
+            "example": "GOLD"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Investment history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestmentHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid investment type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/cashflow-trend": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get cashflow trend",
+        "description": "Retrieves monthly net cashflow trend data for the authenticated user.",
+        "operationId": "getCashflowTrend",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Cashflow trend retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashflowTrendResponse"
+                },
+                "example": {
+                  "responseCode": 200,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "Cashflow trend retrieved successfully",
+                  "responseDetails": [
+                    { "month": "2025-11", "net_cashflow": 4000000 },
+                    { "month": "2025-12", "net_cashflow": 3500000 },
+                    { "month": "2026-01", "net_cashflow": 4500000 }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/portfolio": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get portfolio analytics",
+        "description": "Retrieves portfolio summary (total invested vs current value) and growth over time.",
+        "operationId": "getPortfolioAnalytics",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Portfolio analytics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioAnalyticsResponse"
+                },
+                "example": {
+                  "responseCode": 200,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "Portfolio analytics retrieved successfully",
+                  "responseDetails": {
+                    "summary": {
+                      "total_invested": 10000000,
+                      "total_current_value": 11500000,
+                      "total_gain_loss": 1500000
+                    },
+                    "growth": [
+                      { "month": "2025-12", "invested_amount": 8000000, "current_value": 8500000 },
+                      { "month": "2026-01", "invested_amount": 10000000, "current_value": 11500000 }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/comparison": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get investment comparison",
+        "description": "Retrieves separate summaries for Gold and Mutual Fund investments for comparison.",
+        "operationId": "getInvestmentComparison",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Investment comparison retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestmentComparisonResponse"
+                },
+                "example": {
+                  "responseCode": 200,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "Investment comparison retrieved successfully",
+                  "responseDetails": {
+                    "gold": {
+                      "total_invested": 5000000,
+                      "total_current_value": 5500000,
+                      "total_gain_loss": 500000
+                    },
+                    "mutual_fund": {
+                      "total_invested": 5000000,
+                      "total_current_value": 6000000,
+                      "total_gain_loss": 1000000
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/recommendation": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get AI investment recommendation",
+        "description": "Retrieves AI-powered investment allocation recommendation based on user's financial history. Returns 403 if AI recommendation is disabled in user settings.",
+        "operationId": "getInvestmentRecommendation",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Investment recommendation generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResponse"
+                },
+                "example": {
+                  "responseCode": 200,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "Investment recommendation generated successfully",
+                  "responseDetails": {
+                    "gold_percentage": 40,
+                    "mutual_fund_percentage": 60,
+                    "investable_amount": 4000000,
+                    "reasoning": "Berdasarkan analisis keuangan Anda, kami merekomendasikan alokasi 40% untuk Emas dan 60% untuk Reksa Dana. Cashflow Anda stabil dengan rata-rata surplus Rp 4.000.000 per bulan.",
+                    "risk_profile": "moderate",
+                    "should_invest": true,
+                    "warnings": []
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AI recommendation disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "responseCode": 403,
+                  "responseStatus": "ERROR",
+                  "responseMessage": "AI recommendation is disabled. Enable it in settings to receive investment recommendations.",
+                  "responseDetails": null
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get user settings",
+        "description": "Retrieves the current user's settings including AI recommendation preference.",
+        "operationId": "getUserSettings",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Settings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                },
+                "example": {
+                  "responseCode": 200,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "Settings retrieved successfully",
+                  "responseDetails": {
+                    "ai_recommendation_enabled": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/ai-recommendation": {
+      "patch": {
+        "tags": ["Settings"],
+        "summary": "Toggle AI recommendation setting",
+        "description": "Enables or disables AI investment recommendations for the user.",
+        "operationId": "updateAIRecommendationSetting",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AISettingInput"
+              },
+              "example": {
+                "enabled": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI recommendation setting updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/send-monthly": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Trigger monthly notifications",
+        "description": "Triggers monthly email notifications for all users. Sends reminder emails to users without cashflow data for the current month, and summary emails to users with data. This endpoint is designed to be called by a cron job scheduler.",
+        "operationId": "sendMonthlyNotifications",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Monthly notifications processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResultResponse"
+                },
+                "example": {
+                  "responseCode": 200,
+                  "responseStatus": "SUCCESS",
+                  "responseMessage": "Monthly notifications processed: 5 sent, 0 failed",
+                  "responseDetails": {
+                    "sent": 5,
+                    "failed": 0,
+                    "total": 5,
+                    "details": [
+                      { "userId": "1", "type": "SUMMARY", "success": true },
+                      { "userId": "2", "type": "REMINDER", "success": true }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (invalid cron secret)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from NextAuth.js authentication"
+      }
+    },
+    "schemas": {
+      "APIResponse": {
+        "type": "object",
+        "required": ["responseCode", "responseStatus", "responseMessage", "responseDetails"],
+        "properties": {
+          "responseCode": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "responseStatus": {
+            "type": "string",
+            "enum": ["SUCCESS", "ERROR"],
+            "description": "Operation status"
+          },
+          "responseMessage": {
+            "type": "string",
+            "description": "Human-readable message"
+          },
+          "responseDetails": {
+            "description": "Operation-specific data or null"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "User password (minimum 8 characters)"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password", "csrfToken"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password"
+          },
+          "csrfToken": {
+            "type": "string",
+            "description": "CSRF token obtained from /api/auth/csrf"
+          }
+        }
+      },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "email": { "type": "string" },
+              "ai_recommendation_enabled": { "type": "boolean" }
+            }
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Session expiration timestamp"
+          }
+        }
+      },
+      "RegisterResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "email": { "type": "string" },
+                  "created_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CashflowInput": {
+        "type": "object",
+        "required": ["month", "income", "expense_rent", "expense_living", "expense_other"],
+        "properties": {
+          "month": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "description": "Month in YYYY-MM format"
+          },
+          "income": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Monthly income"
+          },
+          "expense_rent": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Rent expense"
+          },
+          "expense_living": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Living expense"
+          },
+          "expense_other": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Other expenses"
+          }
+        }
+      },
+      "CashflowRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "month": { "type": "string" },
+          "income": { "type": "number" },
+          "expense_rent": { "type": "number" },
+          "expense_living": { "type": "number" },
+          "expense_other": { "type": "number" },
+          "total_expense": { "type": "number" },
+          "net_cashflow": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CashflowResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": { "$ref": "#/components/schemas/CashflowRecord" }
+            }
+          }
+        ]
+      },
+      "CashflowHistoryResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/CashflowRecord" }
+              }
+            }
+          }
+        ]
+      },
+      "InvestmentSnapshotInput": {
+        "type": "object",
+        "required": ["type", "month", "invested_amount", "current_value"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["GOLD", "MUTUAL_FUND"],
+            "description": "Investment type"
+          },
+          "month": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "description": "Month in YYYY-MM format"
+          },
+          "invested_amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total amount invested"
+          },
+          "current_value": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Current market value"
+          }
+        }
+      },
+      "InvestmentRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "type": { "type": "string", "enum": ["GOLD", "MUTUAL_FUND"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InvestmentSnapshotRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "investment_id": { "type": "string" },
+          "month": { "type": "string" },
+          "invested_amount": { "type": "number" },
+          "current_value": { "type": "number" },
+          "gain_loss": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InvestmentsListResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/InvestmentRecord" }
+              }
+            }
+          }
+        ]
+      },
+      "InvestmentSnapshotResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": { "$ref": "#/components/schemas/InvestmentSnapshotRecord" }
+            }
+          }
+        ]
+      },
+      "InvestmentHistoryResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/InvestmentSnapshotRecord" }
+              }
+            }
+          }
+        ]
+      },
+      "ValidationErrorResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseCode": { "type": "integer", "example": 400 },
+              "responseStatus": { "type": "string", "example": "ERROR" },
+              "responseDetails": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "UnauthorizedResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseCode": { "type": "integer", "example": 401 },
+              "responseStatus": { "type": "string", "example": "ERROR" },
+              "responseMessage": { "type": "string", "example": "Unauthorized" },
+              "responseDetails": { "type": "null" }
+            }
+          }
+        ]
+      },
+      "NotFoundResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseCode": { "type": "integer", "example": 404 },
+              "responseStatus": { "type": "string", "example": "ERROR" },
+              "responseMessage": { "type": "string", "example": "Resource not found" },
+              "responseDetails": { "type": "null" }
+            }
+          }
+        ]
+      },
+      "ErrorResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseStatus": { "type": "string", "example": "ERROR" },
+              "responseDetails": { "type": "null" }
+            }
+          }
+        ]
+      },
+      "ServerErrorResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseCode": { "type": "integer", "example": 500 },
+              "responseStatus": { "type": "string", "example": "ERROR" },
+              "responseMessage": { "type": "string", "example": "Internal server error" },
+              "responseDetails": { "type": "null" }
+            }
+          }
+        ]
+      },
+      "CashflowTrend": {
+        "type": "object",
+        "properties": {
+          "month": { "type": "string", "description": "Month in YYYY-MM format" },
+          "net_cashflow": { "type": "number", "description": "Net cashflow for the month" }
+        }
+      },
+      "CashflowTrendResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/CashflowTrend" }
+              }
+            }
+          }
+        ]
+      },
+      "PortfolioSummary": {
+        "type": "object",
+        "properties": {
+          "total_invested": { "type": "number", "description": "Total amount invested" },
+          "total_current_value": { "type": "number", "description": "Total current market value" },
+          "total_gain_loss": { "type": "number", "description": "Total unrealized gain/loss" }
+        }
+      },
+      "PortfolioGrowthItem": {
+        "type": "object",
+        "properties": {
+          "month": { "type": "string" },
+          "invested_amount": { "type": "number" },
+          "current_value": { "type": "number" }
+        }
+      },
+      "PortfolioAnalyticsResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": {
+                "type": "object",
+                "properties": {
+                  "summary": { "$ref": "#/components/schemas/PortfolioSummary" },
+                  "growth": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/PortfolioGrowthItem" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "InvestmentComparison": {
+        "type": "object",
+        "properties": {
+          "gold": { "$ref": "#/components/schemas/PortfolioSummary" },
+          "mutual_fund": { "$ref": "#/components/schemas/PortfolioSummary" }
+        }
+      },
+      "InvestmentComparisonResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": { "$ref": "#/components/schemas/InvestmentComparison" }
+            }
+          }
+        ]
+      },
+      "AllocationRecommendation": {
+        "type": "object",
+        "properties": {
+          "gold_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Recommended percentage allocation for Gold (0-100)"
+          },
+          "mutual_fund_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Recommended percentage allocation for Mutual Fund (0-100)"
+          },
+          "investable_amount": {
+            "type": "number",
+            "description": "Suggested amount to invest this month"
+          },
+          "reasoning": {
+            "type": "string",
+            "description": "Explanation in Bahasa Indonesia for the recommendation"
+          },
+          "risk_profile": {
+            "type": "string",
+            "enum": ["conservative", "moderate", "aggressive"],
+            "description": "User's determined risk profile"
+          },
+          "should_invest": {
+            "type": "boolean",
+            "description": "Whether user should invest (false if should focus on emergency fund)"
+          },
+          "warnings": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Any warnings or caveats"
+          }
+        }
+      },
+      "RecommendationResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": { "$ref": "#/components/schemas/AllocationRecommendation" }
+            }
+          }
+        ]
+      },
+      "UserSettings": {
+        "type": "object",
+        "properties": {
+          "ai_recommendation_enabled": {
+            "type": "boolean",
+            "description": "Whether AI investment recommendations are enabled"
+          }
+        }
+      },
+      "SettingsResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": { "$ref": "#/components/schemas/UserSettings" }
+            }
+          }
+        ]
+      },
+      "AISettingInput": {
+        "type": "object",
+        "required": ["enabled"],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Enable or disable AI recommendations"
+          }
+        }
+      },
+      "NotificationResult": {
+        "type": "object",
+        "properties": {
+          "sent": { "type": "integer", "description": "Number of notifications sent successfully" },
+          "failed": { "type": "integer", "description": "Number of notifications that failed" },
+          "total": { "type": "integer", "description": "Total notifications processed" },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "string" },
+                "type": { "type": "string", "enum": ["REMINDER", "SUMMARY"] },
+                "success": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "NotificationResultResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/APIResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "responseDetails": { "$ref": "#/components/schemas/NotificationResult" }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
