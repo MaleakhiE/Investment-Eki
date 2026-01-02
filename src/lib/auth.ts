@@ -9,7 +9,7 @@
 
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { validateCredentials } from '@/services/auth.service';
+import { authConfig } from './auth.config';
 
 declare module 'next-auth' {
   interface Session {
@@ -28,6 +28,7 @@ declare module 'next-auth' {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       name: 'credentials',
@@ -43,6 +44,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
+        // Dynamic import to avoid Edge Runtime issues
+        const { validateCredentials } = await import('@/services/auth.service');
         const result = await validateCredentials(email, password);
 
         if (!result.user) {
@@ -57,32 +60,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.ai_recommendation_enabled = user.ai_recommendation_enabled;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user = {
-        ...session.user,
-        id: token.id as string,
-        email: token.email as string,
-        ai_recommendation_enabled: token.ai_recommendation_enabled as boolean,
-      };
-      return session;
-    },
-  },
-  pages: {
-    signIn: '/login',
-  },
 });
 
 /**

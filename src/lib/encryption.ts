@@ -24,9 +24,47 @@ function getEncryptionKey(): Buffer {
   return crypto.createHash('sha256').update(key).digest();
 }
 
+/**
+ * Generate a deterministic IV from the plaintext for searchable encryption.
+ * This allows the same plaintext to always produce the same ciphertext,
+ * enabling database lookups on encrypted fields.
+ * 
+ * Note: This is less secure than random IV but necessary for searchable fields.
+ */
+function getDeterministicIV(plaintext: string): Buffer {
+  const key = getEncryptionKey();
+  // Use HMAC to derive a deterministic IV from the plaintext
+  return crypto.createHmac('sha256', key)
+    .update(plaintext)
+    .digest()
+    .subarray(0, IV_LENGTH);
+}
+
+/**
+ * Encrypt with random IV (more secure, for non-searchable fields)
+ */
 export function encrypt(plaintext: string): string {
   const key = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
+  
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  
+  let encrypted = cipher.update(plaintext, 'utf8', 'base64');
+  encrypted += cipher.final('base64');
+  
+  const authTag = cipher.getAuthTag();
+  
+  // Format: iv:authTag:ciphertext (all base64 encoded)
+  return `${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted}`;
+}
+
+/**
+ * Encrypt with deterministic IV (for searchable fields like email)
+ * Same plaintext will always produce the same ciphertext.
+ */
+export function encryptDeterministic(plaintext: string): string {
+  const key = getEncryptionKey();
+  const iv = getDeterministicIV(plaintext);
   
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   

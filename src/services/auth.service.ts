@@ -9,7 +9,7 @@
 
 import bcrypt from 'bcrypt';
 import { prisma } from '@/lib/prisma';
-import { encrypt, decrypt } from '@/lib/encryption';
+import { encryptDeterministic, decrypt } from '@/lib/encryption';
 import { validateEmail, validatePassword } from '@/lib/validation';
 
 const SALT_ROUNDS = 10;
@@ -54,8 +54,8 @@ export async function register(email: string, password: string): Promise<Registe
     return { success: false, error: passwordValidation.errors[0] };
   }
 
-  // Encrypt email for storage
-  const encryptedEmail = encrypt(email.toLowerCase().trim());
+  // Encrypt email for storage (deterministic for lookups)
+  const encryptedEmail = encryptDeterministic(email.toLowerCase().trim());
 
   // Check for duplicate email by comparing encrypted values
   const existingUser = await prisma.user.findUnique({
@@ -104,8 +104,8 @@ export async function validateCredentials(
   email: string,
   password: string
 ): Promise<ValidateCredentialsResult> {
-  // Encrypt email to search in database
-  const encryptedEmail = encrypt(email.toLowerCase().trim());
+  // Encrypt email to search in database (deterministic)
+  const encryptedEmail = encryptDeterministic(email.toLowerCase().trim());
 
   // Find user by encrypted email
   const user = await prisma.user.findUnique({

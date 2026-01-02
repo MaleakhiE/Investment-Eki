@@ -199,72 +199,72 @@ This implementation plan breaks down the Personal Finance Tracker into increment
     - **Property 13: Investment History Completeness**
     - **Validates: Requirements 3.4**
 
-- [-] 9. Checkpoint - Investment Service Complete
+- [x] 9. Checkpoint - Investment Service Complete
   - Ensure all investment tests pass, ask the user if questions arise.
 
-- [ ] 10. Analytics Service
-  - [ ] 10.1 Implement portfolio aggregation functions
+- [x] 10. Analytics Service
+  - [x] 10.1 Implement portfolio aggregation functions
     - Create getPortfolioSummary function
     - Create getInvestmentComparison function (Gold vs Mutual Fund)
     - _Requirements: 4.2, 4.4_
 
-  - [ ] 10.2 Write property test for portfolio aggregation correctness
+  - [x] 10.2 Write property test for portfolio aggregation correctness
     - **Property 15: Portfolio Aggregation Correctness**
     - **Validates: Requirements 4.2, 4.4**
 
-  - [ ] 10.3 Implement cashflow trend analytics
+  - [x] 10.3 Implement cashflow trend analytics
     - Create getCashflowTrend function
     - Create getPortfolioGrowth function
     - _Requirements: 4.1, 4.3_
 
-- [ ] 11. Notification Service
-  - [ ] 11.1 Implement email content builders
+- [x] 11. Notification Service
+  - [x] 11.1 Implement email content builders
     - Create buildReminderEmailContent function
     - Create buildSummaryEmailContent function with all required fields
     - _Requirements: 6.3_
 
-  - [ ] 11.2 Write property test for summary email content completeness
+  - [x] 11.2 Write property test for summary email content completeness
     - **Property 18: Summary Email Content Completeness**
     - **Validates: Requirements 6.3**
 
-  - [ ] 11.3 Implement notification type selection logic
+  - [x] 11.3 Implement notification type selection logic
     - Create determineNotificationType function
     - Check if cashflow exists for current month
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 11.4 Write property test for notification type selection
+  - [x] 11.4 Write property test for notification type selection
     - **Property 17: Notification Type Selection**
     - **Validates: Requirements 6.1, 6.2**
 
-  - [ ] 11.5 Implement email sending and logging
+  - [x] 11.5 Implement email sending and logging
     - Create sendEmail function using Nodemailer
     - Create logNotification function
     - _Requirements: 6.4, 6.5_
 
-  - [ ] 11.6 Write property test for notification logging completeness
+  - [x] 11.6 Write property test for notification logging completeness
     - **Property 19: Notification Logging Completeness**
     - **Validates: Requirements 6.4**
 
-  - [ ] 11.7 Implement monthly notification scheduler
+  - [x] 11.7 Implement monthly notification scheduler
     - Create sendMonthlyNotifications function
     - Iterate all users and send appropriate notification
     - _Requirements: 6.1, 6.2_
 
-- [ ] 12. AI Investment Recommendation Service
-  - [ ] 12.1 Implement financial health analysis
+- [x] 12. AI Investment Recommendation Service
+  - [x] 12.1 Implement financial health analysis
     - Create analyzeFinancialHealth function
     - Calculate average_net_cashflow from cashflow history
     - Calculate cashflow_volatility (standard deviation)
     - Determine months_of_data count
     - _Requirements: 11.1_
 
-  - [ ] 12.2 Implement portfolio balance analysis
+  - [x] 12.2 Implement portfolio balance analysis
     - Create analyzePortfolioBalance function
     - Calculate current percentage split between Gold and Mutual Fund
     - Calculate performance (gain/loss %) for each type
     - _Requirements: 11.3_
 
-  - [ ] 12.3 Implement allocation calculation logic
+  - [x] 12.3 Implement allocation calculation logic
     - Create calculateRecommendedAllocation function
     - Base allocation: 40% Gold, 60% Mutual Fund
     - Adjust for cashflow volatility (higher volatility = more gold)
@@ -272,124 +272,138 @@ This implementation plan breaks down the Personal Finance Tracker into increment
     - Adjust for performance trends
     - _Requirements: 11.2, 11.6_
 
-  - [ ] 12.4 Write property test for allocation percentage sum
+  - [x] 12.4 Write property test for allocation percentage sum
     - **Property 25: Allocation Percentage Sum Invariant**
     - **Validates: Requirements 11.2**
 
-  - [ ] 12.5 Write property test for diversification constraint
+  - [x] 12.5 Write property test for diversification constraint
     - **Property 27: Diversification Constraint**
     - **Validates: Requirements 11.6**
 
-  - [ ] 12.6 Implement negative cashflow detection
+  - [x] 12.6 Implement negative cashflow detection
     - Check if average_net_cashflow < 0
     - Set should_invest = false when negative
     - Add emergency fund warning
     - _Requirements: 11.5_
 
-  - [ ] 12.7 Write property test for negative cashflow recommendation
+  - [x] 12.7 Write property test for negative cashflow recommendation
     - **Property 26: Negative Cashflow Emergency Fund Recommendation**
     - **Validates: Requirements 11.5**
 
-  - [ ] 12.8 Implement reasoning text generator (Bahasa Indonesia)
+  - [x] 12.8 Implement reasoning text generator (Bahasa Indonesia)
     - Create generateReasoningText function
     - Explain allocation in simple, clear Bahasa Indonesia
     - Include factors considered (cashflow stability, portfolio balance, etc.)
     - _Requirements: 11.4_
 
-  - [ ] 12.9 Write property test for reasoning completeness
+  - [x] 12.9 Write property test for reasoning completeness
     - **Property 28: Recommendation Reasoning Completeness**
     - **Validates: Requirements 11.4**
 
-  - [ ] 12.10 Implement main recommendation service
+  - [x] 12.10 Implement main recommendation service
     - Create getInvestmentRecommendation function
     - Orchestrate all analysis and calculation functions
     - Return complete AllocationRecommendation object
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.7_
 
-- [ ] 13. User Settings Service
-  - [ ] 13.1 Update Prisma schema for AI setting
+- [x] 13. User Settings Service
+  - [x] 13.1 Update Prisma schema for AI setting
     - Add ai_recommendation_enabled field to User model
     - Default value: true
     - Run migration
     - _Requirements: 12.4, 12.5_
 
-  - [ ] 13.2 Implement settings service
+  - [x] 13.2 Implement settings service
     - Create getUserSettings function
     - Create updateAIRecommendationSetting function
     - Create isAIRecommendationEnabled function
     - _Requirements: 12.1, 12.4, 12.6_
 
-  - [ ] 13.3 Write property test for AI setting toggle persistence
+  - [x] 13.3 Write property test for AI setting toggle persistence
     - **Property 29: AI Setting Toggle Persistence**
     - **Validates: Requirements 12.4, 12.6**
 
-  - [ ] 13.4 Write property test for AI setting default value
+  - [x] 13.4 Write property test for AI setting default value
     - **Property 30: AI Setting Default Value**
     - **Validates: Requirements 12.5**
 
-  - [ ] 13.5 Create settings API routes
+  - [x] 13.5 Create settings API routes
     - GET /api/settings (get user settings)
     - PATCH /api/settings/ai-recommendation (toggle AI setting)
     - _Requirements: 12.1, 12.6_
 
-- [ ] 14. Checkpoint - Services Complete
+- [x] 14. Checkpoint - Services Complete
   - Ensure all service tests pass, ask the user if questions arise.
 
-- [ ] 15. API Routes
-  - [ ] 15.1 Create authentication API routes
+- [x] 15. API Routes
+  - [x] 15.1 Create authentication API routes
     - POST /api/auth/register
     - Configure NextAuth routes
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-  - [ ] 15.2 Create cashflow API routes
+  - [x] 15.2 Create cashflow API routes
     - POST /api/cashflow (create/update)
     - GET /api/cashflow (history)
     - GET /api/cashflow/[month] (single month)
     - _Requirements: 2.3, 2.4, 2.5_
 
-  - [ ] 15.3 Create investment API routes
+  - [x] 15.3 Create investment API routes
     - POST /api/investments/snapshot (create/update)
     - GET /api/investments (list investments)
     - GET /api/investments/[type]/history (snapshots by type)
     - _Requirements: 3.2, 3.4, 3.5_
 
-  - [ ] 15.4 Create analytics API routes
+  - [x] 15.4 Create analytics API routes
     - GET /api/analytics/cashflow-trend
     - GET /api/analytics/portfolio
     - GET /api/analytics/comparison
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-  - [ ] 15.5 Create AI recommendation API route
+  - [x] 15.5 Create AI recommendation API route
     - GET /api/analytics/recommendation
     - Check if AI recommendation is enabled for user first
     - Return allocation percentages, reasoning, and warnings
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.7, 12.2_
 
-  - [ ] 15.6 Create notification trigger API route
+  - [x] 15.6 Create notification trigger API route
     - POST /api/notifications/send-monthly (for cron trigger)
     - _Requirements: 6.1, 6.2_
 
-- [ ] 16. Frontend Pages
-  - [ ] 16.1 Create authentication pages
+- [x] 16. API Documentation
+  - [x] 16.1 Create OpenAPI/Swagger specification
+    - Create openapi.json file with OpenAPI 3.0 specification
+    - Document all API endpoints with request/response schemas
+    - Include authentication requirements for each endpoint
+    - Add example requests and responses
+    - Document error responses and status codes
+
+  - [x] 16.2 Create API documentation README
+    - Create docs/API.md with human-readable API documentation
+    - Include endpoint descriptions, parameters, and examples
+    - Document authentication flow
+    - Add curl examples for each endpoint
+
+- [x] 17. Frontend Pages
+  - [x] 17.1 Create authentication pages
     - /login page with form
     - /register page with form
     - _Requirements: 1.1, 1.3_
 
-  - [ ] 16.2 Create dashboard page
+  - [x] 17.2 Create dashboard page
     - /dashboard with summary widgets
     - Display net cashflow, portfolio value, recent activity
     - _Requirements: 4.1, 4.2_
 
-  - [ ] 16.3 Create cashflow management page
+  - [x] 17.3 Create cashflow management page
     - /cashflow with input form and history table
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-  - [ ] 16.4 Create investments management page
+  - [x] 17.4 Create investments management page
     - /investments with snapshot form and history
     - Separate sections for Gold and Mutual Fund
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-  - [ ] 16.5 Create AI recommendation display on analytics page
+  - [x] 17.5 Create AI recommendation display on analytics page
     - Check if AI recommendation is enabled before displaying
     - Display recommended allocation percentages (pie chart)
     - Show reasoning text in Bahasa Indonesia
@@ -397,13 +411,13 @@ This implementation plan breaks down the Personal Finance Tracker into increment
     - Show investable amount suggestion
     - _Requirements: 11.4, 11.7, 12.2_
 
-  - [ ] 16.6 Create settings page with AI toggle
+  - [x] 17.6 Create settings page with AI toggle
     - /settings for user preferences
     - AI recommendation toggle with clear description
     - Email notification preferences
     - _Requirements: 6.1, 6.2, 12.1, 12.7_
 
-- [ ] 17. Final Checkpoint - All Tests Pass
+- [ ] 18. Final Checkpoint - All Tests Pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

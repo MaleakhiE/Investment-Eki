@@ -21,6 +21,10 @@ export interface InvestmentSnapshotRecord {
   invested_amount: number;
   current_value: number;
   gain_loss: number;
+  platform?: string;
+  product_name?: string;
+  units?: string;
+  nav_per_unit?: string;
   created_at: Date;
 }
 
@@ -50,7 +54,7 @@ export interface SaveSnapshotResult {
  */
 export async function saveSnapshot(
   userId: bigint,
-  input: InvestmentSnapshotInput
+  input: InvestmentSnapshotInput & { platform?: string; product_name?: string; units?: string; nav_per_unit?: string }
 ): Promise<SaveSnapshotResult> {
   // Validate input
   const validation = validateSnapshotInput(input);
@@ -92,12 +96,20 @@ export async function saveSnapshot(
     update: {
       invested_amount: encryptedInvestedAmount,
       current_value: encryptedCurrentValue,
+      platform: input.platform || null,
+      product_name: input.product_name || null,
+      units: input.units || null,
+      nav_per_unit: input.nav_per_unit || null,
     },
     create: {
       investment_id: investment.id,
       month: input.month,
       invested_amount: encryptedInvestedAmount,
       current_value: encryptedCurrentValue,
+      platform: input.platform || null,
+      product_name: input.product_name || null,
+      units: input.units || null,
+      nav_per_unit: input.nav_per_unit || null,
     },
   });
 
@@ -114,6 +126,10 @@ export async function saveSnapshot(
       invested_amount: input.invested_amount,
       current_value: input.current_value,
       gain_loss: gainLoss,
+      platform: record.platform || undefined,
+      product_name: record.product_name || undefined,
+      units: record.units || undefined,
+      nav_per_unit: record.nav_per_unit || undefined,
       created_at: record.created_at,
     },
   };
@@ -212,6 +228,10 @@ export async function getSnapshotsByInvestment(investmentId: bigint): Promise<In
       invested_amount: investedAmount,
       current_value: currentValue,
       gain_loss: calculateGainLoss(investedAmount, currentValue),
+      platform: record.platform || undefined,
+      product_name: record.product_name || undefined,
+      units: record.units || undefined,
+      nav_per_unit: record.nav_per_unit || undefined,
       created_at: record.created_at,
     };
   });

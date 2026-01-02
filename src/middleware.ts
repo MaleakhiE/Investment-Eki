@@ -2,67 +2,13 @@
  * Auth Middleware
  * 
  * Protects routes that require authentication.
- * Redirects unauthenticated users to the login page.
+ * Uses Edge-compatible auth configuration.
  */
 
-import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/lib/auth.config';
 
-// Routes that require authentication
-const protectedRoutes = [
-  '/dashboard',
-  '/cashflow',
-  '/investments',
-  '/settings',
-  '/api/cashflow',
-  '/api/investments',
-  '/api/analytics',
-  '/api/notifications',
-  '/api/settings',
-];
-
-// Routes that should redirect to dashboard if already authenticated
-const authRoutes = ['/login', '/register'];
-
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const isAuthenticated = !!req.auth?.user;
-
-  // Check if the route is protected
-  const isProtectedRoute = protectedRoutes.some(
-    (route) => pathname.startsWith(route)
-  );
-
-  // Check if the route is an auth route (login/register)
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-  // Redirect unauthenticated users from protected routes to login
-  if (isProtectedRoute && !isAuthenticated) {
-    // For API routes, return 401
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json(
-        {
-          responseCode: 401,
-          responseStatus: 'ERROR',
-          responseMessage: 'Unauthorized',
-          responseDetails: null,
-        },
-        { status: 401 }
-      );
-    }
-    // For pages, redirect to login
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Redirect authenticated users from auth routes to dashboard
-  if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
-  }
-
-  return NextResponse.next();
-});
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
   matcher: [
@@ -72,7 +18,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - api/auth (NextAuth routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/|api/auth).*)',
   ],
 };

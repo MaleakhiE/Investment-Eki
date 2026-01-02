@@ -22,9 +22,33 @@ function getEncryptionKey(): Buffer {
   return crypto.createHash('sha256').update(key).digest();
 }
 
+/**
+ * Generate a deterministic IV from the plaintext for searchable encryption.
+ */
+function getDeterministicIV(plaintext: string): Buffer {
+  const key = getEncryptionKey();
+  return crypto.createHmac('sha256', key)
+    .update(plaintext)
+    .digest()
+    .subarray(0, IV_LENGTH);
+}
+
 function encrypt(plaintext: string): string {
   const key = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  let encrypted = cipher.update(plaintext, 'utf8', 'base64');
+  encrypted += cipher.final('base64');
+  const authTag = cipher.getAuthTag();
+  return `${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted}`;
+}
+
+/**
+ * Deterministic encryption for searchable fields like email
+ */
+function encryptDeterministic(plaintext: string): string {
+  const key = getEncryptionKey();
+  const iv = getDeterministicIV(plaintext);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   let encrypted = cipher.update(plaintext, 'utf8', 'base64');
   encrypted += cipher.final('base64');
@@ -41,7 +65,7 @@ async function main() {
 
   // Create default admin user
   const hashedPassword = await bcrypt.hash('admin123', 10);
-  const encryptedEmail = encrypt('admin@example.com');
+  const encryptedEmail = encryptDeterministic('admin@example.com');
 
   const adminUser = await prisma.user.upsert({
     where: { email: encryptedEmail },
