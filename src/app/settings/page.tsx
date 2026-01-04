@@ -128,6 +128,7 @@ export default function SettingsPage() {
     if (!confirm('Reset SMTP?')) return;
     try { const res = await fetch('/api/settings/smtp', { method: 'DELETE' }); const d = await res.json(); if (res.ok) { setSmtpSettings(d.responseDetails); setSmtpSuccess('Reset'); setTimeout(() => setSmtpSuccess(''), 3000); } } catch { setSmtpError('Failed'); }
   }
+
   async function updateNotifSetting(key: string, value: unknown) {
     if (!notifSettings) return;
     setNotifError(''); setNotifSuccess(''); setIsSavingNotif(true);
