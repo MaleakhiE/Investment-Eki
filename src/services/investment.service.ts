@@ -320,3 +320,41 @@ export async function getSnapshotsByUserAndType(
   // Get all snapshots for this investment
   return getSnapshotsByInvestment(investment.id);
 }
+
+export interface DeleteSnapshotResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Delete investment snapshot by ID
+ * Verifies ownership before deletion
+ * 
+ * Requirements: 3.4
+ */
+export async function deleteSnapshot(
+  userId: bigint,
+  snapshotId: bigint
+): Promise<DeleteSnapshotResult> {
+  // Get snapshot with investment to verify ownership
+  const snapshot = await prisma.investmentSnapshot.findUnique({
+    where: { id: snapshotId },
+    include: { investment: true },
+  });
+
+  if (!snapshot) {
+    return { success: false, error: 'NOT_FOUND' };
+  }
+
+  // Verify ownership
+  if (snapshot.investment.user_id !== userId) {
+    return { success: false, error: 'NOT_FOUND' };
+  }
+
+  // Delete snapshot
+  await prisma.investmentSnapshot.delete({
+    where: { id: snapshotId },
+  });
+
+  return { success: true };
+}
