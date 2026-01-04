@@ -46,9 +46,12 @@ export default function CurrencyInput({
     onChange(rawValue);
   }, [onChange]);
 
+  // Remove any px-* or pl-* classes from className to avoid conflicts
+  const cleanedClassName = className.replace(/\b(px-\d+|pl-\d+)\b/g, '').trim();
+
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none">
+      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none select-none">
         Rp
       </span>
       <input
@@ -59,7 +62,7 @@ export default function CurrencyInput({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
-        className={`pl-10 text-zinc-900 ${className}`}
+        className={`pl-7 pr-2 text-zinc-900 ${cleanedClassName}`}
       />
     </div>
   );

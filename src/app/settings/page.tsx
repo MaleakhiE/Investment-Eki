@@ -16,6 +16,7 @@ interface NotificationSettings {
   low_balance_threshold: number;
   custom_alerts: CustomAlert[];
 }
+interface ExportSummary { transactions: number; investment_snapshots: number; budgets: number; goals: number; total_records: number; }
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -44,8 +45,10 @@ export default function SettingsPage() {
   const [newAlertName, setNewAlertName] = useState('');
   const [newAlertType, setNewAlertType] = useState<'expense_limit' | 'income_target' | 'savings_goal'>('expense_limit');
   const [newAlertThreshold, setNewAlertThreshold] = useState('');
+  const [exportSummary, setExportSummary] = useState<ExportSummary | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => { fetchSettings(); fetchSmtpSettings(); fetchNotifSettings(); }, []);
+  useEffect(() => { fetchSettings(); fetchSmtpSettings(); fetchNotifSettings(); fetchExportSummary(); }, []);
 
   async function fetchSettings() {
     try {
@@ -68,6 +71,30 @@ export default function SettingsPage() {
       const res = await fetch('/api/settings/notifications');
       if (res.ok) { const d = await res.json(); setNotifSettings(d.responseDetails); }
     } catch { /* ignore */ }
+  }
+  async function fetchExportSummary() {
+    try {
+      const res = await fetch('/api/export?summary=true');
+      if (res.ok) { const d = await res.json(); setExportSummary(d.responseDetails); }
+    } catch { /* ignore */ }
+  }
+  async function handleExport(format: 'json' | 'csv') {
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/export?format=${format}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = format === 'csv' ? `transactions_${new Date().toISOString().split('T')[0]}.csv` : `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        setSuccess('Export berhasil!'); setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch { setError('Export gagal'); } finally { setIsExporting(false); }
   }
   async function toggleAI() {
     if (!settings) return;
@@ -134,23 +161,23 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-slate-100">
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <main className="lg:ml-64 p-3 sm:p-4 lg:p-8">
-        <div className="mb-4"><h2 className="text-xl font-bold text-zinc-900">Settings</h2><p className="text-xs text-zinc-500">Manage your preferences</p></div>
+        <div className="mb-4"><h2 className="text-xl font-bold text-zinc-900">Settings</h2><p className="text-xs text-zinc-600">Manage your preferences</p></div>
         {error && <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">{error}</div>}
         {success && <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-xl text-xs text-green-600">{success}</div>}
-        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-500">Loading...</div> : (
+        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div className="bg-white rounded-xl shadow-sm p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1"><h3 className="font-semibold text-zinc-900 text-sm mb-1">AI Recommendation</h3><p className="text-xs text-zinc-500 mb-2">Enable AI-powered investment recommendations.</p><p className="text-xs"><span className="text-zinc-500">Status: </span><span className={`font-medium ${settings?.ai_recommendation_enabled ? 'text-green-600' : 'text-zinc-600'}`}>{settings?.ai_recommendation_enabled ? 'Active' : 'Inactive'}</span></p></div>
+                  <div className="flex-1"><h3 className="font-semibold text-zinc-900 text-sm mb-1">AI Recommendation</h3><p className="text-xs text-zinc-600 mb-2">Enable AI-powered investment recommendations.</p><p className="text-xs"><span className="text-zinc-600">Status: </span><span className={`font-medium ${settings?.ai_recommendation_enabled ? 'text-green-600' : 'text-zinc-600'}`}>{settings?.ai_recommendation_enabled ? 'Active' : 'Inactive'}</span></p></div>
                   <button onClick={toggleAI} disabled={isSaving} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${settings?.ai_recommendation_enabled ? 'bg-blue-600' : 'bg-zinc-200'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${settings?.ai_recommendation_enabled ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm p-4">
                 <h3 className="font-semibold text-zinc-900 text-sm mb-3">Account</h3>
                 <div className="space-y-2">
-                  <div className="flex justify-between py-1 border-b border-zinc-100"><span className="text-xs text-zinc-500">Email</span><span className="text-xs font-medium text-zinc-900 truncate max-w-[150px]">{session?.user?.email}</span></div>
-                  <div className="flex justify-between py-1"><span className="text-xs text-zinc-500">User ID</span><span className="text-xs font-mono text-zinc-600">{session?.user?.id}</span></div>
+                  <div className="flex justify-between py-1 border-b border-zinc-100"><span className="text-xs text-zinc-600">Email</span><span className="text-xs font-medium text-zinc-900 truncate max-w-[150px]">{session?.user?.email}</span></div>
+                  <div className="flex justify-between py-1"><span className="text-xs text-zinc-600">User ID</span><span className="text-xs font-mono text-zinc-600">{session?.user?.id}</span></div>
                 </div>
               </div>
             </div>
@@ -159,30 +186,30 @@ export default function SettingsPage() {
               <h3 className="font-semibold text-zinc-900 text-sm mb-3">Pengaturan Notifikasi</h3>
               {notifError && <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">{notifError}</div>}
               {notifSuccess && <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-600">{notifSuccess}</div>}
-              {!notifSettings ? <p className="text-xs text-zinc-400 text-center py-4">Loading...</p> : (
+              {!notifSettings ? <p className="text-xs text-zinc-500 text-center py-4">Loading...</p> : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
-                    <div className="flex-1 mr-3"><p className="text-xs font-medium text-zinc-900">Pengingat Bulanan</p><p className="text-[10px] text-zinc-500">Pengingat mengisi data keuangan</p>
-                      <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-500">Tanggal:</span>
+                    <div className="flex-1 mr-3"><p className="text-xs font-medium text-zinc-900">Pengingat Bulanan</p><p className="text-[10px] text-zinc-600">Pengingat mengisi data keuangan</p>
+                      <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-600">Tanggal:</span>
                         <select value={notifSettings.monthly_reminder_day} onChange={(e) => updateNotifSetting('monthly_reminder_day', parseInt(e.target.value))} disabled={isSavingNotif || !notifSettings.monthly_reminder} className="px-1.5 py-0.5 text-[10px] border border-zinc-200 rounded bg-white disabled:opacity-50">{Array.from({ length: 28 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}</select>
                       </div>
                     </div>
                     <button onClick={() => updateNotifSetting('monthly_reminder', !notifSettings.monthly_reminder)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.monthly_reminder ? 'bg-blue-600' : 'bg-zinc-200'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.monthly_reminder ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
-                    <div className="mr-3"><p className="text-xs font-medium text-zinc-900">Ringkasan Bulanan</p><p className="text-[10px] text-zinc-500">Ringkasan keuangan akhir bulan</p></div>
+                    <div className="mr-3"><p className="text-xs font-medium text-zinc-900">Ringkasan Bulanan</p><p className="text-[10px] text-zinc-600">Ringkasan keuangan akhir bulan</p></div>
                     <button onClick={() => updateNotifSetting('monthly_summary', !notifSettings.monthly_summary)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.monthly_summary ? 'bg-blue-600' : 'bg-zinc-200'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.monthly_summary ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
-                    <div className="flex-1 mr-3"><p className="text-xs font-medium text-zinc-900">Peringatan Saldo Rendah</p><p className="text-[10px] text-zinc-500">Notifikasi jika cashflow rendah</p>
-                      <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-500">Min:</span><CurrencyInput value={notifSettings.low_balance_threshold.toString()} onChange={(v) => { const num = parseFloat(v.replace(/[^\d]/g, '')) || 0; updateNotifSetting('low_balance_threshold', num); }} placeholder="0" className="w-24 px-1.5 py-0.5 text-[10px] border border-zinc-200 rounded disabled:opacity-50" disabled={isSavingNotif || !notifSettings.low_balance_alert} /></div>
+                    <div className="flex-1 mr-3"><p className="text-xs font-medium text-zinc-900">Peringatan Saldo Rendah</p><p className="text-[10px] text-zinc-600">Notifikasi jika cashflow rendah</p>
+                      <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-600">Min:</span><CurrencyInput value={notifSettings.low_balance_threshold.toString()} onChange={(v) => { const num = parseFloat(v.replace(/[^\d]/g, '')) || 0; updateNotifSetting('low_balance_threshold', num); }} placeholder="0" className="w-28 py-0.5 text-[10px] border border-zinc-200 rounded disabled:opacity-50" disabled={isSavingNotif || !notifSettings.low_balance_alert} /></div>
                     </div>
                     <button onClick={() => updateNotifSetting('low_balance_alert', !notifSettings.low_balance_alert)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.low_balance_alert ? 'bg-blue-600' : 'bg-zinc-200'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.low_balance_alert ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                   </div>
                   <div className="p-3 bg-zinc-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2"><div><p className="text-xs font-medium text-zinc-900">Alert Kustom</p><p className="text-[10px] text-zinc-500">Notifikasi sesuai kebutuhan</p></div><button onClick={() => setShowCustomAlertForm(!showCustomAlertForm)} className="text-[10px] text-blue-600 hover:underline">{showCustomAlertForm ? 'Batal' : '+ Tambah'}</button></div>
-                    {showCustomAlertForm && (<div className="mb-2 p-2 bg-white rounded-lg border border-zinc-200 space-y-2"><input type="text" value={newAlertName} onChange={(e) => setNewAlertName(e.target.value)} placeholder="Nama alert..." className="w-full px-2 py-1 text-[10px] border border-zinc-200 rounded" /><div className="grid grid-cols-2 gap-2"><select value={newAlertType} onChange={(e) => setNewAlertType(e.target.value as typeof newAlertType)} className="px-2 py-1 text-[10px] border border-zinc-200 rounded"><option value="expense_limit">Batas Expense</option><option value="income_target">Target Income</option><option value="savings_goal">Target Saving</option></select><CurrencyInput value={newAlertThreshold} onChange={setNewAlertThreshold} placeholder="Threshold" className="px-2 py-1 text-[10px] border border-zinc-200 rounded" /></div><button onClick={addCustomAlert} disabled={!newAlertName || !newAlertThreshold || isSavingNotif} className="w-full py-1 bg-blue-600 text-white text-[10px] rounded hover:bg-blue-700 disabled:opacity-50">Simpan</button></div>)}
-                    {notifSettings.custom_alerts.length > 0 ? (<div className="space-y-2">{notifSettings.custom_alerts.map((alert) => (<div key={alert.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-zinc-200"><div className="flex-1 min-w-0"><p className="text-[10px] font-medium text-zinc-900 truncate">{alert.name}</p><p className="text-[9px] text-zinc-500 truncate">{alertTypeLabel(alert.type)}: {fmt(alert.threshold)}</p></div><div className="flex items-center gap-1.5 ml-2"><button onClick={() => toggleCustomAlert(alert.id)} disabled={isSavingNotif} className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${alert.enabled ? 'bg-blue-600' : 'bg-zinc-200'}`}><span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition ${alert.enabled ? 'translate-x-3' : 'translate-x-0'}`} /></button><button onClick={() => deleteCustomAlert(alert.id)} className="p-0.5 text-zinc-400 hover:text-red-500"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div></div>))}</div>) : !showCustomAlertForm && <p className="text-[10px] text-zinc-400 text-center py-2">Belum ada alert kustom</p>}
+                    <div className="flex items-center justify-between mb-2"><div><p className="text-xs font-medium text-zinc-900">Alert Kustom</p><p className="text-[10px] text-zinc-600">Notifikasi sesuai kebutuhan</p></div><button onClick={() => setShowCustomAlertForm(!showCustomAlertForm)} className="text-[10px] text-blue-600 hover:underline">{showCustomAlertForm ? 'Batal' : '+ Tambah'}</button></div>
+                    {showCustomAlertForm && (<div className="mb-2 p-2 bg-white rounded-lg border border-zinc-200 space-y-2"><input type="text" value={newAlertName} onChange={(e) => setNewAlertName(e.target.value)} placeholder="Nama alert..." className="w-full px-2 py-1 text-[10px] border border-zinc-200 rounded" /><div className="grid grid-cols-2 gap-2"><select value={newAlertType} onChange={(e) => setNewAlertType(e.target.value as typeof newAlertType)} className="px-2 py-1 text-[10px] border border-zinc-200 rounded"><option value="expense_limit">Batas Expense</option><option value="income_target">Target Income</option><option value="savings_goal">Target Saving</option></select><CurrencyInput value={newAlertThreshold} onChange={setNewAlertThreshold} placeholder="Threshold" className="py-1 text-[10px] border border-zinc-200 rounded" /></div><button onClick={addCustomAlert} disabled={!newAlertName || !newAlertThreshold || isSavingNotif} className="w-full py-1 bg-blue-600 text-white text-[10px] rounded hover:bg-blue-700 disabled:opacity-50">Simpan</button></div>)}
+                    {notifSettings.custom_alerts.length > 0 ? (<div className="space-y-2">{notifSettings.custom_alerts.map((alert) => (<div key={alert.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-zinc-200"><div className="flex-1 min-w-0"><p className="text-[10px] font-medium text-zinc-900 truncate">{alert.name}</p><p className="text-[9px] text-zinc-600 truncate">{alertTypeLabel(alert.type)}: {fmt(alert.threshold)}</p></div><div className="flex items-center gap-1.5 ml-2"><button onClick={() => toggleCustomAlert(alert.id)} disabled={isSavingNotif} className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${alert.enabled ? 'bg-blue-600' : 'bg-zinc-200'}`}><span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition ${alert.enabled ? 'translate-x-3' : 'translate-x-0'}`} /></button><button onClick={() => deleteCustomAlert(alert.id)} className="p-0.5 text-zinc-500 hover:text-red-500"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div></div>))}</div>) : !showCustomAlertForm && <p className="text-[10px] text-zinc-500 text-center py-2">Belum ada alert kustom</p>}
                   </div>
                 </div>
               )}
@@ -190,7 +217,7 @@ export default function SettingsPage() {
 
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-zinc-900 text-sm">SMTP Configuration</h3>{!showSmtpForm && <button onClick={() => setShowSmtpForm(true)} className="text-xs text-blue-600 hover:underline">{smtpSettings ? 'Edit' : 'Configure'}</button>}</div>
-              <p className="text-xs text-zinc-500 mb-3">Configure SMTP for email notifications.</p>
+              <p className="text-xs text-zinc-600 mb-3">Configure SMTP for email notifications.</p>
               {smtpError && <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">{smtpError}</div>}
               {smtpSuccess && <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-600">{smtpSuccess}</div>}
               {showSmtpForm ? (
@@ -208,15 +235,40 @@ export default function SettingsPage() {
                 </form>
               ) : smtpSettings ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-500 mb-0.5">Host</p><p className="text-xs font-medium text-zinc-900 truncate">{smtpSettings.host}</p></div>
-                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-500 mb-0.5">Port</p><p className="text-xs font-medium text-zinc-900">{smtpSettings.port}</p></div>
-                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-500 mb-0.5">User</p><p className="text-xs font-medium text-zinc-900 truncate">{smtpSettings.user}</p></div>
-                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-500 mb-0.5">Source</p><span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${smtpSettings.source === 'user' ? 'bg-blue-100 text-blue-600' : 'bg-zinc-200 text-zinc-600'}`}>{smtpSettings.source === 'user' ? 'Custom' : 'Env'}</span>{smtpSettings.source === 'user' && <button onClick={handleResetSmtp} className="text-[10px] text-red-500 hover:underline ml-1">Reset</button>}</div>
+                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">Host</p><p className="text-xs font-medium text-zinc-900 truncate">{smtpSettings.host}</p></div>
+                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">Port</p><p className="text-xs font-medium text-zinc-900">{smtpSettings.port}</p></div>
+                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">User</p><p className="text-xs font-medium text-zinc-900 truncate">{smtpSettings.user}</p></div>
+                  <div className="bg-zinc-50 rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">Source</p><span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${smtpSettings.source === 'user' ? 'bg-blue-100 text-blue-600' : 'bg-zinc-200 text-zinc-600'}`}>{smtpSettings.source === 'user' ? 'Custom' : 'Env'}</span>{smtpSettings.source === 'user' && <button onClick={handleResetSmtp} className="text-[10px] text-red-500 hover:underline ml-1">Reset</button>}</div>
                 </div>
-              ) : <p className="text-center py-3 text-zinc-500 text-xs">No SMTP configuration found.</p>}
+              ) : <p className="text-center py-3 text-zinc-600 text-xs">No SMTP configuration found.</p>}
             </div>
+
+            {/* Export Data */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="font-semibold text-zinc-900 text-sm mb-3">Export Data</h3>
+              <p className="text-xs text-zinc-600 mb-3">Download your financial data for backup or analysis.</p>
+              {exportSummary && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                  <div className="bg-zinc-50 rounded-lg p-2 text-center"><p className="text-lg font-bold text-zinc-900">{exportSummary.transactions}</p><p className="text-[10px] text-zinc-600">Transactions</p></div>
+                  <div className="bg-zinc-50 rounded-lg p-2 text-center"><p className="text-lg font-bold text-zinc-900">{exportSummary.investment_snapshots}</p><p className="text-[10px] text-zinc-600">Investments</p></div>
+                  <div className="bg-zinc-50 rounded-lg p-2 text-center"><p className="text-lg font-bold text-zinc-900">{exportSummary.budgets}</p><p className="text-[10px] text-zinc-600">Budgets</p></div>
+                  <div className="bg-zinc-50 rounded-lg p-2 text-center"><p className="text-lg font-bold text-zinc-900">{exportSummary.goals}</p><p className="text-[10px] text-zinc-600">Goals</p></div>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => handleExport('json')} disabled={isExporting} className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  {isExporting ? '...' : 'JSON Backup'}
+                </button>
+                <button onClick={() => handleExport('csv')} disabled={isExporting} className="flex-1 py-2 px-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  {isExporting ? '...' : 'CSV Transactions'}
+                </button>
+              </div>
+            </div>
+
             <div className="bg-white rounded-xl shadow-sm p-4 border border-red-200">
-              <div className="flex items-center justify-between"><div><h3 className="font-semibold text-zinc-900 text-sm mb-1">Session</h3><p className="text-xs text-zinc-500">Sign out from your account.</p></div><button onClick={() => signOut({ callbackUrl: '/login' })} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-xs">Sign Out</button></div>
+              <div className="flex items-center justify-between"><div><h3 className="font-semibold text-zinc-900 text-sm mb-1">Session</h3><p className="text-xs text-zinc-600">Sign out from your account.</p></div><button onClick={() => signOut({ callbackUrl: '/login' })} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-xs">Sign Out</button></div>
             </div>
           </div>
         )}

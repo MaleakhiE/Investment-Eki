@@ -165,7 +165,8 @@ export default function InvestmentsPage() {
   const formatMonth = (m: string) => { const [y, mn] = m.split('-'); return new Date(parseInt(y), parseInt(mn) - 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }); };
   const previewGL = (parseFloat(currentValue) || 0) - (parseFloat(investedAmount) || 0);
   const previewReturn = parseFloat(investedAmount) > 0 ? ((previewGL / parseFloat(investedAmount)) * 100).toFixed(1) : '0';
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm";
+  const inputClass = "w-full py-2 rounded-xl border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm";
+  const inputClassWithPadding = "w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm";
 
   const goldTotal = goldSnapshots.reduce((sum, s) => sum + s.current_value, 0);
   const mfTotal = mfSnapshots.reduce((sum, s) => sum + s.current_value, 0);
@@ -178,11 +179,11 @@ export default function InvestmentsPage() {
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-zinc-900">Investments</h2>
-          <p className="text-sm text-zinc-500">Track your Gold and Mutual Fund investments</p>
+          <p className="text-sm text-zinc-600">Track your Gold and Mutual Fund investments</p>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-64 text-zinc-500">Loading...</div>
+          <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>
         ) : (
           <div className="space-y-6">
             {/* Row 1: Summary Cards - 2 equal columns */}
@@ -193,7 +194,7 @@ export default function InvestmentsPage() {
                     <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-500">Gold (Emas)</p>
+                    <p className="text-sm text-zinc-600">Gold (Emas)</p>
                     <p className="text-2xl font-bold text-zinc-900">{formatCurrency(goldTotal)}</p>
                   </div>
                 </div>
@@ -205,7 +206,7 @@ export default function InvestmentsPage() {
                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-500">Mutual Fund (Reksa Dana)</p>
+                    <p className="text-sm text-zinc-600">Mutual Fund (Reksa Dana)</p>
                     <p className="text-2xl font-bold text-zinc-900">{formatCurrency(mfTotal)}</p>
                   </div>
                 </div>
@@ -223,14 +224,14 @@ export default function InvestmentsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-1">Type</label>
-                    <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as InvestmentType)} className={inputClass}>
+                    <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as InvestmentType)} className={inputClassWithPadding}>
                       <option value="GOLD">Gold (Emas)</option>
                       <option value="MUTUAL_FUND">Mutual Fund (Reksa Dana)</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-1">Month</label>
-                    <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} required className={inputClass} />
+                    <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} required className={inputClassWithPadding} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-1">Invested Amount</label>
@@ -270,7 +271,7 @@ export default function InvestmentsPage() {
                         </div>
                         <div>
                           <label className="block text-xs text-amber-700 mb-1">Grams</label>
-                          <input type="number" value={goldGrams} onChange={(e) => setGoldGrams(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClass} border-amber-300`} />
+                          <input type="number" value={goldGrams} onChange={(e) => setGoldGrams(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-amber-300`} />
                         </div>
                       </div>
                     )}
@@ -289,19 +290,19 @@ export default function InvestmentsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
                         <label className="block text-xs text-blue-700 mb-1">Platform</label>
-                        <select value={mfPlatform} onChange={(e) => setMfPlatform(e.target.value)} className={`${inputClass} border-blue-300`}>
+                        <select value={mfPlatform} onChange={(e) => setMfPlatform(e.target.value)} className={`${inputClassWithPadding} border-blue-300`}>
                           {PLATFORMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="block text-xs text-blue-700 mb-1">Product Name</label>
-                        <input type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Fund name" className={`${inputClass} border-blue-300`} />
+                        <input type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Fund name" className={`${inputClassWithPadding} border-blue-300`} />
                       </div>
                       {useMfCalc && (
                         <>
                           <div>
                             <label className="block text-xs text-blue-700 mb-1">Units</label>
-                            <input type="number" value={mfUnits} onChange={(e) => setMfUnits(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClass} border-blue-300`} />
+                            <input type="number" value={mfUnits} onChange={(e) => setMfUnits(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-blue-300`} />
                           </div>
                           <div>
                             <label className="block text-xs text-blue-700 mb-1">NAV/Unit</label>
@@ -319,7 +320,7 @@ export default function InvestmentsPage() {
                     <CurrencyInput value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-zinc-100' : ''}`} />
                   </div>
                   <div className="bg-zinc-50 rounded-xl p-3">
-                    <p className="text-xs text-zinc-500 mb-1">Gain/Loss Preview</p>
+                    <p className="text-xs text-zinc-600 mb-1">Gain/Loss Preview</p>
                     <p className={`text-lg font-bold ${previewGL >= 0 ? 'text-green-600' : 'text-red-500'}`}>{previewGL >= 0 ? '+' : ''}Rp {formatNumber(Math.abs(previewGL))} ({previewReturn}%)</p>
                   </div>
                   <button type="submit" disabled={isSaving} className="py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-xl transition-colors text-sm">{isSaving ? 'Saving...' : 'Save Snapshot'}</button>
@@ -335,14 +336,14 @@ export default function InvestmentsPage() {
                   <h3 className="font-semibold text-zinc-900">Gold (Emas)</h3>
                 </div>
                 {goldSnapshots.length === 0 ? (
-                  <p className="text-center py-6 text-zinc-500 text-sm">No records yet</p>
+                  <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {goldSnapshots.map((s) => (
                       <div key={s.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-zinc-900">{formatMonth(s.month)}</p>
-                          <p className="text-xs text-zinc-500">Invested: {formatCurrency(s.invested_amount)}</p>
+                          <p className="text-xs text-zinc-600">Invested: {formatCurrency(s.invested_amount)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-zinc-900">{formatCurrency(s.current_value)}</p>
@@ -360,14 +361,14 @@ export default function InvestmentsPage() {
                   <h3 className="font-semibold text-zinc-900">Mutual Fund (Reksa Dana)</h3>
                 </div>
                 {mfSnapshots.length === 0 ? (
-                  <p className="text-center py-6 text-zinc-500 text-sm">No records yet</p>
+                  <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {mfSnapshots.map((s) => (
                       <div key={s.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-zinc-900">{s.product_name || formatMonth(s.month)}</p>
-                          <p className="text-xs text-zinc-500">{s.platform} • {formatMonth(s.month)}</p>
+                          <p className="text-xs text-zinc-600">{s.platform} • {formatMonth(s.month)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-zinc-900">{formatCurrency(s.current_value)}</p>

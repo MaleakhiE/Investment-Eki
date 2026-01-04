@@ -1,0 +1,343 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import Sidebar from '@/components/layout/Sidebar';
+import CurrencyInput from '@/components/ui/CurrencyInput';
+
+interface FinancialGoal {
+  id: string;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: string | null;
+  category: string;
+  priority: number;
+  is_completed: boolean;
+  percentage: number;
+  remaining: number;
+  days_left: number | null;
+  monthly_needed: number | null;
+}
+
+interface GoalsSummary {
+  total_goals: number;
+  active_goals: number;
+  completed_goals: number;
+  total_target: number;
+  total_current: number;
+  overall_progress: number;
+}
+
+const CATEGORIES = [
+  { value: 'EMERGENCY_FUND', label: 'Dana Darurat', icon: '🛡️' },
+  { value: 'INVESTMENT', label: 'Investasi', icon: '📈' },
+  { value: 'VACATION', label: 'Liburan', icon: '✈️' },
+  { value: 'GADGET', label: 'Gadget', icon: '📱' },
+  { value: 'VEHICLE', label: 'Kendaraan', icon: '🚗' },
+  { value: 'PROPERTY', label: 'Properti', icon: '🏠' },
+  { value: 'EDUCATION', label: 'Pendidikan', icon: '🎓' },
+  { value: 'WEDDING', label: 'Pernikahan', icon: '💒' },
+  { value: 'OTHER', label: 'Lainnya', icon: '🎯' },
+];
+
+export default function GoalsPage() {
+  useSession();
+  const [goals, setGoals] = useState<FinancialGoal[]>([]);
+  const [summary, setSummary] = useState<GoalsSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [addAmountId, setAddAmountId] = useState<string | null>(null);
+  const [addAmount, setAddAmount] = useState('');
+
+  // Form state
+  const [name, setName] = useState('');
+  const [targetAmount, setTargetAmount] = useState('');
+  const [currentAmount, setCurrentAmount] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [category, setCategory] = useState('OTHER');
+  const [priority, setPriority] = useState(2);
+
+  useEffect(() => { fetchData(); }, []);
+
+  async function fetchData() {
+    try {
+      const [goalsRes, summaryRes] = await Promise.all([
+        fetch('/api/goals'),
+        fetch('/api/goals?summary=true'),
+      ]);
+      if (goalsRes.ok) { const d = await goalsRes.json(); setGoals(d.responseDetails || []); }
+      if (summaryRes.ok) { const d = await summaryRes.json(); setSummary(d.responseDetails); }
+    } catch { setError('Failed to load'); } finally { setIsLoading(false); }
+  }
+
+  function resetForm() {
+    setEditingId(null); setName(''); setTargetAmount(''); setCurrentAmount('');
+    setDeadline(''); setCategory('OTHER'); setPriority(2); setShowForm(false);
+  }
+
+  function loadGoal(goal: FinancialGoal) {
+    setEditingId(goal.id); setName(goal.name); setTargetAmount(goal.target_amount.toString());
+    setCurrentAmount(goal.current_amount.toString()); setDeadline(goal.deadline || '');
+    setCategory(goal.category); setPriority(goal.priority); setShowForm(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
+    try {
+      const url = editingId ? `/api/goals/${editingId}` : '/api/goals';
+      const method = editingId ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, target_amount: parseFloat(targetAmount) || 0,
+          current_amount: parseFloat(currentAmount) || 0,
+          deadline: deadline || null, category, priority,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.responseMessage || 'Failed'); return; }
+      setSuccess(editingId ? 'Updated!' : 'Created!'); resetForm(); fetchData();
+    } catch { setError('Error'); } finally { setIsSaving(false); }
+  }
+
+  async function handleAddAmount(goalId: string) {
+    if (!addAmount) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/goals/${goalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ add_amount: parseFloat(addAmount) || 0 }),
+      });
+      if (res.ok) { setSuccess('Amount added!'); setAddAmountId(null); setAddAmount(''); fetchData(); }
+    } catch { setError('Error'); } finally { setIsSaving(false); }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus goal ini?')) return;
+    try {
+      const res = await fetch(`/api/goals/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchData();
+    } catch { setError('Error'); }
+  }
+
+  async function toggleComplete(goal: FinancialGoal) {
+    try {
+      await fetch(`/api/goals/${goal.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_completed: !goal.is_completed }),
+      });
+      fetchData();
+    } catch { setError('Error'); }
+  }
+
+  const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
+  const fmtC = (v: number) => v >= 1e9 ? `${(v/1e9).toFixed(1)}M` : v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
+  const getCat = (c: string) => CATEGORIES.find(x => x.value === c) || CATEGORIES[8];
+  const getPriorityLabel = (p: number) => p === 1 ? 'High' : p === 2 ? 'Medium' : 'Low';
+  const getPriorityColor = (p: number) => p === 1 ? 'bg-red-100 text-red-700' : p === 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+
+  const activeGoals = goals.filter(g => !g.is_completed);
+  const completedGoals = goals.filter(g => g.is_completed);
+
+  return (
+    <div className="min-h-screen bg-slate-100">
+      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <main className="lg:ml-64 p-4 lg:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-zinc-900">Financial Goals</h2>
+            <p className="text-sm text-zinc-600">Track your savings targets</p>
+          </div>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">+ New Goal</button>
+        </div>
+
+        {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">{error}</div>}
+        {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-600">{success}</div>}
+
+        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
+          <div className="space-y-4">
+            {/* Summary */}
+            {summary && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl shadow-sm p-4">
+                  <p className="text-xs text-zinc-600 mb-1">Total Goals</p>
+                  <p className="text-2xl font-bold text-zinc-900">{summary.total_goals}</p>
+                  <p className="text-xs text-zinc-500">{summary.active_goals} active, {summary.completed_goals} done</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm p-4">
+                  <p className="text-xs text-zinc-600 mb-1">Target Total</p>
+                  <p className="text-2xl font-bold text-zinc-900">{fmtC(summary.total_target)}</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm p-4">
+                  <p className="text-xs text-zinc-600 mb-1">Current Total</p>
+                  <p className="text-2xl font-bold text-green-600">{fmtC(summary.total_current)}</p>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm p-4">
+                  <p className="text-xs text-zinc-600 mb-1">Overall Progress</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${summary.overall_progress}%` }}></div>
+                    </div>
+                    <span className="text-sm font-bold text-zinc-900">{summary.overall_progress.toFixed(0)}%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Form Modal */}
+            {showForm && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
+                <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                  <h3 className="font-semibold text-zinc-900 text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-zinc-600 mb-1">Nama Goal</label>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Dana Darurat 6 Bulan" className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-zinc-600 mb-1">Target</label>
+                        <CurrencyInput value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-zinc-200 rounded-lg text-sm" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-zinc-600 mb-1">Current</label>
+                        <CurrencyInput value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-zinc-200 rounded-lg text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-zinc-600 mb-1">Category</label>
+                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm">
+                          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-zinc-600 mb-1">Priority</label>
+                        <select value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm">
+                          <option value={1}>🔴 High</option>
+                          <option value={2}>🟡 Medium</option>
+                          <option value={3}>🟢 Low</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-600 mb-1">Deadline (optional)</label>
+                      <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm" />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
+                      <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-zinc-100 text-zinc-600 rounded-lg text-sm">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Active Goals */}
+            <div className="bg-white rounded-xl shadow-sm p-5">
+              <h3 className="font-semibold text-zinc-900 mb-4">Active Goals ({activeGoals.length})</h3>
+              {activeGoals.length === 0 ? (
+                <p className="text-sm text-zinc-500 text-center py-8">No active goals. Create one to start tracking!</p>
+              ) : (
+                <div className="space-y-3">
+                  {activeGoals.map(goal => {
+                    const cat = getCat(goal.category);
+                    return (
+                      <div key={goal.id} className="p-4 bg-zinc-50 rounded-xl">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{cat.icon}</span>
+                            <div>
+                              <p className="font-medium text-zinc-900">{goal.name}</p>
+                              <p className="text-xs text-zinc-500">{cat.label}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${getPriorityColor(goal.priority)}`}>{getPriorityLabel(goal.priority)}</span>
+                            <button onClick={() => loadGoal(goal)} className="p-1 text-zinc-500 hover:text-blue-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                            <button onClick={() => handleDelete(goal.id)} className="p-1 text-zinc-500 hover:text-red-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex-1 h-3 bg-zinc-200 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all ${goal.percentage >= 100 ? 'bg-green-500' : goal.percentage >= 75 ? 'bg-blue-500' : goal.percentage >= 50 ? 'bg-amber-500' : 'bg-zinc-400'}`} style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
+                          </div>
+                          <span className="text-sm font-bold text-zinc-700 w-12 text-right">{goal.percentage.toFixed(0)}%</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-zinc-600">
+                          <span>{fmt(goal.current_amount)} / {fmt(goal.target_amount)}</span>
+                          <span>Remaining: {fmtC(goal.remaining)}</span>
+                        </div>
+                        {goal.deadline && (
+                          <div className="flex items-center justify-between text-xs mt-1">
+                            <span className="text-zinc-500">Deadline: {new Date(goal.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            {goal.days_left !== null && (
+                              <span className={goal.days_left < 30 ? 'text-red-500' : 'text-zinc-500'}>{goal.days_left} days left</span>
+                            )}
+                          </div>
+                        )}
+                        {goal.monthly_needed && (
+                          <p className="text-xs text-blue-600 mt-1">Need {fmtC(goal.monthly_needed)}/month to reach target</p>
+                        )}
+                        <div className="flex gap-2 mt-3">
+                          {addAmountId === goal.id ? (
+                            <div className="flex gap-2 flex-1">
+                              <CurrencyInput value={addAmount} onChange={setAddAmount} placeholder="Amount" className="flex-1 py-1.5 text-xs border border-zinc-200 rounded-lg" />
+                              <button onClick={() => handleAddAmount(goal.id)} disabled={isSaving} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg">Add</button>
+                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); }} className="px-3 py-1.5 bg-zinc-200 text-zinc-600 text-xs rounded-lg">Cancel</button>
+                            </div>
+                          ) : (
+                            <>
+                              <button onClick={() => setAddAmountId(goal.id)} className="flex-1 py-2 bg-green-100 text-green-700 text-xs rounded-lg font-medium hover:bg-green-200">+ Add Amount</button>
+                              <button onClick={() => toggleComplete(goal)} className="px-3 py-2 bg-blue-100 text-blue-700 text-xs rounded-lg font-medium hover:bg-blue-200">✓ Complete</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Completed Goals */}
+            {completedGoals.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <h3 className="font-semibold text-zinc-900 mb-4">Completed Goals ({completedGoals.length})</h3>
+                <div className="space-y-2">
+                  {completedGoals.map(goal => {
+                    const cat = getCat(goal.category);
+                    return (
+                      <div key={goal.id} className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{cat.icon}</span>
+                          <div>
+                            <p className="font-medium text-zinc-900 line-through opacity-70">{goal.name}</p>
+                            <p className="text-xs text-green-600">{fmt(goal.target_amount)} ✓</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => toggleComplete(goal)} className="text-xs text-zinc-500 hover:text-blue-600">Reopen</button>
+                          <button onClick={() => handleDelete(goal.id)} className="text-xs text-zinc-500 hover:text-red-600">Delete</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
