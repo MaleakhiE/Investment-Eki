@@ -1,0 +1,213 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import Sidebar from '@/components/layout/Sidebar';
+import CurrencyInput from '@/components/ui/CurrencyInput';
+
+interface BudgetWithSpent {
+  id: string;
+  category: string;
+  amount: number;
+  period: string;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  isOverBudget: boolean;
+}
+
+const EXPENSE_CATEGORIES = ['Rent', 'Living', 'Food', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Education', 'Investment', 'Other'];
+
+export default function BudgetPage() {
+  useSession();
+  const [budgets, setBudgets] = useState<BudgetWithSpent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  // Form state
+  const [category, setCategory] = useState('Food');
+  const [amount, setAmount] = useState('');
+  const [period, setPeriod] = useState<'WEEKLY' | 'MONTHLY' | 'YEARLY'>('MONTHLY');
+
+  useEffect(() => { fetchBudgets(); }, []);
+
+  async function fetchBudgets() {
+    try {
+      const res = await fetch('/api/budgets');
+      if (res.ok) { const d = await res.json(); setBudgets(d.responseDetails || []); }
+    } catch { setError('Failed to load'); } finally { setIsLoading(false); }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
+    try {
+      const res = await fetch('/api/budgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category, amount: parseFloat(amount) || 0, period }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.responseMessage || 'Failed'); return; }
+      setSuccess('Budget saved!'); setShowForm(false); setAmount(''); fetchBudgets();
+    } catch { setError('Error'); } finally { setIsSaving(false); }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus budget ini?')) return;
+    try {
+      const res = await fetch(`/api/budgets/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchBudgets();
+    } catch { setError('Error'); }
+  }
+
+  const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
+  const fmtC = (v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
+  const getPeriodLabel = (p: string) => p === 'WEEKLY' ? 'Mingguan' : p === 'YEARLY' ? 'Tahunan' : 'Bulanan';
+
+  const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0);
+  const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
+  const overBudgetCount = budgets.filter(b => b.isOverBudget).length;
+  const warningCount = budgets.filter(b => b.percentage >= 80 && !b.isOverBudget).length;
+
+  // Categories without budget
+  const budgetedCategories = budgets.map(b => b.category);
+  const unbugdetedCategories = EXPENSE_CATEGORIES.filter(c => !budgetedCategories.includes(c));
+
+  return (
+    <div className="min-h-screen bg-[#0f0f0f]">
+      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <main className="lg:ml-64 p-4 lg:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Budget</h2>
+            <p className="text-sm text-zinc-600">Set spending limits per category</p>
+          </div>
+          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#00d4aa] text-white rounded-xl text-sm font-medium hover:bg-[#00a88a]">+ Set Budget</button>
+        </div>
+
+        {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
+        {success && <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-sm text-green-400">{success}</div>}
+
+        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
+          <div className="space-y-4">
+            {/* Summary */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="card rounded-xl p-4">
+                <p className="text-xs text-zinc-600 mb-1">Total Budget</p>
+                <p className="text-2xl font-bold text-white">{fmtC(totalBudget)}</p>
+                <p className="text-xs text-zinc-500">{budgets.length} categories</p>
+              </div>
+              <div className="card rounded-xl p-4">
+                <p className="text-xs text-zinc-600 mb-1">Total Spent</p>
+                <p className="text-2xl font-bold text-red-400">{fmtC(totalSpent)}</p>
+                <p className="text-xs text-zinc-500">{totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(0) : 0}% of budget</p>
+              </div>
+              <div className="card rounded-xl p-4">
+                <p className="text-xs text-zinc-600 mb-1">Remaining</p>
+                <p className={`text-2xl font-bold ${totalBudget - totalSpent >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmtC(Math.max(0, totalBudget - totalSpent))}</p>
+              </div>
+              <div className="card rounded-xl p-4">
+                <p className="text-xs text-zinc-600 mb-1">Alerts</p>
+                <div className="flex items-center gap-2">
+                  {overBudgetCount > 0 && <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">{overBudgetCount} over</span>}
+                  {warningCount > 0 && <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full">{warningCount} warning</span>}
+                  {overBudgetCount === 0 && warningCount === 0 && <span className="text-green-400 text-sm">✓ All good</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Form Modal */}
+            {showForm && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
+                <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+                  <h3 className="font-semibold text-white text-lg mb-4">Set Budget</h3>
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Category</label>
+                      <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white">
+                        {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Budget Amount</label>
+                      <CurrencyInput value={amount} onChange={setAmount} required className="w-full py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Period</label>
+                      <select value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white">
+                        <option value="WEEKLY">Mingguan</option>
+                        <option value="MONTHLY">Bulanan</option>
+                        <option value="YEARLY">Tahunan</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-white rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : 'Save'}</button>
+                      <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-white/10 text-zinc-400 rounded-lg text-sm">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Budget List */}
+            <div className="card rounded-xl p-5">
+              <h3 className="font-semibold text-white mb-4">Budget per Category</h3>
+              {budgets.length === 0 ? (
+                <p className="text-sm text-zinc-500 text-center py-8">No budgets set. Click &quot;+ Set Budget&quot; to start!</p>
+              ) : (
+                <div className="space-y-3">
+                  {budgets.sort((a, b) => b.percentage - a.percentage).map(budget => (
+                    <div key={budget.id} className={`p-4 rounded-xl ${budget.isOverBudget ? 'bg-red-500/10 border border-red-500/30' : budget.percentage >= 80 ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-white/5'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-white">{budget.category}</span>
+                          <span className="text-[10px] px-2 py-0.5 bg-white/10 text-zinc-400 rounded-full">{getPeriodLabel(budget.period)}</span>
+                          {budget.isOverBudget && <span className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full">Over Budget!</span>}
+                          {!budget.isOverBudget && budget.percentage >= 80 && <span className="text-[10px] px-2 py-0.5 bg-amber-500 text-white rounded-full">Warning</span>}
+                        </div>
+                        <button onClick={() => handleDelete(budget.id)} className="p-1 text-zinc-500 hover:text-red-400">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all ${budget.isOverBudget ? 'bg-red-500' : budget.percentage >= 80 ? 'bg-amber-500' : budget.percentage >= 50 ? 'bg-blue-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, budget.percentage)}%` }}></div>
+                        </div>
+                        <span className={`text-sm font-bold w-14 text-right ${budget.isOverBudget ? 'text-red-400' : 'text-zinc-300'}`}>{budget.percentage.toFixed(0)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-zinc-400">
+                        <span>Spent: {fmt(budget.spent)}</span>
+                        <span>Budget: {fmt(budget.amount)}</span>
+                        <span className={budget.remaining > 0 ? 'text-green-400' : 'text-red-400'}>
+                          {budget.remaining > 0 ? `Remaining: ${fmtC(budget.remaining)}` : `Over: ${fmtC(Math.abs(budget.remaining))}`}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Unbudgeted Categories */}
+            {unbugdetedCategories.length > 0 && (
+              <div className="card rounded-xl p-5">
+                <h3 className="font-semibold text-white mb-3">Categories Without Budget</h3>
+                <div className="flex flex-wrap gap-2">
+                  {unbugdetedCategories.map(cat => (
+                    <button key={cat} onClick={() => { setCategory(cat); setShowForm(true); }} className="px-3 py-1.5 bg-white/10 text-zinc-400 text-xs rounded-lg hover:bg-white/20">
+                      + {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

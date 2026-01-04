@@ -1,42 +1,217 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #0f0f0f;
+  --foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-hover: #242424;
+  --accent: #00d4aa;
+  --accent-light: #00ffcc;
+  --accent-dark: #00a88a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure all form inputs have black text */
-input,
-select,
-textarea {
-  color: #18181b !important; /* zinc-900 */
+/* Safe area for mobile devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Animations */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.5); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-slide-up { animation: slide-up 0.3s ease-out; }
+.animate-fade-in { animation: fade-in 0.4s ease-out; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #00d4aa 0%, #00ffcc 50%, #00d4aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card styles */
+.card {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+}
+
+.card-elevated {
+  background: linear-gradient(145deg, #1e1e1e 0%, #1a1a1a 100%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Accent gradients */
+.gradient-accent {
+  background: linear-gradient(135deg, #00d4aa 0%, #00a88a 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+}
+
+.gradient-red {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Touch targets */
+@media (max-width: 1023px) {
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+  
+  main {
+    padding-bottom: 100px !important;
+  }
+}
+
+/* Desktop - ensure content doesn't get cut off */
+@media (min-width: 1024px) {
+  main {
+    padding-bottom: 40px !important;
+    min-height: 100vh;
+  }
+}
+
+/* Form inputs - dark theme */
+input, select, textarea {
+  color: #ffffff !important;
+  background: #1a1a1a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 input::placeholder {
-  color: #a1a1aa !important; /* zinc-400 */
+  color: #666666 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #00d4aa !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
 }
 
 input:disabled {
-  color: #71717a !important; /* zinc-500 */
-  background-color: #f4f4f5 !important; /* zinc-100 */
+  color: #666666 !important;
+  background: #0f0f0f !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+
+/* Number animations */
+.number-up {
+  color: #00d4aa;
+}
+
+.number-down {
+  color: #ef4444;
+}
+
+/* Progress bar glow */
+.progress-glow {
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* Bottom nav blur */
+.nav-blur {
+  background: rgba(15, 15, 15, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.hover-scale {
+  transition: transform 0.15s;
+}
+
+.hover-scale:active {
+  transform: scale(0.97);
+}
+
+/* Stat card glow on hover */
+.stat-card {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: rgba(0, 212, 170, 0.3);
+  box-shadow: 0 0 30px rgba(0, 212, 170, 0.1);
 }

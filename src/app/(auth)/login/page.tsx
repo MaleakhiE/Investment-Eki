@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * Login Page
- * 
- * Provides a form for users to authenticate with email and password.
- * Uses NextAuth.js signIn function for credential-based authentication.
- * 
- * Requirements: 1.3
- */
-
 import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -37,86 +28,85 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        setError('Email atau password salah');
       } else {
         router.push(callbackUrl);
         router.refresh();
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError('Terjadi kesalahan');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md">
-      <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            Welcome Back
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-2">
-            Sign in to your finance tracker
-          </p>
+    <div className="w-full max-w-md px-6">
+      {/* Logo */}
+      <div className="text-center mb-10">
+        <div className="w-20 h-20 rounded-3xl gradient-accent flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#00d4aa]/20 animate-pulse-glow">
+          <span className="text-4xl">💎</span>
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-2">FinTrack</h1>
+        <p className="text-zinc-500">Kelola keuanganmu dengan cerdas</p>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+          <p className="text-sm text-red-400 text-center">{error}</p>
+        </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-zinc-400 mb-2">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
+            placeholder="nama@email.com"
+          />
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="w-full px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-800"
-          >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
-              Sign up
-            </Link>
-          </p>
+        <div>
+          <label className="block text-sm font-medium text-zinc-400 mb-2">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
+            placeholder="••••••••"
+          />
         </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-4 px-6 rounded-2xl gradient-accent text-black font-semibold text-lg hover:opacity-90 disabled:opacity-50 transition-all hover-scale"
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+              Masuk...
+            </span>
+          ) : 'Masuk'}
+        </button>
+      </form>
+
+      <div className="mt-8 text-center">
+        <p className="text-zinc-500">
+          Belum punya akun?{' '}
+          <Link href="/register" className="text-[#00d4aa] hover:underline font-medium">
+            Daftar
+          </Link>
+        </p>
       </div>
     </div>
   );
@@ -124,8 +114,16 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 px-4">
-      <Suspense fallback={<div className="text-zinc-500">Loading...</div>}>
+    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-[#00d4aa]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#00d4aa]/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+      
+      <Suspense fallback={
+        <div className="flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full border-2 border-[#00d4aa] border-t-transparent animate-spin"></div>
+        </div>
+      }>
         <LoginForm />
       </Suspense>
     </div>

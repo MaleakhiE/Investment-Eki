@@ -12,50 +12,21 @@ interface MonthlySummary {
   expense_by_category: Record<string, number>;
 }
 
-interface PortfolioSummary {
-  total_invested: number;
-  total_current_value: number;
-  total_gain_loss: number;
-}
-
-interface InvestmentComparison {
-  gold: PortfolioSummary;
-  mutual_fund: PortfolioSummary;
-}
-
-interface InvestmentDetail {
-  type: string;
-  platform: string;
-  product_name: string;
-  invested_amount: number;
-  current_value: number;
-  gain_loss: number;
-  gain_loss_percent: number;
-}
-
-interface InvestmentDetailFull extends InvestmentDetail {}
-
-interface CashflowTrend {
-  month: string;
-  net_cashflow: number;
-}
-
-interface Transaction {
-  id: string;
-  date: string;
-  type: string;
-  category: string;
-  amount: number;
-}
+interface PortfolioSummary { total_invested: number; total_current_value: number; total_gain_loss: number; }
+interface InvestmentComparison { gold: PortfolioSummary; mutual_fund: PortfolioSummary; }
+interface InvestmentDetail { type: string; platform: string; product_name: string; invested_amount: number; current_value: number; gain_loss: number; }
+interface CashflowTrend { month: string; income: number; expense: number; net_cashflow: number; }
+interface Transaction { id: string; date: string; type: string; category: string; amount: number; description?: string; }
+interface GoalProgress { id: string; name: string; target_amount: number; current_amount: number; percentage: number; category: string; days_left: number | null; is_completed: boolean; }
 
 export default function DashboardPage() {
   useSession();
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
-  const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [comparison, setComparison] = useState<InvestmentComparison | null>(null);
   const [investments, setInvestments] = useState<InvestmentDetail[]>([]);
   const [trend, setTrend] = useState<CashflowTrend[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [goals, setGoals] = useState<GoalProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [periodLabel, setPeriodLabel] = useState('');
@@ -70,7 +41,7 @@ export default function DashboardPage() {
       return {
         startDate: `${sy}-${String(sm + 1).padStart(2, '0')}-25`,
         endDate: `${year}-${String(month + 1).padStart(2, '0')}-24`,
-        label: new Date(sy, sm, 25).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ' - ' + new Date(year, month, 24).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        label: new Date(sy, sm, 25).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ' - ' + new Date(year, month, 24).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
       };
     } else {
       const em = month === 11 ? 0 : month + 1;
@@ -78,7 +49,7 @@ export default function DashboardPage() {
       return {
         startDate: `${year}-${String(month + 1).padStart(2, '0')}-25`,
         endDate: `${ey}-${String(em + 1).padStart(2, '0')}-24`,
-        label: new Date(year, month, 25).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ' - ' + new Date(ey, em, 24).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        label: new Date(year, month, 25).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ' - ' + new Date(ey, em, 24).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
       };
     }
   };
@@ -88,28 +59,20 @@ export default function DashboardPage() {
       try {
         const period = getSalaryPeriod(new Date());
         setPeriodLabel(period.label);
-        const [sumRes, portRes, compRes, trendRes, invRes, txRes] = await Promise.all([
+        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes] = await Promise.all([
           fetch(`/api/transactions/summary-range?startDate=${period.startDate}&endDate=${period.endDate}`),
-          fetch('/api/analytics/portfolio'),
           fetch('/api/analytics/comparison'),
           fetch('/api/analytics/cashflow-trend'),
           fetch('/api/investments/details'),
           fetch('/api/transactions?limit=5'),
+          fetch('/api/goals'),
         ]);
         if (sumRes.ok) { const d = await sumRes.json(); setSummary(d.responseDetails); }
-        if (portRes.ok) { 
-          const d = await portRes.json(); 
-          console.log('Portfolio API response:', d.responseDetails);
-          setPortfolio(d.responseDetails?.summary || null); 
-        }
         if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
         if (trendRes.ok) { const d = await trendRes.json(); setTrend(d.responseDetails || []); }
-        if (invRes.ok) { 
-          const d = await invRes.json(); 
-          console.log('Investment details:', d.responseDetails); 
-          setInvestments(Array.isArray(d.responseDetails) ? d.responseDetails : []); 
-        }
+        if (invRes.ok) { const d = await invRes.json(); setInvestments(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
         if (txRes.ok) { const d = await txRes.json(); const txList = d.responseDetails?.transactions; setTransactions(Array.isArray(txList) ? txList : []); }
+        if (goalsRes.ok) { const d = await goalsRes.json(); setGoals(Array.isArray(d.responseDetails) ? d.responseDetails.filter((g: GoalProgress) => !g.is_completed).slice(0, 3) : []); }
       } catch (e) { console.error(e); } finally { setIsLoading(false); }
     }
     fetchData();
@@ -122,262 +85,317 @@ export default function DashboardPage() {
   const income = safe(summary?.total_income);
   const expense = safe(summary?.total_expense);
   const net = safe(summary?.net_cashflow);
-  
-  // Calculate portfolio directly from investments details
   const calcInvested = investments.reduce((sum, inv) => sum + safe(inv.invested_amount), 0);
   const calcCurrentVal = investments.reduce((sum, inv) => sum + safe(inv.current_value), 0);
-  // Calculate gain directly: current_value - invested_amount
-  const calcGainLoss = calcCurrentVal - calcInvested;
-  
-  // Debug log
-  console.log('Portfolio calc:', { calcInvested, calcCurrentVal, calcGainLoss, investments });
-  
-  // Use calculated values if available, fallback to portfolio API
-  const invested = calcInvested > 0 ? calcInvested : safe(portfolio?.total_invested);
-  const currentVal = calcCurrentVal > 0 ? calcCurrentVal : safe(portfolio?.total_current_value);
-  const gainLoss = calcInvested > 0 ? calcGainLoss : (currentVal - invested);
+  const invested = calcInvested > 0 ? calcInvested : 0;
+  const currentVal = calcCurrentVal > 0 ? calcCurrentVal : 0;
+  const gainLoss = currentVal - invested;
   const returnPct = invested > 0 ? (gainLoss / invested) * 100 : 0;
-  
-  console.log('Final values:', { invested, currentVal, gainLoss, returnPct });
-  
-  // Calculate allocation from investments
-  const goldInv = investments.find(inv => inv.type === 'GOLD');
-  const mfInv = investments.find(inv => inv.type === 'MUTUAL_FUND');
-  const goldVal = safe(goldInv?.current_value) || safe(comparison?.gold?.total_current_value);
-  const mfVal = safe(mfInv?.current_value) || safe(comparison?.mutual_fund?.total_current_value);
-  const goldPct = currentVal > 0 ? (goldVal / currentVal) * 100 : 0;
-  const mfPct = currentVal > 0 ? (mfVal / currentVal) * 100 : 0;
+  const goldVal = safe(comparison?.gold?.total_current_value);
+  const mfVal = safe(comparison?.mutual_fund?.total_current_value);
+  const savingsRate = income > 0 ? (net / income) * 100 : 0;
+  const trendMax = Math.max(...trend.map(t => Math.max(t.income || 0, t.expense || 0)), 1);
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f]">
+        <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <main className="lg:ml-64 p-4 lg:p-6">
+          <div className="space-y-4">
+            <div className="skeleton h-48 rounded-3xl"></div>
+            <div className="grid grid-cols-4 gap-3">
+              {[1,2,3,4].map(i => <div key={i} className="skeleton h-24 rounded-2xl"></div>)}
+            </div>
+            <div className="skeleton h-64 rounded-3xl"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[#0f0f0f]">
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
-      <main className="lg:ml-64 p-4 lg:p-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-zinc-900">Dashboard</h2>
-          <p className="text-sm text-zinc-500">{periodLabel}</p>
+      <main className="lg:ml-64 p-4 lg:p-6">
+        {/* Greeting */}
+        <div className="mb-6 animate-fade-in">
+          <p className="text-zinc-500 text-sm">{periodLabel}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white mt-1">
+            Selamat datang! <span className="inline-block animate-bounce">👋</span>
+          </h1>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64 text-zinc-500">Loading...</div>
-        ) : (
-          <div className="space-y-6">
-            {/* Row 1: Summary Cards - 3 equal columns */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <p className="text-sm text-zinc-500 mb-1">Net Cashflow</p>
-                <p className="text-3xl font-bold text-zinc-900">{formatCurrency(net)}</p>
-                <div className="flex gap-6 mt-4">
-                  <div><p className="text-xs text-zinc-400">Income</p><p className="text-sm font-semibold text-green-600">{formatCurrency(income)}</p></div>
-                  <div><p className="text-xs text-zinc-400">Expenses</p><p className="text-sm font-semibold text-red-500">{formatCurrency(expense)}</p></div>
+        <div className="space-y-5">
+          {/* Hero Balance Card */}
+          <div className="card-elevated rounded-3xl p-6 animate-fade-in relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#00d4aa]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#00d4aa]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+            
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-zinc-400 text-sm">Sisa Uang</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#00d4aa] text-xs font-medium">Bulan Ini</span>
+              </div>
+              <p className={`text-4xl lg:text-5xl font-bold mb-6 ${net >= 0 ? 'gradient-text' : 'text-red-400'}`}>
+                {formatCurrency(net)}
+              </p>
+              
+              {/* Income/Expense Cards */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-[#00d4aa]/20 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
+                    </div>
+                    <span className="text-zinc-400 text-xs">Pemasukan</span>
+                  </div>
+                  <p className="text-xl font-bold text-white">{formatCompact(income)}</p>
+                </div>
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
+                    </div>
+                    <span className="text-zinc-400 text-xs">Pengeluaran</span>
+                  </div>
+                  <p className="text-xl font-bold text-white">{formatCompact(expense)}</p>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <p className="text-sm text-zinc-500 mb-1">Portfolio Value</p>
-                <p className="text-3xl font-bold text-zinc-900">{formatCurrency(currentVal)}</p>
-                <div className="flex gap-6 mt-4">
-                  <div><p className="text-xs text-zinc-400">Invested</p><p className="text-sm font-semibold text-zinc-700">{formatCurrency(invested)}</p></div>
-                  <div>
-                    <p className="text-xs text-zinc-400">Gain/Loss</p>
-                    <p className={`text-sm font-semibold ${gainLoss >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {gainLoss >= 0 ? '+' : ''}{formatCurrency(gainLoss)} ({returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%)
-                    </p>
+              
+              {/* Savings Progress */}
+              {income > 0 && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs mb-2">
+                    <span className="text-zinc-400">Tingkat Tabungan</span>
+                    <span className={savingsRate >= 20 ? 'text-[#00d4aa]' : savingsRate >= 0 ? 'text-amber-400' : 'text-red-400'}>{savingsRate.toFixed(0)}%</span>
+                  </div>
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-1000 ${savingsRate >= 20 ? 'bg-[#00d4aa]' : savingsRate >= 0 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${Math.min(Math.max(savingsRate, 0), 100)}%` }}></div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <p className="text-sm text-zinc-500 mb-3">Investment Allocation</p>
-                {currentVal > 0 ? (
-                  <>
-                    <div className="flex h-3 rounded-full overflow-hidden mb-3">
-                      <div className="bg-amber-400" style={{ width: `${goldPct}%` }}></div>
-                      <div className="bg-blue-500" style={{ width: `${mfPct}%` }}></div>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="flex items-center gap-1 text-zinc-700"><span className="w-2 h-2 rounded-full bg-amber-400"></span>Gold {goldPct.toFixed(0)}%</span>
-                      <span className="flex items-center gap-1 text-zinc-700"><span className="w-2 h-2 rounded-full bg-blue-500"></span>Mutual Fund {mfPct.toFixed(0)}%</span>
-                    </div>
-                  </>
-                ) : <p className="text-xs text-zinc-400">No investment data</p>}
-              </div>
-            </div>
-
-            {/* Row 2: Transactions & Chart - 2 equal columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-zinc-900">Recent Transactions</h3>
-                  <Link href="/cashflow" className="text-xs text-blue-600 hover:underline">View all</Link>
-                </div>
-                {transactions.length > 0 ? (
-                  <div className="space-y-3">
-                    {transactions.map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-100' : 'bg-red-100'}`}>
-                            <svg className={`w-4 h-4 ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tx.type === 'INCOME' ? 'M7 11l5-5m0 0l5 5m-5-5v12' : 'M17 13l-5 5m0 0l-5-5m5 5V6'} /></svg>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-zinc-900">{tx.category}</p>
-                            <p className="text-xs text-zinc-400">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
-                          </div>
-                        </div>
-                        <p className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? '+' : '-'}{formatCompact(tx.amount)}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-sm text-zinc-400 text-center py-4">No transactions yet</p>}
-              </div>
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <h3 className="font-semibold text-zinc-900 mb-4">Income vs Expense</h3>
-                {(income > 0 || expense > 0) ? (
-                  <div className="flex items-center gap-6">
-                    {/* Larger Pie Chart */}
-                    <div className="relative flex-shrink-0">
-                      <div 
-                        className="w-32 h-32 rounded-full"
-                        style={{
-                          background: income + expense > 0 
-                            ? `conic-gradient(
-                                #22c55e 0deg ${(income / (income + expense)) * 360}deg,
-                                #ef4444 ${(income / (income + expense)) * 360}deg 360deg
-                              )`
-                            : '#e4e4e7'
-                        }}
-                      >
-                        <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
-                          <div className="text-center">
-                            <p className="text-[10px] text-zinc-400">Net</p>
-                            <p className={`text-sm font-bold ${net >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                              {net >= 0 ? '+' : ''}{formatCompact(net)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Legend */}
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="flex items-center gap-2 text-sm text-zinc-700">
-                            <span className="w-3 h-3 rounded-full bg-green-500"></span>Income
-                          </span>
-                          <span className="text-sm font-bold text-zinc-900">{formatCompact(income)}</span>
-                        </div>
-                        <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${income + expense > 0 ? (income / (income + expense)) * 100 : 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="flex items-center gap-2 text-sm text-zinc-700">
-                            <span className="w-3 h-3 rounded-full bg-red-500"></span>Expense
-                          </span>
-                          <span className="text-sm font-bold text-zinc-900">{formatCompact(expense)}</span>
-                        </div>
-                        <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-red-500 rounded-full" style={{ width: `${income + expense > 0 ? (expense / (income + expense)) * 100 : 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div className="pt-2 border-t border-zinc-100 flex items-center justify-between">
-                        <span className="text-sm text-zinc-500">Savings Rate</span>
-                        <span className={`text-sm font-bold ${income > 0 && net > 0 ? 'text-green-600' : 'text-zinc-400'}`}>
-                          {income > 0 ? ((net / income) * 100).toFixed(0) : 0}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ) : <p className="text-sm text-zinc-400 text-center py-4">No cashflow data</p>}
-              </div>
-            </div>
-
-            {/* Row 3: Investments & Expenses - 2 equal columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-zinc-900">My Investments</h3>
-                  <Link href="/investments" className="text-xs text-blue-600 hover:underline">Manage</Link>
-                </div>
-                {investments.length > 0 ? (
-                  <div className="space-y-3">
-                    {investments.map((inv, i) => {
-                      // Calculate gain directly from current_value - invested_amount
-                      const invGain = inv.current_value - inv.invested_amount;
-                      const invGainPct = inv.invested_amount > 0 ? (invGain / inv.invested_amount) * 100 : 0;
-                      return (
-                        <div key={i} className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${inv.type === 'GOLD' ? 'bg-amber-100' : 'bg-blue-100'}`}>
-                              {inv.type === 'GOLD' ? <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> : <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-zinc-900">{inv.platform}</p>
-                              <p className="text-xs text-zinc-500">{inv.product_name}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-zinc-900">{formatCurrency(inv.current_value)}</p>
-                            <p className={`text-xs ${invGain >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                              {invGain >= 0 ? '+' : ''}{formatCurrency(invGain)} ({invGainPct >= 0 ? '+' : ''}{invGainPct.toFixed(2)}%)
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-sm text-zinc-400 mb-3">No investments yet</p>
-                    <Link href="/investments" className="text-sm text-blue-600 hover:underline">+ Add Investment</Link>
-                  </div>
-                )}
-              </div>
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <h3 className="font-semibold text-zinc-900 mb-4">Top Expenses</h3>
-                {summary?.expense_by_category && Object.keys(summary.expense_by_category).length > 0 ? (
-                  <div className="space-y-3">
-                    {Object.entries(summary.expense_by_category).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cat, amt]) => (
-                      <div key={cat} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm text-zinc-700">{cat}</span>
-                            <span className="text-sm font-medium text-zinc-900">{formatCurrency(amt)}</span>
-                          </div>
-                          <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-red-400 rounded-full" style={{ width: `${(amt / expense) * 100}%` }}></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-sm text-zinc-400 text-center py-4">No expense data</p>}
-              </div>
-            </div>
-
-            {/* Row 4: Quick Actions - 4 equal columns */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link href="/cashflow" className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"><svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg></div>
-                <span className="text-sm font-medium text-zinc-700">Add Transaction</span>
-              </Link>
-              <Link href="/investments" className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"><svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg></div>
-                <span className="text-sm font-medium text-zinc-700">Update Investment</span>
-              </Link>
-              <Link href="/analytics" className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center"><svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div>
-                <span className="text-sm font-medium text-zinc-700">View Analytics</span>
-              </Link>
-              <Link href="/settings" className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center"><svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
-                <span className="text-sm font-medium text-zinc-700">Settings</span>
-              </Link>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-4 gap-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            {[
+              { href: '/cashflow', emoji: '💳', label: 'Transaksi', color: 'from-blue-500/20 to-blue-600/20' },
+              { href: '/investments', emoji: '📈', label: 'Investasi', color: 'from-amber-500/20 to-amber-600/20' },
+              { href: '/budget', emoji: '💰', label: 'Budget', color: 'from-green-500/20 to-green-600/20' },
+              { href: '/goals', emoji: '🎯', label: 'Goals', color: 'from-purple-500/20 to-purple-600/20' },
+            ].map((item) => (
+              <Link key={item.href} href={item.href} className="card hover-scale p-4 flex flex-col items-center gap-2 stat-card">
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center`}>
+                  <span className="text-2xl">{item.emoji}</span>
+                </div>
+                <span className="text-[10px] lg:text-xs font-medium text-zinc-400">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Portfolio Card */}
+          {currentVal > 0 && (
+            <div className="card rounded-3xl p-5 animate-fade-in stat-card" style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">💎</span>
+                  <h3 className="font-semibold text-white">Portfolio</h3>
+                </div>
+                <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">Lihat Detail →</Link>
+              </div>
+              
+              <div className="flex items-end justify-between mb-4">
+                <div>
+                  <p className="text-3xl font-bold text-white">{formatCurrency(currentVal)}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#00d4aa]' : 'text-red-400'}`}>
+                      {gainLoss >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(gainLoss))}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${gainLoss >= 0 ? 'bg-[#00d4aa]/10 text-[#00d4aa]' : 'bg-red-500/10 text-red-400'}`}>
+                      {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Allocation */}
+              <div className="space-y-3">
+                <div className="flex h-3 rounded-full overflow-hidden bg-white/5">
+                  {goldVal > 0 && <div className="bg-gradient-to-r from-amber-400 to-amber-500 transition-all" style={{ width: `${(goldVal / currentVal) * 100}%` }}></div>}
+                  {mfVal > 0 && <div className="bg-gradient-to-r from-blue-400 to-blue-500 transition-all" style={{ width: `${(mfVal / currentVal) * 100}%` }}></div>}
+                </div>
+                <div className="flex justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500"></div>
+                    <span className="text-xs text-zinc-400">Gold</span>
+                    <span className="text-xs font-medium text-white">{formatCompact(goldVal)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500"></div>
+                    <span className="text-xs text-zinc-400">Reksa Dana</span>
+                    <span className="text-xs font-medium text-white">{formatCompact(mfVal)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recent Transactions */}
+          <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💳</span>
+                <h3 className="font-semibold text-white">Transaksi Terakhir</h3>
+              </div>
+              <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">Semua →</Link>
+            </div>
+            
+            {transactions.length > 0 ? (
+              <div className="space-y-3">
+                {transactions.slice(0, 5).map((tx, i) => (
+                  <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-[#00d4aa]/10' : 'bg-red-500/10'}`}>
+                      {tx.type === 'INCOME' ? (
+                        <svg className="w-5 h-5 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{tx.category}</p>
+                      <p className="text-xs text-zinc-500">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                    </div>
+                    <p className={`text-sm font-bold ${tx.type === 'INCOME' ? 'text-[#00d4aa]' : 'text-red-400'}`}>
+                      {tx.type === 'INCOME' ? '+' : '-'}{formatCompact(tx.amount)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                  <span className="text-3xl">📝</span>
+                </div>
+                <p className="text-zinc-500 text-sm mb-3">Belum ada transaksi</p>
+                <Link href="/cashflow" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
+                  <span>+</span> Tambah Transaksi
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Trend Chart */}
+          {trend.length > 0 && (
+            <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">📊</span>
+                <h3 className="font-semibold text-white">Tren 6 Bulan</h3>
+              </div>
+              
+              <div className="flex items-end gap-2 h-32">
+                {trend.slice(-6).map((t, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center">
+                    <div className="w-full flex gap-1 items-end justify-center h-24">
+                      <div className="w-3 lg:w-4 bg-gradient-to-t from-[#00d4aa] to-[#00ffcc] rounded-t-lg transition-all hover:opacity-80" style={{ height: `${Math.max((safe(t.income) / trendMax) * 100, t.income > 0 ? 10 : 0)}%` }}></div>
+                      <div className="w-3 lg:w-4 bg-gradient-to-t from-red-500 to-red-400 rounded-t-lg transition-all hover:opacity-80" style={{ height: `${Math.max((safe(t.expense) / trendMax) * 100, t.expense > 0 ? 10 : 0)}%` }}></div>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mt-2">{new Date(t.month + '-01').toLocaleDateString('id-ID', { month: 'short' })}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#00d4aa] to-[#00ffcc]"></div>
+                  <span className="text-xs text-zinc-400">Pemasukan</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-400"></div>
+                  <span className="text-xs text-zinc-400">Pengeluaran</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Goals Progress */}
+          {goals.length > 0 && (
+            <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎯</span>
+                  <h3 className="font-semibold text-white">Goals Aktif</h3>
+                </div>
+                <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">Semua →</Link>
+              </div>
+              
+              <div className="space-y-3">
+                {goals.map((goal) => (
+                  <div key={goal.id} className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-white">{goal.name}</span>
+                      <span className="text-sm font-bold text-[#00d4aa]">{goal.percentage.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                      <div className="h-full bg-gradient-to-r from-[#00d4aa] to-[#00ffcc] rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-zinc-500">
+                      <span>{formatCompact(goal.current_amount)} / {formatCompact(goal.target_amount)}</span>
+                      {goal.days_left !== null && <span>{goal.days_left} hari lagi</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Top Expenses */}
+          {summary?.expense_by_category && Object.keys(summary.expense_by_category).length > 0 && (
+            <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">🔥</span>
+                <h3 className="font-semibold text-white">Pengeluaran Terbesar</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {Object.entries(summary.expense_by_category).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([cat, amt], i) => {
+                  const pct = (amt / expense) * 100;
+                  const colors = ['from-red-500 to-red-400', 'from-orange-500 to-orange-400', 'from-amber-500 to-amber-400', 'from-yellow-500 to-yellow-400'];
+                  return (
+                    <div key={cat}>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm text-zinc-300">{cat}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white">{formatCompact(amt)}</span>
+                          <span className="text-xs text-zinc-500">{pct.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div className={`h-full bg-gradient-to-r ${colors[i] || colors[3]} rounded-full transition-all duration-1000`} style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state for new users */}
+          {!isLoading && transactions.length === 0 && currentVal === 0 && (
+            <div className="card rounded-3xl p-8 text-center animate-fade-in">
+              <div className="w-20 h-20 rounded-full bg-[#00d4aa]/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">🚀</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Mulai Perjalanan Finansialmu!</h3>
+              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">Catat transaksi pertamamu dan mulai kelola keuangan dengan lebih baik</p>
+              <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-black font-semibold hover:opacity-90 transition-opacity">
+                <span>+</span> Tambah Transaksi Pertama
+              </Link>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
