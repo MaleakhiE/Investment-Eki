@@ -6,16 +6,16 @@ import { signOut } from 'next-auth/react';
 import { useState } from 'react';
 
 const navItems = [
-  { href: '/dashboard', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', emoji: '🏠' },
-  { href: '/cashflow', label: 'Transaksi', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', emoji: '💳' },
-  { href: '/investments', label: 'Investasi', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', emoji: '📈' },
-  { href: '/analytics', label: 'Analisis', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', emoji: '📊' },
+  { href: '/dashboard', label: 'Home' },
+  { href: '/cashflow', label: 'Transaksi' },
+  { href: '/investments', label: 'Investasi' },
+  { href: '/analytics', label: 'Analisis' },
 ];
 
 const moreItems = [
-  { href: '/budget', label: 'Budget', emoji: '💰' },
-  { href: '/goals', label: 'Goals', emoji: '🎯' },
-  { href: '/settings', label: 'Pengaturan', emoji: '⚙️' },
+  { href: '/budget', label: 'Budget' },
+  { href: '/goals', label: 'Goals' },
+  { href: '/settings', label: 'Pengaturan' },
 ];
 
 interface SidebarProps {
@@ -23,7 +23,8 @@ interface SidebarProps {
   setMobileMenuOpen: (open: boolean) => void;
 }
 
-export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
+export default function Sidebar(_props: SidebarProps) {
+  void _props;
   const pathname = usePathname();
   const [showMore, setShowMore] = useState(false);
 
@@ -33,9 +34,6 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
       <aside className="fixed left-0 top-0 z-20 hidden h-full w-64 flex-col overflow-y-auto border-r border-[#dcece8] bg-white lg:flex">
         <div className="p-5">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl gradient-accent flex items-center justify-center shadow-lg shadow-[#00d4aa]/20">
-              <span className="text-xl">💎</span>
-            </div>
             <div>
               <h1 className="text-lg font-bold text-[#16332f]">FinTrack</h1>
               <p className="text-[10px] text-[#63807a]">Smart Finance</p>
@@ -47,10 +45,8 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-[#d8f7ef] text-[#087f6b]' : 'text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
-                <span className="text-lg">{item.emoji}</span>
-                <span className="font-medium text-sm">{item.label}</span>
-                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00d4aa]"></div>}
+              <Link key={item.href} href={item.href} className={`border-l-2 px-3 py-3 block rounded-r-xl transition-all ${isActive ? 'border-[#00d4aa] bg-[#d8f7ef] font-semibold text-[#087f6b]' : 'border-transparent text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
+                <span className="text-sm">{item.label}</span>
               </Link>
             );
           })}
@@ -60,9 +56,8 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
             {moreItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? 'bg-[#d8f7ef] text-[#087f6b]' : 'text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
-                  <span className="text-base">{item.emoji}</span>
-                  <span className="font-medium text-sm">{item.label}</span>
+                <Link key={item.href} href={item.href} className={`block border-l-2 px-3 py-2.5 rounded-r-xl transition-all ${isActive ? 'border-[#00d4aa] bg-[#d8f7ef] font-semibold text-[#087f6b]' : 'border-transparent text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
+                  <span className="text-sm">{item.label}</span>
                 </Link>
               );
             })}
@@ -70,8 +65,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
         </nav>
         
         <div className="p-3 border-t border-[#dcece8]">
-          <button onClick={() => signOut({ callbackUrl: '/login' })} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-400 w-full transition-all">
-            <span className="text-base">👋</span>
+          <button onClick={() => signOut({ callbackUrl: '/login' })} className="px-3 py-2.5 rounded-xl text-left text-zinc-400 hover:bg-red-500/10 hover:text-red-400 w-full transition-all">
             <span className="font-medium text-sm">Keluar</span>
           </button>
         </div>
@@ -83,19 +77,13 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href} className={`flex flex-col items-center justify-center flex-1 py-2 transition-all ${isActive ? 'text-[#00d4aa]' : 'text-zinc-500'}`}>
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-1 transition-all ${isActive ? 'bg-[#00d4aa]/10 scale-110' : ''}`}>
-                  <span className="text-2xl">{item.emoji}</span>
-                </div>
-                <span className={`text-[10px] font-medium ${isActive ? 'text-[#00d4aa]' : 'text-zinc-500'}`}>{item.label}</span>
+              <Link key={item.href} href={item.href} className={`flex items-center justify-center flex-1 border-t-2 py-5 transition-all ${isActive ? 'border-[#00d4aa] font-semibold text-[#087f6b]' : 'border-transparent text-zinc-500'}`}>
+                <span className="text-xs">{item.label}</span>
               </Link>
             );
           })}
           <button onClick={() => setShowMore(!showMore)} className={`flex flex-col items-center justify-center flex-1 py-2 transition-all ${showMore ? 'text-[#00d4aa]' : 'text-zinc-500'}`}>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-1 transition-all ${showMore ? 'bg-[#00d4aa]/10' : ''}`}>
-              <span className="text-2xl">⋯</span>
-            </div>
-            <span className="text-[10px] font-medium">Lainnya</span>
+            <span className="text-xs font-medium">Lainnya</span>
           </button>
         </div>
       </nav>
@@ -112,14 +100,12 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
                 {moreItems.map((item) => {
                   const isActive = pathname === item.href;
                   return (
-                    <Link key={item.href} href={item.href} onClick={() => setShowMore(false)} className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all hover-scale ${isActive ? 'bg-[#00d4aa]/10' : 'bg-[#f5fbf9]'}`}>
-                      <span className="text-3xl">{item.emoji}</span>
+                    <Link key={item.href} href={item.href} onClick={() => setShowMore(false)} className={`p-4 text-center rounded-2xl transition-all hover-scale ${isActive ? 'border border-[#00d4aa] bg-[#00d4aa]/10' : 'border border-transparent bg-[#f5fbf9]'}`}>
                       <span className={`text-xs font-medium ${isActive ? 'text-[#00d4aa]' : 'text-zinc-300'}`}>{item.label}</span>
                     </Link>
                   );
                 })}
-                <button onClick={() => { setShowMore(false); signOut({ callbackUrl: '/login' }); }} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-red-500/10 transition-all hover-scale">
-                  <span className="text-3xl">👋</span>
+                <button onClick={() => { setShowMore(false); signOut({ callbackUrl: '/login' }); }} className="p-4 rounded-2xl bg-red-500/10 transition-all hover-scale">
                   <span className="text-xs font-medium text-red-400">Keluar</span>
                 </button>
               </div>
@@ -132,13 +118,10 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
       <header className="lg:hidden glass sticky top-0 z-20 border-b border-[#dcece8] safe-area-top">
         <div className="flex items-center justify-between px-5 h-16">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center">
-              <span className="text-lg">💎</span>
-            </div>
             <span className="text-lg font-bold text-[#16332f]">FinTrack</span>
           </div>
-          <Link href="/settings" className="w-10 h-10 rounded-xl bg-[#f5fbf9] flex items-center justify-center text-zinc-400 hover:bg-[#e9f5f2] transition-colors">
-            <span className="text-lg">⚙️</span>
+          <Link href="/settings" className="rounded-xl bg-[#f5fbf9] px-3 py-2 text-sm text-zinc-500 hover:bg-[#e9f5f2] transition-colors">
+            Pengaturan
           </Link>
         </div>
       </header>

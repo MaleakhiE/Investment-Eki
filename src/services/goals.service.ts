@@ -175,14 +175,14 @@ function formatGoal(goal: {
   };
 }
 
-export const GOAL_CATEGORIES: { value: GoalCategory; label: string; icon: string }[] = [
-  { value: 'EMERGENCY_FUND', label: 'Dana Darurat', icon: '🛡️' },
-  { value: 'INVESTMENT', label: 'Investasi', icon: '📈' },
-  { value: 'VACATION', label: 'Liburan', icon: '✈️' },
-  { value: 'GADGET', label: 'Gadget', icon: '📱' },
-  { value: 'VEHICLE', label: 'Kendaraan', icon: '🚗' },
-  { value: 'PROPERTY', label: 'Properti', icon: '🏠' },
-  { value: 'EDUCATION', label: 'Pendidikan', icon: '🎓' },
-  { value: 'WEDDING', label: 'Pernikahan', icon: '💒' },
-  { value: 'OTHER', label: 'Lainnya', icon: '🎯' },
+export const GOAL_CATEGORIES: { value: GoalCategory; label: string }[] = [
+  { value: 'EMERGENCY_FUND', label: 'Dana Darurat' },
+  { value: 'INVESTMENT', label: 'Investasi' },
+  { value: 'VACATION', label: 'Liburan' },
+  { value: 'GADGET', label: 'Gadget' },
+  { value: 'VEHICLE', label: 'Kendaraan' },
+  { value: 'PROPERTY', label: 'Properti' },
+  { value: 'EDUCATION', label: 'Pendidikan' },
+  { value: 'WEDDING', label: 'Pernikahan' },
+  { value: 'OTHER', label: 'Lainnya' },
 ];

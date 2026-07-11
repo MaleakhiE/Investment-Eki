@@ -245,9 +245,6 @@ export default function InvestmentsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="card rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                  </div>
                   <div>
                     <p className="text-sm text-zinc-600">Gold (Emas)</p>
                     <p className="text-2xl font-bold text-[#16332f]">{formatCurrency(goldTotal)}</p>
@@ -262,9 +259,6 @@ export default function InvestmentsPage() {
               </div>
               <div className="card rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                  </div>
                   <div>
                     <p className="text-sm text-zinc-600">Mutual Fund (Reksa Dana)</p>
                     <p className="text-2xl font-bold text-[#16332f]">{formatCurrency(mfTotal)}</p>
@@ -308,11 +302,10 @@ export default function InvestmentsPage() {
                 {selectedType === 'GOLD' && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-amber-400 flex items-center gap-2">🪙 Gold Calculator</h4>
+                      <h4 className="font-medium text-amber-400">Gold Calculator</h4>
                       <div className="flex items-center gap-3">
                         <button type="button" onClick={fetchGoldPrice} disabled={goldPriceLoading} className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1">
-                          <svg className={`w-3 h-3 ${goldPriceLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                          Refresh
+                          {goldPriceLoading ? 'Loading...' : 'Refresh'}
                         </button>
                         <label className="flex items-center text-sm text-amber-400 cursor-pointer">
                           <input type="checkbox" checked={useGoldCalc} onChange={(e) => setUseGoldCalc(e.target.checked)} className="mr-2" />Use calculator
@@ -347,7 +340,7 @@ export default function InvestmentsPage() {
                 {selectedType === 'MUTUAL_FUND' && (
                   <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-blue-400 flex items-center gap-2">📊 Mutual Fund Details</h4>
+                      <h4 className="font-medium text-blue-400">Mutual Fund Details</h4>
                       <label className="flex items-center text-sm text-blue-400 cursor-pointer">
                         <input type="checkbox" checked={useMfCalc} onChange={(e) => setUseMfCalc(e.target.checked)} className="mr-2" />Auto calculate
                       </label>
