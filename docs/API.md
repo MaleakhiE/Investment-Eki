@@ -134,6 +134,32 @@ All API responses follow a consistent format:
 
 ### Authentication
 
+#### Request password reset
+
+```http
+POST /api/auth/forgot-password
+Content-Type: application/json
+
+{"email":"user@example.com"}
+```
+
+The endpoint always returns the same success response for syntactically valid requests, whether or not the account exists. When it exists, a single-use reset link valid for 30 minutes is sent through the application-wide SMTP configuration.
+
+#### Reset password
+
+```http
+POST /api/auth/reset-password
+Content-Type: application/json
+
+{"token":"token-from-email","password":"new-password"}
+```
+
+The raw reset token is never stored. Only its SHA-256 hash is persisted, and successful use consumes it.
+
+#### Global SMTP configuration
+
+SMTP is application-managed; users cannot view or modify credentials. Configure the deployment secret store with `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, and `MAIL_FROM_ADDRESS`, apply migrations, then run the server-side SMTP import command documented in `package.json`.
+
 #### Register User
 
 Creates a new user account.

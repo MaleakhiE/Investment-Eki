@@ -24,8 +24,38 @@ model User {
   budgets              Budget[]
   recurringTransactions RecurringTransaction[]
   financialGoals       FinancialGoal[]
+  passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
+}
+
+model ApplicationSmtpSettings {
+  id         Int      @id
+  host       String   @db.VarChar(255)
+  port       Int
+  secure     Boolean  @default(false)
+  smtp_user  String   @db.VarChar(512)
+  smtp_pass  String   @db.VarChar(512)
+  from_email String   @db.VarChar(255)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("application_smtp_settings")
+}
+
+model PasswordResetToken {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  token_hash String    @unique @db.Char(64)
+  active_user_id BigInt? @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, expires_at])
+  @@map("password_reset_tokens")
 }
 
 model MonthlyCashflow {

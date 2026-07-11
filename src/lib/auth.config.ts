@@ -29,8 +29,8 @@ export const authConfig: NextAuthConfig = {
         '/analytics',
       ];
       
-      // Auth routes (login/register)
-      const authRoutes = ['/login', '/register'];
+      // Public authentication routes. Authenticated users do not need these flows.
+      const authRoutes = ['/login', '/register', '/forgot-password'];
       
       const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
       const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));

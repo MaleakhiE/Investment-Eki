@@ -6,7 +6,6 @@ import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 
 interface UserSettings { ai_recommendation_enabled: boolean; }
-interface SmtpSettings { host: string; port: string; user: string; from_email: string; source: 'user' | 'env' | 'none'; }
 interface CustomAlert { id: string; name: string; type: 'expense_limit' | 'income_target' | 'savings_goal'; threshold: number; enabled: boolean; }
 interface NotificationSettings {
   monthly_reminder: boolean;
@@ -21,50 +20,29 @@ interface ExportSummary { transactions: number; investment_snapshots: number; bu
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [smtpSettings, setSmtpSettings] = useState<SmtpSettings | null>(null);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isSavingSmtp, setIsSavingSmtp] = useState(false);
-  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
   const [isSavingNotif, setIsSavingNotif] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [smtpError, setSmtpError] = useState('');
-  const [smtpSuccess, setSmtpSuccess] = useState('');
   const [notifError, setNotifError] = useState('');
   const [notifSuccess, setNotifSuccess] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showSmtpForm, setShowSmtpForm] = useState(false);
   const [showCustomAlertForm, setShowCustomAlertForm] = useState(false);
-  const [smtpHost, setSmtpHost] = useState('');
-  const [smtpPort, setSmtpPort] = useState('587');
-  const [smtpUser, setSmtpUser] = useState('');
-  const [smtpPass, setSmtpPass] = useState('');
-  const [smtpFromEmail, setSmtpFromEmail] = useState('');
   const [newAlertName, setNewAlertName] = useState('');
   const [newAlertType, setNewAlertType] = useState<'expense_limit' | 'income_target' | 'savings_goal'>('expense_limit');
   const [newAlertThreshold, setNewAlertThreshold] = useState('');
   const [exportSummary, setExportSummary] = useState<ExportSummary | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => { fetchSettings(); fetchSmtpSettings(); fetchNotifSettings(); fetchExportSummary(); }, []);
+  useEffect(() => { fetchSettings(); fetchNotifSettings(); fetchExportSummary(); }, []);
 
   async function fetchSettings() {
     try {
       const res = await fetch('/api/settings');
       if (res.ok) { const d = await res.json(); setSettings(d.responseDetails); }
     } catch { setError('Failed to load'); } finally { setIsLoading(false); }
-  }
-  async function fetchSmtpSettings() {
-    try {
-      const res = await fetch('/api/settings/smtp');
-      if (res.ok) {
-        const d = await res.json();
-        setSmtpSettings(d.responseDetails);
-        if (d.responseDetails) { setSmtpHost(d.responseDetails.host); setSmtpPort(d.responseDetails.port); setSmtpUser(d.responseDetails.user); setSmtpFromEmail(d.responseDetails.from_email); }
-      }
-    } catch { /* ignore */ }
   }
   async function fetchNotifSettings() {
     try {
@@ -106,29 +84,6 @@ export default function SettingsPage() {
       setSettings(d.responseDetails); setSuccess('Updated'); setTimeout(() => setSuccess(''), 3000);
     } catch { setError('Error'); } finally { setIsSaving(false); }
   }
-  async function handleSaveSmtp(e: React.FormEvent) {
-    e.preventDefault(); setSmtpError(''); setSmtpSuccess(''); setIsSavingSmtp(true);
-    try {
-      const res = await fetch('/api/settings/smtp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ host: smtpHost, port: smtpPort, user: smtpUser, pass: smtpPass, from_email: smtpFromEmail }) });
-      const d = await res.json();
-      if (!res.ok) { setSmtpError(d.responseMessage || 'Failed'); return; }
-      setSmtpSettings(d.responseDetails); setSmtpSuccess('Saved'); setShowSmtpForm(false); setSmtpPass(''); setTimeout(() => setSmtpSuccess(''), 3000);
-    } catch { setSmtpError('Error'); } finally { setIsSavingSmtp(false); }
-  }
-  async function handleTestSmtp() {
-    setSmtpError(''); setSmtpSuccess(''); setIsTestingSmtp(true);
-    try {
-      const res = await fetch('/api/settings/smtp/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ host: smtpHost, port: smtpPort, user: smtpUser, pass: smtpPass, from_email: smtpFromEmail }) });
-      const d = await res.json();
-      if (!res.ok) { setSmtpError(d.responseMessage || 'Failed'); return; }
-      setSmtpSuccess('Connection successful!'); setTimeout(() => setSmtpSuccess(''), 3000);
-    } catch { setSmtpError('Failed'); } finally { setIsTestingSmtp(false); }
-  }
-  async function handleResetSmtp() {
-    if (!confirm('Reset SMTP?')) return;
-    try { const res = await fetch('/api/settings/smtp', { method: 'DELETE' }); const d = await res.json(); if (res.ok) { setSmtpSettings(d.responseDetails); setSmtpSuccess('Reset'); setTimeout(() => setSmtpSuccess(''), 3000); } } catch { setSmtpError('Failed'); }
-  }
-
   async function updateNotifSetting(key: string, value: unknown) {
     if (!notifSettings) return;
     setNotifError(''); setNotifSuccess(''); setIsSavingNotif(true);
@@ -214,34 +169,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="card rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-[#16332f] text-sm">SMTP Configuration</h3>{!showSmtpForm && <button onClick={() => setShowSmtpForm(true)} className="text-xs text-[#00d4aa] hover:underline">{smtpSettings ? 'Edit' : 'Configure'}</button>}</div>
-              <p className="text-xs text-zinc-600 mb-3">Configure SMTP for email notifications.</p>
-              {smtpError && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-xs text-red-400">{smtpError}</div>}
-              {smtpSuccess && <div className="mb-3 p-2 bg-green-500/20 border border-green-500/30 rounded-lg text-xs text-green-400">{smtpSuccess}</div>}
-              {showSmtpForm ? (
-                <form onSubmit={handleSaveSmtp} className="space-y-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <div><label className="block text-[10px] font-medium text-zinc-300 mb-1">Host</label><input type="text" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} required placeholder="smtp.gmail.com" className="w-full px-2 py-1.5 rounded-lg border border-[#dcece8] text-xs" /></div>
-                    <div><label className="block text-[10px] font-medium text-zinc-300 mb-1">Port</label><input type="text" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} required placeholder="587" className="w-full px-2 py-1.5 rounded-lg border border-[#dcece8] text-xs" /></div>
-                    <div><label className="block text-[10px] font-medium text-zinc-300 mb-1">Username</label><input type="text" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} required placeholder="email@gmail.com" className="w-full px-2 py-1.5 rounded-lg border border-[#dcece8] text-xs" /></div>
-                    <div><label className="block text-[10px] font-medium text-zinc-300 mb-1">Password</label><input type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} required placeholder="********" className="w-full px-2 py-1.5 rounded-lg border border-[#dcece8] text-xs" /></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] font-medium text-zinc-300 mb-1">From Email</label><input type="email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} required placeholder="noreply@domain.com" className="w-full px-2 py-1.5 rounded-lg border border-[#dcece8] text-xs" /></div>
-                    <div className="flex items-end gap-2"><button type="button" onClick={handleTestSmtp} disabled={isTestingSmtp || !smtpHost || !smtpUser || !smtpPass} className="px-2 py-1.5 bg-[#e9f5f2] text-zinc-300 font-medium rounded-lg text-[10px] hover:bg-zinc-200 disabled:opacity-50">{isTestingSmtp ? '...' : 'Test'}</button><button type="submit" disabled={isSavingSmtp} className="flex-1 py-1.5 px-2 bg-[#00d4aa] hover:bg-[#00a88a] disabled:bg-blue-400 text-[#16332f] font-medium rounded-lg text-[10px]">{isSavingSmtp ? '...' : 'Save'}</button><button type="button" onClick={() => { setShowSmtpForm(false); setSmtpPass(''); }} className="px-2 py-1.5 bg-[#e9f5f2] text-zinc-300 font-medium rounded-lg text-[10px] hover:bg-zinc-200">Cancel</button></div>
-                  </div>
-                </form>
-              ) : smtpSettings ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="bg-[#f5fbf9] rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">Host</p><p className="text-xs font-medium text-[#16332f] truncate">{smtpSettings.host}</p></div>
-                  <div className="bg-[#f5fbf9] rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">Port</p><p className="text-xs font-medium text-[#16332f]">{smtpSettings.port}</p></div>
-                  <div className="bg-[#f5fbf9] rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">User</p><p className="text-xs font-medium text-[#16332f] truncate">{smtpSettings.user}</p></div>
-                  <div className="bg-[#f5fbf9] rounded-lg p-2"><p className="text-[10px] text-zinc-600 mb-0.5">Source</p><span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${smtpSettings.source === 'user' ? 'bg-blue-500/20 text-[#00d4aa]' : 'bg-[#e9f5f2] text-zinc-400'}`}>{smtpSettings.source === 'user' ? 'Custom' : 'Env'}</span>{smtpSettings.source === 'user' && <button onClick={handleResetSmtp} className="text-[10px] text-red-400 hover:underline ml-1">Reset</button>}</div>
-                </div>
-              ) : <p className="text-center py-3 text-zinc-600 text-xs">No SMTP configuration found.</p>}
             </div>
 
             {/* Export Data */}
