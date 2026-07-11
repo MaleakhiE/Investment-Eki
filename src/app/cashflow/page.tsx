@@ -38,7 +38,6 @@ export default function CashflowPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAllModal, setShowAllModal] = useState(false);
   const [filterMonth, setFilterMonth] = useState(() => {
     const now = new Date();
@@ -180,7 +179,7 @@ export default function CashflowPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-3 sm:p-4 lg:p-6">
         <div className="mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-[#16332f]">Transactions</h2>

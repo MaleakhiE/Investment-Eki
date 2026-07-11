@@ -25,7 +25,6 @@ export default function BudgetPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   // Form state
@@ -79,7 +78,7 @@ export default function BudgetPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>

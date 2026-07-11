@@ -28,7 +28,6 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState('');
   const [notifError, setNotifError] = useState('');
   const [notifSuccess, setNotifSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showCustomAlertForm, setShowCustomAlertForm] = useState(false);
   const [newAlertName, setNewAlertName] = useState('');
   const [newAlertType, setNewAlertType] = useState<'expense_limit' | 'income_target' | 'savings_goal'>('expense_limit');
@@ -115,7 +114,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-3 sm:p-4 lg:p-8">
         <div className="mb-4"><h2 className="text-xl font-bold text-[#16332f]">Settings</h2><p className="text-xs text-zinc-600">Manage your preferences</p></div>
         {error && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-red-400">{error}</div>}
@@ -126,7 +125,7 @@ export default function SettingsPage() {
               <div className="card rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1"><h3 className="font-semibold text-[#16332f] text-sm mb-1">AI Recommendation</h3><p className="text-xs text-zinc-600 mb-2">Enable AI-powered investment recommendations.</p><p className="text-xs"><span className="text-zinc-500">Status: </span><span className={`font-medium ${settings?.ai_recommendation_enabled ? 'text-green-400' : 'text-zinc-500'}`}>{settings?.ai_recommendation_enabled ? 'Active' : 'Inactive'}</span></p></div>
-                  <button onClick={toggleAI} disabled={isSaving} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${settings?.ai_recommendation_enabled ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${settings?.ai_recommendation_enabled ? 'translate-x-4' : 'translate-x-0'}`} /></button>
+                  <button type="button" role="switch" aria-checked={settings?.ai_recommendation_enabled ?? false} aria-label="Aktifkan rekomendasi AI" onClick={toggleAI} disabled={isSaving} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${settings?.ai_recommendation_enabled ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${settings?.ai_recommendation_enabled ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                 </div>
               </div>
               <div className="card rounded-xl p-4">
@@ -150,17 +149,17 @@ export default function SettingsPage() {
                         <select value={notifSettings.monthly_reminder_day} onChange={(e) => updateNotifSetting('monthly_reminder_day', parseInt(e.target.value))} disabled={isSavingNotif || !notifSettings.monthly_reminder} className="px-1.5 py-0.5 text-[10px] border border-[#dcece8] rounded bg-[#f3faf8] text-[#16332f] disabled:opacity-50">{Array.from({ length: 28 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}</select>
                       </div>
                     </div>
-                    <button onClick={() => updateNotifSetting('monthly_reminder', !notifSettings.monthly_reminder)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.monthly_reminder ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.monthly_reminder ? 'translate-x-4' : 'translate-x-0'}`} /></button>
+                    <button type="button" role="switch" aria-checked={notifSettings.monthly_reminder} aria-label="Aktifkan pengingat bulanan" onClick={() => updateNotifSetting('monthly_reminder', !notifSettings.monthly_reminder)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.monthly_reminder ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.monthly_reminder ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
                     <div className="mr-3"><p className="text-xs font-medium text-[#16332f]">Ringkasan Bulanan</p><p className="text-[10px] text-zinc-600">Ringkasan keuangan akhir bulan</p></div>
-                    <button onClick={() => updateNotifSetting('monthly_summary', !notifSettings.monthly_summary)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.monthly_summary ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.monthly_summary ? 'translate-x-4' : 'translate-x-0'}`} /></button>
+                    <button type="button" role="switch" aria-checked={notifSettings.monthly_summary} aria-label="Aktifkan ringkasan bulanan" onClick={() => updateNotifSetting('monthly_summary', !notifSettings.monthly_summary)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.monthly_summary ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.monthly_summary ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
                     <div className="flex-1 mr-3"><p className="text-xs font-medium text-[#16332f]">Peringatan Saldo Rendah</p><p className="text-[10px] text-zinc-600">Notifikasi jika cashflow rendah</p>
                       <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-600">Min:</span><CurrencyInput value={notifSettings.low_balance_threshold.toString()} onChange={(v) => { const num = parseFloat(v.replace(/[^\d]/g, '')) || 0; updateNotifSetting('low_balance_threshold', num); }} placeholder="0" className="w-28 py-0.5 text-[10px] border border-[#dcece8] rounded disabled:opacity-50" disabled={isSavingNotif || !notifSettings.low_balance_alert} /></div>
                     </div>
-                    <button onClick={() => updateNotifSetting('low_balance_alert', !notifSettings.low_balance_alert)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.low_balance_alert ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.low_balance_alert ? 'translate-x-4' : 'translate-x-0'}`} /></button>
+                    <button type="button" role="switch" aria-checked={notifSettings.low_balance_alert} aria-label="Aktifkan peringatan saldo rendah" onClick={() => updateNotifSetting('low_balance_alert', !notifSettings.low_balance_alert)} disabled={isSavingNotif} className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${notifSettings.low_balance_alert ? 'bg-[#00d4aa]' : 'bg-white/20'}`}><span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${notifSettings.low_balance_alert ? 'translate-x-4' : 'translate-x-0'}`} /></button>
                   </div>
                   <div className="p-3 bg-[#f5fbf9] rounded-lg">
                     <div className="flex items-center justify-between mb-2"><div><p className="text-xs font-medium text-[#16332f]">Alert Kustom</p><p className="text-[10px] text-zinc-600">Notifikasi sesuai kebutuhan</p></div><button onClick={() => setShowCustomAlertForm(!showCustomAlertForm)} className="text-[10px] text-[#00d4aa] hover:underline">{showCustomAlertForm ? 'Batal' : 'Tambah'}</button></div>

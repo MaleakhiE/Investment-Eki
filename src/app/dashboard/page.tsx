@@ -32,7 +32,6 @@ export default function DashboardPage() {
   const [suggestions, setSuggestions] = useState<SavingsSuggestion[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [periodLabel, setPeriodLabel] = useState('');
 
   const getSalaryPeriod = (date: Date) => {
@@ -108,7 +107,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f3faf8]">
-        <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <Sidebar />
         <main className="lg:ml-64 p-4 lg:p-6">
           <div className="space-y-4">
             <div className="skeleton h-48 rounded-3xl"></div>
@@ -124,7 +123,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-4 lg:p-6">
         {/* Greeting */}
         <div className="mb-6 animate-fade-in">

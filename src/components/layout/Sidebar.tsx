@@ -18,13 +18,7 @@ const moreItems = [
   { href: '/settings', label: 'Pengaturan' },
 ];
 
-interface SidebarProps {
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
-}
-
-export default function Sidebar(_props: SidebarProps) {
-  void _props;
+export default function Sidebar() {
   const pathname = usePathname();
   const [showMore, setShowMore] = useState(false);
 

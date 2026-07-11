@@ -28,7 +28,6 @@ export default function AnalyticsPage() {
   const [comparison, setComparison] = useState<InvestmentComparison | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'cashflow' | 'investment'>('overview');
 
   useEffect(() => {
@@ -82,7 +81,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#16332f]">Analytics</h2>

@@ -44,7 +44,6 @@ export default function InvestmentsPage() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [selectedType, setSelectedType] = useState<InvestmentType>('GOLD');
   const [month, setMonth] = useState(() => {
@@ -230,7 +229,7 @@ export default function InvestmentsPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#16332f]">Investments</h2>
