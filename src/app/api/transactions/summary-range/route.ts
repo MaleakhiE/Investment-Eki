@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const records = await (prisma as any).transaction.findMany({
+    const records = await prisma.transaction.findMany({
       where: {
         user_id: userId,
         date: {

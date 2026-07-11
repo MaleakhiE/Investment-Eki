@@ -149,15 +149,15 @@ export default function GoalsPage() {
   const completedGoals = goals.filter(g => g.is_completed);
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f]">
+    <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Financial Goals</h2>
+            <h2 className="text-2xl font-bold text-[#16332f]">Financial Goals</h2>
             <p className="text-sm text-zinc-600">Track your savings targets</p>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-[#00d4aa] text-white rounded-xl text-sm font-medium hover:bg-[#00a88a]">+ New Goal</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">+ New Goal</button>
         </div>
 
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
@@ -170,12 +170,12 @@ export default function GoalsPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="card rounded-xl p-4">
                   <p className="text-xs text-zinc-600 mb-1">Total Goals</p>
-                  <p className="text-2xl font-bold text-white">{summary.total_goals}</p>
+                  <p className="text-2xl font-bold text-[#16332f]">{summary.total_goals}</p>
                   <p className="text-xs text-zinc-500">{summary.active_goals} active, {summary.completed_goals} done</p>
                 </div>
                 <div className="card rounded-xl p-4">
                   <p className="text-xs text-zinc-600 mb-1">Target Total</p>
-                  <p className="text-2xl font-bold text-white">{fmtC(summary.total_target)}</p>
+                  <p className="text-2xl font-bold text-[#16332f]">{fmtC(summary.total_target)}</p>
                 </div>
                 <div className="card rounded-xl p-4">
                   <p className="text-xs text-zinc-600 mb-1">Current Total</p>
@@ -184,10 +184,10 @@ export default function GoalsPage() {
                 <div className="card rounded-xl p-4">
                   <p className="text-xs text-zinc-600 mb-1">Overall Progress</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-[#e9f5f2] rounded-full overflow-hidden">
                       <div className="h-full bg-blue-500 rounded-full" style={{ width: `${summary.overall_progress}%` }}></div>
                     </div>
-                    <span className="text-sm font-bold text-white">{summary.overall_progress.toFixed(0)}%</span>
+                    <span className="text-sm font-bold text-[#16332f]">{summary.overall_progress.toFixed(0)}%</span>
                   </div>
                 </div>
               </div>
@@ -196,33 +196,33 @@ export default function GoalsPage() {
             {/* Form Modal */}
             {showForm && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
-                <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-                  <h3 className="font-semibold text-white text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
+                <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                  <h3 className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1">Nama Goal</label>
-                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Dana Darurat 6 Bulan" className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white" />
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Dana Darurat 6 Bulan" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-zinc-400 mb-1">Target</label>
-                        <CurrencyInput value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white" />
+                        <CurrencyInput value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                       </div>
                       <div>
                         <label className="block text-xs text-zinc-400 mb-1">Current</label>
-                        <CurrencyInput value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white" />
+                        <CurrencyInput value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-zinc-400 mb-1">Category</label>
-                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white">
+                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                           {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="block text-xs text-zinc-400 mb-1">Priority</label>
-                        <select value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white">
+                        <select value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                           <option value={1}>🔴 High</option>
                           <option value={2}>🟡 Medium</option>
                           <option value={3}>🟢 Low</option>
@@ -231,11 +231,11 @@ export default function GoalsPage() {
                     </div>
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1">Deadline (optional)</label>
-                      <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-[#0f0f0f] text-white" />
+                      <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="flex gap-2 pt-2">
-                      <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-white rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
-                      <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-white/10 text-zinc-400 rounded-lg text-sm">Cancel</button>
+                      <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
+                      <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -244,7 +244,7 @@ export default function GoalsPage() {
 
             {/* Active Goals */}
             <div className="card rounded-xl p-5">
-              <h3 className="font-semibold text-white mb-4">Active Goals ({activeGoals.length})</h3>
+              <h3 className="font-semibold text-[#16332f] mb-4">Active Goals ({activeGoals.length})</h3>
               {activeGoals.length === 0 ? (
                 <p className="text-sm text-zinc-500 text-center py-8">No active goals. Create one to start tracking!</p>
               ) : (
@@ -252,12 +252,12 @@ export default function GoalsPage() {
                   {activeGoals.map(goal => {
                     const cat = getCat(goal.category);
                     return (
-                      <div key={goal.id} className="p-4 bg-white/5 rounded-xl">
+                      <div key={goal.id} className="p-4 bg-[#f5fbf9] rounded-xl">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{cat.icon}</span>
                             <div>
-                              <p className="font-medium text-white">{goal.name}</p>
+                              <p className="font-medium text-[#16332f]">{goal.name}</p>
                               <p className="text-xs text-zinc-500">{cat.label}</p>
                             </div>
                           </div>
@@ -268,7 +268,7 @@ export default function GoalsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                          <div className="flex-1 h-3 bg-[#e9f5f2] rounded-full overflow-hidden">
                             <div className={`h-full rounded-full transition-all ${goal.percentage >= 100 ? 'bg-green-500' : goal.percentage >= 75 ? 'bg-blue-500' : goal.percentage >= 50 ? 'bg-amber-500' : 'bg-zinc-400'}`} style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
                           </div>
                           <span className="text-sm font-bold text-zinc-300 w-12 text-right">{goal.percentage.toFixed(0)}%</span>
@@ -291,9 +291,9 @@ export default function GoalsPage() {
                         <div className="flex gap-2 mt-3">
                           {addAmountId === goal.id ? (
                             <div className="flex gap-2 flex-1">
-                              <CurrencyInput value={addAmount} onChange={setAddAmount} placeholder="Amount" className="flex-1 py-1.5 text-xs border border-white/10 rounded-lg bg-[#0f0f0f] text-white" />
+                              <CurrencyInput value={addAmount} onChange={setAddAmount} placeholder="Amount" className="flex-1 py-1.5 text-xs border border-[#dcece8] rounded-lg bg-[#f3faf8] text-[#16332f]" />
                               <button onClick={() => handleAddAmount(goal.id)} disabled={isSaving} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg">Add</button>
-                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); }} className="px-3 py-1.5 bg-white/10 text-zinc-400 text-xs rounded-lg">Cancel</button>
+                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg">Cancel</button>
                             </div>
                           ) : (
                             <>
@@ -312,7 +312,7 @@ export default function GoalsPage() {
             {/* Completed Goals */}
             {completedGoals.length > 0 && (
               <div className="card rounded-xl p-5">
-                <h3 className="font-semibold text-white mb-4">Completed Goals ({completedGoals.length})</h3>
+                <h3 className="font-semibold text-[#16332f] mb-4">Completed Goals ({completedGoals.length})</h3>
                 <div className="space-y-2">
                   {completedGoals.map(goal => {
                     const cat = getCat(goal.category);
@@ -321,7 +321,7 @@ export default function GoalsPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{cat.icon}</span>
                           <div>
-                            <p className="font-medium text-white line-through opacity-70">{goal.name}</p>
+                            <p className="font-medium text-[#16332f] line-through opacity-70">{goal.name}</p>
                             <p className="text-xs text-green-400">{fmt(goal.target_amount)} ✓</p>
                           </div>
                         </div>

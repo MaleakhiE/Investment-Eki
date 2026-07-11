@@ -190,7 +190,7 @@ function calculateNextRun(rec: { frequency: string; day_of_month: number | null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  let next = new Date(today);
+  const next = new Date(today);
 
   switch (rec.frequency) {
     case 'DAILY':

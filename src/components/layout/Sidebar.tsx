@@ -30,15 +30,15 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-[#0f0f0f] border-r border-white/5 hidden lg:flex flex-col z-20 overflow-y-auto">
+      <aside className="fixed left-0 top-0 z-20 hidden h-full w-64 flex-col overflow-y-auto border-r border-[#dcece8] bg-white lg:flex">
         <div className="p-5">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl gradient-accent flex items-center justify-center shadow-lg shadow-[#00d4aa]/20">
               <span className="text-xl">💎</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">FinTrack</h1>
-              <p className="text-[10px] text-zinc-500">Smart Finance</p>
+              <h1 className="text-lg font-bold text-[#16332f]">FinTrack</h1>
+              <p className="text-[10px] text-[#63807a]">Smart Finance</p>
             </div>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-[#00d4aa]/10 text-[#00d4aa]' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>
+              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-[#d8f7ef] text-[#087f6b]' : 'text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
                 <span className="text-lg">{item.emoji}</span>
                 <span className="font-medium text-sm">{item.label}</span>
                 {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00d4aa]"></div>}
@@ -55,12 +55,12 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
             );
           })}
           
-          <div className="pt-3 mt-3 border-t border-white/5">
+          <div className="pt-3 mt-3 border-t border-[#dcece8]">
             <p className="px-3 text-[10px] font-medium text-zinc-600 uppercase tracking-wider mb-2">Lainnya</p>
             {moreItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? 'bg-[#00d4aa]/10 text-[#00d4aa]' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>
+                <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive ? 'bg-[#d8f7ef] text-[#087f6b]' : 'text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
                   <span className="text-base">{item.emoji}</span>
                   <span className="font-medium text-sm">{item.label}</span>
                 </Link>
@@ -69,7 +69,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
           </div>
         </nav>
         
-        <div className="p-3 border-t border-white/5">
+        <div className="p-3 border-t border-[#dcece8]">
           <button onClick={() => signOut({ callbackUrl: '/login' })} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-400 w-full transition-all">
             <span className="text-base">👋</span>
             <span className="font-medium text-sm">Keluar</span>
@@ -78,7 +78,7 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
       </aside>
 
       {/* Mobile Bottom Navigation - Modern style */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 nav-blur border-t border-white/5 z-30 safe-area-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 nav-blur border-t border-[#dcece8] z-30 safe-area-bottom">
         <div className="flex items-center justify-around h-20 px-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -104,15 +104,15 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
       {showMore && (
         <>
           <div className="lg:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in" onClick={() => setShowMore(false)} />
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1a1a1a] rounded-t-[32px] z-50 animate-slide-up safe-area-bottom">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] z-50 animate-slide-up safe-area-bottom shadow-[0_-12px_40px_rgba(8,127,107,0.12)]">
             <div className="w-12 h-1 bg-zinc-700 rounded-full mx-auto mt-3 mb-6" />
             <div className="px-6 pb-8">
-              <h3 className="text-lg font-bold text-white mb-4">Menu Lainnya</h3>
+              <h3 className="text-lg font-bold text-[#16332f] mb-4">Menu Lainnya</h3>
               <div className="grid grid-cols-3 gap-4">
                 {moreItems.map((item) => {
                   const isActive = pathname === item.href;
                   return (
-                    <Link key={item.href} href={item.href} onClick={() => setShowMore(false)} className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all hover-scale ${isActive ? 'bg-[#00d4aa]/10' : 'bg-white/5'}`}>
+                    <Link key={item.href} href={item.href} onClick={() => setShowMore(false)} className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all hover-scale ${isActive ? 'bg-[#00d4aa]/10' : 'bg-[#f5fbf9]'}`}>
                       <span className="text-3xl">{item.emoji}</span>
                       <span className={`text-xs font-medium ${isActive ? 'text-[#00d4aa]' : 'text-zinc-300'}`}>{item.label}</span>
                     </Link>
@@ -129,15 +129,15 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarPr
       )}
 
       {/* Mobile Header - Minimal */}
-      <header className="lg:hidden glass sticky top-0 z-20 border-b border-white/5 safe-area-top">
+      <header className="lg:hidden glass sticky top-0 z-20 border-b border-[#dcece8] safe-area-top">
         <div className="flex items-center justify-between px-5 h-16">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center">
               <span className="text-lg">💎</span>
             </div>
-            <span className="text-lg font-bold text-white">FinTrack</span>
+            <span className="text-lg font-bold text-[#16332f]">FinTrack</span>
           </div>
-          <Link href="/settings" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-zinc-400 hover:bg-white/10 transition-colors">
+          <Link href="/settings" className="w-10 h-10 rounded-xl bg-[#f5fbf9] flex items-center justify-center text-zinc-400 hover:bg-[#e9f5f2] transition-colors">
             <span className="text-lg">⚙️</span>
           </Link>
         </div>

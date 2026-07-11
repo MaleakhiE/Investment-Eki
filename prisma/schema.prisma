@@ -54,6 +54,8 @@ model Transaction {
   category    String          @db.VarChar(50)
   description String          @db.VarChar(512)
   amount      String          @db.VarChar(255)
+  account       String?       @db.VarChar(100)
+  receipt_image String?       @db.LongText
   created_at  DateTime        @default(now())
   updated_at  DateTime        @updatedAt
 

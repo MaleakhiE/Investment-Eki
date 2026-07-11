@@ -949,6 +949,43 @@
         }
       }
     },
+    "/api/transactions/ocr-scan": {
+      "post": {
+        "tags": ["Cashflow"],
+        "summary": "Extract editable transaction guesses from a receipt image",
+        "operationId": "scanReceipt",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image"],
+                "properties": { "image": { "type": "string", "format": "binary" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OCR guesses and a receipt image data URL" },
+          "400": { "description": "Missing, unsupported, or oversized image" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "OCR processing failed" }
+        }
+      }
+    },
+    "/api/analytics/savings-suggestions": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get trend-based category savings suggestions",
+        "operationId": "getSavingsSuggestions",
+        "responses": {
+          "200": { "description": "Suggestions based on current month versus the preceding three months" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
     "/api/notifications/send-monthly": {
       "post": {
         "tags": ["Notifications"],
