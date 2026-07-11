@@ -12,6 +12,9 @@ import { NextRequest } from 'next/server';
 const { auth } = NextAuth(authConfig);
 
 export async function middleware(request: NextRequest) {
+  // NextAuth's overloaded middleware type does not expose the request-only call,
+  // although that is the supported runtime shape for this wrapper.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return auth(request as any);
 }
 

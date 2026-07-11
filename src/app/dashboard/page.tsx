@@ -18,6 +18,8 @@ interface InvestmentDetail { type: string; platform: string; product_name: strin
 interface CashflowTrend { month: string; income: number; expense: number; net_cashflow: number; }
 interface Transaction { id: string; date: string; type: string; category: string; amount: number; description?: string; }
 interface GoalProgress { id: string; name: string; target_amount: number; current_amount: number; percentage: number; category: string; days_left: number | null; is_completed: boolean; }
+interface SavingsSuggestion { category: string; current_amount?: number; historical_average?: number; potential_saving?: number; message?: string; }
+interface UpcomingTransaction { id: string; category: string; description: string; amount: number; type: 'INCOME' | 'EXPENSE'; is_active: boolean; next_run: string | null; }
 
 export default function DashboardPage() {
   useSession();
@@ -27,6 +29,8 @@ export default function DashboardPage() {
   const [trend, setTrend] = useState<CashflowTrend[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [goals, setGoals] = useState<GoalProgress[]>([]);
+  const [suggestions, setSuggestions] = useState<SavingsSuggestion[]>([]);
+  const [upcoming, setUpcoming] = useState<UpcomingTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [periodLabel, setPeriodLabel] = useState('');
@@ -59,13 +63,15 @@ export default function DashboardPage() {
       try {
         const period = getSalaryPeriod(new Date());
         setPeriodLabel(period.label);
-        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes] = await Promise.all([
+        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes, suggestionsRes, recurringRes] = await Promise.all([
           fetch(`/api/transactions/summary-range?startDate=${period.startDate}&endDate=${period.endDate}`),
           fetch('/api/analytics/comparison'),
           fetch('/api/analytics/cashflow-trend'),
           fetch('/api/investments/details'),
           fetch('/api/transactions?limit=5'),
           fetch('/api/goals'),
+          fetch('/api/analytics/savings-suggestions'),
+          fetch('/api/recurring'),
         ]);
         if (sumRes.ok) { const d = await sumRes.json(); setSummary(d.responseDetails); }
         if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
@@ -73,6 +79,8 @@ export default function DashboardPage() {
         if (invRes.ok) { const d = await invRes.json(); setInvestments(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
         if (txRes.ok) { const d = await txRes.json(); const txList = d.responseDetails?.transactions; setTransactions(Array.isArray(txList) ? txList : []); }
         if (goalsRes.ok) { const d = await goalsRes.json(); setGoals(Array.isArray(d.responseDetails) ? d.responseDetails.filter((g: GoalProgress) => !g.is_completed).slice(0, 3) : []); }
+        if (suggestionsRes.ok) { const d = await suggestionsRes.json(); const list = d.responseDetails?.suggestions ?? d.responseDetails; setSuggestions(Array.isArray(list) ? list : []); }
+        if (recurringRes.ok) { const d = await recurringRes.json(); const list = Array.isArray(d.responseDetails) ? d.responseDetails : []; setUpcoming(list.filter((item: UpcomingTransaction) => item.is_active && item.next_run).sort((a: UpcomingTransaction, b: UpcomingTransaction) => a.next_run!.localeCompare(b.next_run!)).slice(0, 5)); }
       } catch (e) { console.error(e); } finally { setIsLoading(false); }
     }
     fetchData();
@@ -99,7 +107,7 @@ export default function DashboardPage() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f]">
+      <div className="min-h-screen bg-[#f3faf8]">
         <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
         <main className="lg:ml-64 p-4 lg:p-6">
           <div className="space-y-4">
@@ -115,13 +123,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f]">
+    <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <main className="lg:ml-64 p-4 lg:p-6">
         {/* Greeting */}
         <div className="mb-6 animate-fade-in">
           <p className="text-zinc-500 text-sm">{periodLabel}</p>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-[#16332f] mt-1">
             Selamat datang! <span className="inline-block animate-bounce">👋</span>
           </h1>
         </div>
@@ -136,7 +144,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-zinc-400 text-sm">Sisa Uang</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#00d4aa] text-xs font-medium">Bulan Ini</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#087f6b] text-xs font-medium">Periode Gajian</span>
               </div>
               <p className={`text-4xl lg:text-5xl font-bold mb-6 ${net >= 0 ? 'gradient-text' : 'text-red-400'}`}>
                 {formatCurrency(net)}
@@ -144,23 +152,23 @@ export default function DashboardPage() {
               
               {/* Income/Expense Cards */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-xl bg-[#00d4aa]/20 flex items-center justify-center">
                       <svg className="w-4 h-4 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
                     </div>
                     <span className="text-zinc-400 text-xs">Pemasukan</span>
                   </div>
-                  <p className="text-xl font-bold text-white">{formatCompact(income)}</p>
+                  <p className="text-xl font-bold text-[#16332f]">{formatCompact(income)}</p>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center">
                       <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
                     </div>
                     <span className="text-zinc-400 text-xs">Pengeluaran</span>
                   </div>
-                  <p className="text-xl font-bold text-white">{formatCompact(expense)}</p>
+                  <p className="text-xl font-bold text-[#16332f]">{formatCompact(expense)}</p>
                 </div>
               </div>
               
@@ -171,7 +179,7 @@ export default function DashboardPage() {
                     <span className="text-zinc-400">Tingkat Tabungan</span>
                     <span className={savingsRate >= 20 ? 'text-[#00d4aa]' : savingsRate >= 0 ? 'text-amber-400' : 'text-red-400'}>{savingsRate.toFixed(0)}%</span>
                   </div>
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-1000 ${savingsRate >= 20 ? 'bg-[#00d4aa]' : savingsRate >= 0 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${Math.min(Math.max(savingsRate, 0), 100)}%` }}></div>
                   </div>
                 </div>
@@ -196,20 +204,35 @@ export default function DashboardPage() {
             ))}
           </div>
 
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <section className="card rounded-3xl p-5">
+              <div className="mb-4 flex items-center gap-2"><span className="text-xl">💡</span><h2 className="font-semibold text-[#16332f]">Peluang Hemat</h2></div>
+              {suggestions.length > 0 ? <div className="space-y-3">{suggestions.slice(0, 3).map((item) => {
+                const saving = item.potential_saving ?? 0;
+                return <div key={item.category} className="rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.message ?? `Kembali ke rata-rata tiga bulan untuk menghemat ${formatCurrency(saving)}.`}</p></div><span className="whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
+              })}</div> : <p className="text-sm text-zinc-500">Belum ada pola pengeluaran berlebih yang perlu ditindaklanjuti.</p>}
+            </section>
+
+            <section className="card rounded-3xl p-5">
+              <div className="mb-4 flex items-center gap-2"><span className="text-xl">🗓️</span><h2 className="font-semibold text-[#16332f]">Transaksi Mendatang</h2></div>
+              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00d4aa]/10 text-lg">{item.type === 'INCOME' ? '↗' : '↘'}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">Belum ada transaksi berulang yang aktif.</p>}
+            </section>
+          </div>
+
           {/* Portfolio Card */}
           {currentVal > 0 && (
             <div className="card rounded-3xl p-5 animate-fade-in stat-card" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">💎</span>
-                  <h3 className="font-semibold text-white">Portfolio</h3>
+                  <h3 className="font-semibold text-[#16332f]">Portfolio</h3>
                 </div>
                 <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">Lihat Detail →</Link>
               </div>
               
               <div className="flex items-end justify-between mb-4">
                 <div>
-                  <p className="text-3xl font-bold text-white">{formatCurrency(currentVal)}</p>
+                  <p className="text-3xl font-bold text-[#16332f]">{formatCurrency(currentVal)}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#00d4aa]' : 'text-red-400'}`}>
                       {gainLoss >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(gainLoss))}
@@ -223,7 +246,7 @@ export default function DashboardPage() {
               
               {/* Allocation */}
               <div className="space-y-3">
-                <div className="flex h-3 rounded-full overflow-hidden bg-white/5">
+                <div className="flex h-3 rounded-full overflow-hidden bg-[#f5fbf9]">
                   {goldVal > 0 && <div className="bg-gradient-to-r from-amber-400 to-amber-500 transition-all" style={{ width: `${(goldVal / currentVal) * 100}%` }}></div>}
                   {mfVal > 0 && <div className="bg-gradient-to-r from-blue-400 to-blue-500 transition-all" style={{ width: `${(mfVal / currentVal) * 100}%` }}></div>}
                 </div>
@@ -231,12 +254,12 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500"></div>
                     <span className="text-xs text-zinc-400">Gold</span>
-                    <span className="text-xs font-medium text-white">{formatCompact(goldVal)}</span>
+                    <span className="text-xs font-medium text-[#16332f]">{formatCompact(goldVal)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500"></div>
                     <span className="text-xs text-zinc-400">Reksa Dana</span>
-                    <span className="text-xs font-medium text-white">{formatCompact(mfVal)}</span>
+                    <span className="text-xs font-medium text-[#16332f]">{formatCompact(mfVal)}</span>
                   </div>
                 </div>
               </div>
@@ -248,7 +271,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💳</span>
-                <h3 className="font-semibold text-white">Transaksi Terakhir</h3>
+                <h3 className="font-semibold text-[#16332f]">Transaksi Terakhir</h3>
               </div>
               <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">Semua →</Link>
             </div>
@@ -256,7 +279,7 @@ export default function DashboardPage() {
             {transactions.length > 0 ? (
               <div className="space-y-3">
                 {transactions.slice(0, 5).map((tx, i) => (
-                  <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>
+                  <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-[#f5fbf9] hover:bg-[#e9f5f2] transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-[#00d4aa]/10' : 'bg-red-500/10'}`}>
                       {tx.type === 'INCOME' ? (
                         <svg className="w-5 h-5 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
@@ -265,7 +288,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{tx.category}</p>
+                      <p className="text-sm font-medium text-[#16332f] truncate">{tx.category}</p>
                       <p className="text-xs text-zinc-500">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                     </div>
                     <p className={`text-sm font-bold ${tx.type === 'INCOME' ? 'text-[#00d4aa]' : 'text-red-400'}`}>
@@ -276,7 +299,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                <div className="w-16 h-16 rounded-full bg-[#f5fbf9] flex items-center justify-center mx-auto mb-3">
                   <span className="text-3xl">📝</span>
                 </div>
                 <p className="text-zinc-500 text-sm mb-3">Belum ada transaksi</p>
@@ -292,7 +315,7 @@ export default function DashboardPage() {
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-xl">📊</span>
-                <h3 className="font-semibold text-white">Tren 6 Bulan</h3>
+                <h3 className="font-semibold text-[#16332f]">Tren 6 Bulan</h3>
               </div>
               
               <div className="flex items-end gap-2 h-32">
@@ -326,19 +349,19 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🎯</span>
-                  <h3 className="font-semibold text-white">Goals Aktif</h3>
+                  <h3 className="font-semibold text-[#16332f]">Goals Aktif</h3>
                 </div>
                 <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">Semua →</Link>
               </div>
               
               <div className="space-y-3">
                 {goals.map((goal) => (
-                  <div key={goal.id} className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div key={goal.id} className="p-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8]">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-white">{goal.name}</span>
+                      <span className="text-sm font-medium text-[#16332f]">{goal.name}</span>
                       <span className="text-sm font-bold text-[#00d4aa]">{goal.percentage.toFixed(0)}%</span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                    <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden mb-2">
                       <div className="h-full bg-gradient-to-r from-[#00d4aa] to-[#00ffcc] rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
                     </div>
                     <div className="flex justify-between text-xs text-zinc-500">
@@ -356,7 +379,7 @@ export default function DashboardPage() {
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-xl">🔥</span>
-                <h3 className="font-semibold text-white">Pengeluaran Terbesar</h3>
+                <h3 className="font-semibold text-[#16332f]">Pengeluaran Terbesar</h3>
               </div>
               
               <div className="space-y-4">
@@ -368,11 +391,11 @@ export default function DashboardPage() {
                       <div className="flex justify-between mb-2">
                         <span className="text-sm text-zinc-300">{cat}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white">{formatCompact(amt)}</span>
+                          <span className="text-sm font-medium text-[#16332f]">{formatCompact(amt)}</span>
                           <span className="text-xs text-zinc-500">{pct.toFixed(0)}%</span>
                         </div>
                       </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden">
                         <div className={`h-full bg-gradient-to-r ${colors[i] || colors[3]} rounded-full transition-all duration-1000`} style={{ width: `${pct}%` }}></div>
                       </div>
                     </div>
@@ -388,7 +411,7 @@ export default function DashboardPage() {
               <div className="w-20 h-20 rounded-full bg-[#00d4aa]/10 flex items-center justify-center mx-auto mb-4">
                 <span className="text-4xl">🚀</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Mulai Perjalanan Finansialmu!</h3>
+              <h3 className="text-xl font-bold text-[#16332f] mb-2">Mulai Perjalanan Finansialmu!</h3>
               <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">Catat transaksi pertamamu dan mulai kelola keuangan dengan lebih baik</p>
               <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-black font-semibold hover:opacity-90 transition-opacity">
                 <span>+</span> Tambah Transaksi Pertama

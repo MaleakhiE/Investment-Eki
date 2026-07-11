@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Wrapper script that sets DATABASE_URL from individual env vars
  * and then runs prisma commands

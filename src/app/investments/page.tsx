@@ -216,8 +216,8 @@ export default function InvestmentsPage() {
 
   const previewGL = (parseFloat(currentValue) || 0) - (parseFloat(investedAmount) || 0);
   const previewReturn = parseFloat(investedAmount) > 0 ? ((previewGL / parseFloat(investedAmount)) * 100).toFixed(1) : '0';
-  const inputClass = "w-full py-2 rounded-xl border border-white/10 bg-[#1a1a1a] text-white focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
-  const inputClassWithPadding = "w-full px-3 py-2 rounded-xl border border-white/10 bg-[#1a1a1a] text-white focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
+  const inputClass = "w-full py-2 rounded-xl border border-[#dcece8] bg-white text-[#16332f] focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
+  const inputClassWithPadding = "w-full px-3 py-2 rounded-xl border border-[#dcece8] bg-white text-[#16332f] focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
 
   const goldTotal = goldSnapshots.reduce((sum, s) => sum + s.current_value, 0);
   const mfTotal = mfSnapshots.reduce((sum, s) => sum + s.current_value, 0);
@@ -229,11 +229,11 @@ export default function InvestmentsPage() {
   const mfReturnPct = mfInvested > 0 ? ((mfGainLoss / mfInvested) * 100).toFixed(1) : '0';
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f]">
+    <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white">Investments</h2>
+          <h2 className="text-2xl font-bold text-[#16332f]">Investments</h2>
           <p className="text-sm text-zinc-600">Track your Gold and Mutual Fund investments</p>
         </div>
 
@@ -250,7 +250,7 @@ export default function InvestmentsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-zinc-600">Gold (Emas)</p>
-                    <p className="text-2xl font-bold text-white">{formatCurrency(goldTotal)}</p>
+                    <p className="text-2xl font-bold text-[#16332f]">{formatCurrency(goldTotal)}</p>
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -267,7 +267,7 @@ export default function InvestmentsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-zinc-600">Mutual Fund (Reksa Dana)</p>
-                    <p className="text-2xl font-bold text-white">{formatCurrency(mfTotal)}</p>
+                    <p className="text-2xl font-bold text-[#16332f]">{formatCurrency(mfTotal)}</p>
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -281,7 +281,7 @@ export default function InvestmentsPage() {
 
             {/* Form */}
             <div className="card rounded-2xl p-6">
-              <h3 className="font-semibold text-white mb-4">Add/Update Snapshot</h3>
+              <h3 className="font-semibold text-[#16332f] mb-4">Add/Update Snapshot</h3>
               {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
               {success && <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-sm text-green-400">{success}</div>}
 
@@ -382,13 +382,13 @@ export default function InvestmentsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-1">Current Value</label>
-                    <CurrencyInput value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-white/10' : ''}`} />
+                    <CurrencyInput value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
                   </div>
-                  <div className="bg-white/5 rounded-xl p-3">
+                  <div className="bg-[#f5fbf9] rounded-xl p-3">
                     <p className="text-xs text-zinc-600 mb-1">Gain/Loss Preview</p>
                     <p className={`text-lg font-bold ${previewGL >= 0 ? 'text-green-400' : 'text-red-400'}`}>{previewGL >= 0 ? '+' : ''}Rp {formatNumber(Math.abs(previewGL))} ({previewReturn}%)</p>
                   </div>
-                  <button type="submit" disabled={isSaving} className="py-3 px-4 bg-[#00d4aa] hover:bg-[#00a88a] disabled:bg-blue-400 text-white font-medium rounded-xl transition-colors text-sm">{isSaving ? 'Saving...' : 'Save Snapshot'}</button>
+                  <button type="submit" disabled={isSaving} className="py-3 px-4 bg-[#00d4aa] hover:bg-[#00a88a] disabled:bg-blue-400 text-[#16332f] font-medium rounded-xl transition-colors text-sm">{isSaving ? 'Saving...' : 'Save Snapshot'}</button>
                 </div>
               </form>
             </div>
@@ -399,20 +399,20 @@ export default function InvestmentsPage() {
               <div className="card rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-4 h-4 rounded-full bg-amber-400"></div>
-                  <h3 className="font-semibold text-white">Gold (Emas)</h3>
+                  <h3 className="font-semibold text-[#16332f]">Gold (Emas)</h3>
                 </div>
                 {goldSnapshots.length === 0 ? (
                   <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {goldSnapshots.map((s) => (
-                      <div key={s.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                      <div key={s.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
                         <div>
-                          <p className="text-sm font-medium text-white">{formatMonth(s.month)}</p>
+                          <p className="text-sm font-medium text-[#16332f]">{formatMonth(s.month)}</p>
                           <p className="text-xs text-zinc-600">Invested: {formatCurrency(s.invested_amount)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-white">{formatCurrency(s.current_value)}</p>
+                          <p className="text-sm font-semibold text-[#16332f]">{formatCurrency(s.current_value)}</p>
                           <p className={`text-xs ${s.gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}
                           </p>
@@ -433,20 +433,20 @@ export default function InvestmentsPage() {
               <div className="card rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-                  <h3 className="font-semibold text-white">Mutual Fund (Reksa Dana)</h3>
+                  <h3 className="font-semibold text-[#16332f]">Mutual Fund (Reksa Dana)</h3>
                 </div>
                 {mfSnapshots.length === 0 ? (
                   <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {mfSnapshots.map((s) => (
-                      <div key={s.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                      <div key={s.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
                         <div>
-                          <p className="text-sm font-medium text-white">{s.product_name || formatMonth(s.month)}</p>
+                          <p className="text-sm font-medium text-[#16332f]">{s.product_name || formatMonth(s.month)}</p>
                           <p className="text-xs text-zinc-600">{s.platform} • {formatMonth(s.month)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-white">{formatCurrency(s.current_value)}</p>
+                          <p className="text-sm font-semibold text-[#16332f]">{formatCurrency(s.current_value)}</p>
                           <p className={`text-xs ${s.gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}
                           </p>

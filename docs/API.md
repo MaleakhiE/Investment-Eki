@@ -113,6 +113,25 @@ All API responses follow a consistent format:
 
 ## Endpoints
 
+### Transactions and receipt scanning
+
+`POST /api/transactions` and `PUT /api/transactions/{id}` accept the existing transaction fields plus:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `account` | string or null | No | Preset or custom account/card tag, trimmed, maximum 100 characters |
+| `receipt_image` | string or null | No | Receipt image data URL returned by the OCR endpoint |
+
+`GET /api/transactions` returns `account`, `has_receipt`, and `receipt_image: null`; the image payload is intentionally excluded from lists to keep responses bounded. Create/update responses include the persisted receipt value. Monetary fields remain encrypted at rest.
+
+#### Scan receipt
+
+`POST /api/transactions/ocr-scan` accepts authenticated `multipart/form-data` with one `image` file. JPEG, PNG, and WebP inputs are supported up to the route's documented size limit. OCR returns editable guesses (`amount`, `date`, `merchant`, `categoryGuess`) and `receipt_image`; it never creates a transaction automatically.
+
+#### Savings suggestions
+
+`GET /api/analytics/savings-suggestions` compares this month's expense categories with the preceding three calendar months. A category is suggested only when all three historical months contain spending and the current amount is at least 10% above their average. Results are ordered by potential saving and include concrete Bahasa Indonesia guidance.
+
 ### Authentication
 
 #### Register User

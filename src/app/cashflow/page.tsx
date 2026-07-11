@@ -12,6 +12,9 @@ interface Transaction {
   category: string;
   description: string;
   amount: number;
+  account?: string | null;
+  receipt_image?: string | null;
+  has_receipt?: boolean;
 }
 
 interface MonthlySummary {
@@ -24,6 +27,8 @@ interface MonthlySummary {
 const EXPENSE_CATEGORIES = ['Rent', 'Living', 'Food', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Education', 'Investment', 'Other'];
 const INCOME_CATEGORIES = ['Salary', 'Bonus', 'Investment', 'Freelance', 'Gift', 'Other'];
 const ALL_CATEGORIES = [...new Set([...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES])];
+const ACCOUNT_PRESETS = ['Cash', 'BCA', 'Mandiri', 'BRI', 'BNI', 'GoPay', 'OVO', 'Dana', 'Credit Card'] as const;
+const OTHER_ACCOUNT = '__other__';
 
 export default function CashflowPage() {
   useSession();
@@ -45,6 +50,11 @@ export default function CashflowPage() {
   const [category, setCategory] = useState('Food');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [accountChoice, setAccountChoice] = useState('Cash');
+  const [customAccount, setCustomAccount] = useState('');
+  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [receiptTouched, setReceiptTouched] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   // New: Search and filter
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -84,8 +94,31 @@ export default function CashflowPage() {
     Promise.all([fetchTransactions(), fetchSummary()]).finally(() => setIsLoading(false));
   }, [fetchTransactions, fetchSummary]);
 
-  const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setError(''); setSuccess(''); };
-  const loadTransaction = (tx: Transaction) => { setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setError(''); setSuccess(''); };
+  const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setAccountChoice('Cash'); setCustomAccount(''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
+  const loadTransaction = (tx: Transaction) => { const preset = tx.account && ACCOUNT_PRESETS.includes(tx.account as typeof ACCOUNT_PRESETS[number]); setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setAccountChoice(preset ? tx.account! : tx.account ? OTHER_ACCOUNT : 'Cash'); setCustomAccount(preset ? '' : tx.account || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
+
+  const handleReceiptScan = async (file: File | undefined) => {
+    if (!file) return;
+    setError(''); setSuccess(''); setIsScanning(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/transactions/ocr-scan', { method: 'POST', body: formData });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.responseMessage || 'Gagal membaca struk');
+      const scan = data.responseDetails || {};
+      if (scan.amount) setAmount(String(scan.amount));
+      if (scan.date) setDate(scan.date);
+      if (scan.merchant) setDescription(scan.merchant);
+      if (scan.categoryGuess && EXPENSE_CATEGORIES.includes(scan.categoryGuess)) setCategory(scan.categoryGuess);
+      setType('EXPENSE');
+      setReceiptImage(scan.receipt_image || null);
+      setReceiptTouched(true);
+      setSuccess('Struk terbaca. Periksa kembali detail sebelum menyimpan.');
+    } catch (scanError) {
+      setError(scanError instanceof Error ? scanError.message : 'Gagal membaca struk');
+    } finally { setIsScanning(false); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
@@ -93,7 +126,9 @@ export default function CashflowPage() {
     if (!numAmount || numAmount <= 0) { setError('Amount harus lebih dari 0'); setIsSaving(false); return; }
     try {
       const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions';
-      const response = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, type, category, description, amount: numAmount }) });
+      const account = accountChoice === OTHER_ACCOUNT ? customAccount.trim() : accountChoice;
+      const payload = { date, type, category, description, amount: numAmount, account: account || null, ...(!editingId || receiptTouched ? { receipt_image: receiptImage } : {}) };
+      const response = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (response.ok) { setSuccess(editingId ? 'Updated!' : 'Added!'); resetForm(); await Promise.all([fetchTransactions(), fetchSummary()]); }
       else { setError(data.responseMessage || 'Failed'); }
@@ -118,7 +153,8 @@ export default function CashflowPage() {
   const filteredTransactions = transactions.filter(tx => {
     const matchesSearch = searchQuery === '' || 
       tx.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (tx.description && tx.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      (tx.description && tx.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tx.account && tx.account.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || tx.category === filterCategory;
     const matchesType = filterType === 'all' || tx.type === filterType;
     return matchesSearch && matchesCategory && matchesType;
@@ -143,27 +179,27 @@ export default function CashflowPage() {
   const maxW = Math.max(...weeks.map(w => Math.max(w.income, w.expense)), 1);
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f]">
+    <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <main className="lg:ml-64 p-3 sm:p-4 lg:p-6">
         <div className="mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-white">Transactions</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#16332f]">Transactions</h2>
           <p className="text-xs sm:text-sm text-zinc-600">Kelola pemasukan dan pengeluaran</p>
         </div>
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
                 <p className="text-[10px] sm:text-sm text-zinc-600">Net Cashflow</p>
                 <p className={`text-base sm:text-2xl font-bold ${net >= 0 ? 'text-green-600' : 'text-red-500'}`}>{fmtC(net)}</p>
                 <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">Save rate: {savingsRate}%</p>
               </div>
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
                 <p className="text-[10px] sm:text-sm text-zinc-600">Income</p>
                 <p className="text-base sm:text-2xl font-bold text-green-600">{fmtC(income)}</p>
                 <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">{transactions.filter(t => t.type === 'INCOME').length} transaksi</p>
               </div>
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
                 <p className="text-[10px] sm:text-sm text-zinc-600">Expense</p>
                 <p className="text-base sm:text-2xl font-bold text-red-500">{fmtC(expense)}</p>
                 <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">{transactions.filter(t => t.type === 'EXPENSE').length} transaksi</p>
@@ -171,18 +207,18 @@ export default function CashflowPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-[10px] sm:text-xs text-zinc-500">Filter</p>
-                    <input type="month" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="text-sm sm:text-lg font-semibold text-white border-0 bg-transparent focus:outline-none cursor-pointer" />
+                    <input type="month" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="text-sm sm:text-lg font-semibold text-[#16332f] border-0 bg-transparent focus:outline-none cursor-pointer" />
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
-                    <p className="text-lg sm:text-xl font-bold text-white">{transactions.length}</p>
+                    <p className="text-lg sm:text-xl font-bold text-[#16332f]">{transactions.length}</p>
                   </div>
                 </div>
-                <div className="border-t border-white/10 pt-3">
+                <div className="border-t border-[#dcece8] pt-3">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] sm:text-xs text-zinc-600">Trend Mingguan</p>
                     <div className="flex gap-2 text-[8px] sm:text-[10px]">
@@ -205,50 +241,62 @@ export default function CashflowPage() {
                 </div>
               </div>
 
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
-                <h3 className="font-semibold text-white text-sm sm:text-base mb-3">{editingId ? 'Edit' : 'Tambah'} Transaksi</h3>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">{editingId ? 'Edit' : 'Tambah'} Transaksi</h3>
+                  <label className="cursor-pointer rounded-lg border border-[#00d4aa]/30 bg-[#00d4aa]/10 px-3 py-2 text-[10px] font-semibold text-[#00a88a] hover:bg-[#00d4aa]/20 sm:text-xs">
+                    {isScanning ? 'Membaca...' : '📷 Scan Struk'}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={isScanning} onChange={(event) => { void handleReceiptScan(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
+                  </label>
+                </div>
                 {error && <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-xs rounded-lg">{error}</div>}
                 {success && <div className="mb-2 p-2 bg-green-500/20 text-green-400 text-xs rounded-lg">{success}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Tanggal</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10 rounded-lg text-xs sm:text-sm" required /></div>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Tanggal</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Tipe</label>
                       <div className="flex gap-1">
-                        <button type="button" onClick={() => { setType('EXPENSE'); setCategory('Food'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-white/10 text-zinc-600'}`}>Expense</button>
-                        <button type="button" onClick={() => { setType('INCOME'); setCategory('Salary'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'INCOME' ? 'bg-green-500 text-white' : 'bg-white/10 text-zinc-600'}`}>Income</button>
+                        <button type="button" onClick={() => { setType('EXPENSE'); setCategory('Food'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Expense</button>
+                        <button type="button" onClick={() => { setType('INCOME'); setCategory('Salary'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'INCOME' ? 'bg-green-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Income</button>
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Kategori</label><select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10 rounded-lg text-xs sm:text-sm">{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Jumlah</label><CurrencyInput value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-white/10 rounded-lg text-xs sm:text-sm" /></div>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Kategori</label><select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Jumlah</label><CurrencyInput value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
                   </div>
-                  <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Keterangan</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opsional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10 rounded-lg text-xs sm:text-sm" /></div>
+                  <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Keterangan</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opsional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Akun / Kartu</label><select value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{ACCOUNT_PRESETS.map((preset) => <option key={preset} value={preset}>{preset}</option>)}<option value={OTHER_ACCOUNT}>Lainnya...</option></select></div>
+                    {accountChoice === OTHER_ACCOUNT && <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Nama akun</label><input type="text" maxLength={100} required value={customAccount} onChange={(e) => setCustomAccount(e.target.value)} placeholder="Contoh: Jago" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>}
+                  </div>
+                  {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>✓ Gambar struk akan disimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
+                  {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>✓ Struk tersimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
                   <div className="flex gap-2">
-                    <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Tambah'}</button>
-                    {editingId && <button type="button" onClick={resetForm} className="px-3 py-2 bg-white/10 text-zinc-600 rounded-lg text-xs sm:text-sm">Batal</button>}
+                    <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-xs sm:text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Tambah'}</button>
+                    {editingId && <button type="button" onClick={resetForm} className="px-3 py-2 bg-[#e9f5f2] text-zinc-600 rounded-lg text-xs sm:text-sm">Batal</button>}
                   </div>
                 </form>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-white text-sm sm:text-base">Riwayat Transaksi</h3>
+                  <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">Riwayat Transaksi</h3>
                   {transactions.length > 5 && <button onClick={() => setShowAllModal(true)} className="text-[10px] sm:text-xs text-[#00d4aa] hover:underline">Lihat Semua</button>}
                 </div>
                 {/* Search and Filter */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   <div className="flex-1 min-w-[120px]">
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari..." className="w-full px-2 py-1.5 text-xs border border-white/10 rounded-lg" />
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari..." className="w-full px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg" />
                   </div>
-                  <select value={filterType} onChange={(e) => setFilterType(e.target.value as typeof filterType)} className="px-2 py-1.5 text-xs border border-white/10 rounded-lg">
+                  <select value={filterType} onChange={(e) => setFilterType(e.target.value as typeof filterType)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
                     <option value="all">Semua Tipe</option>
                     <option value="INCOME">Income</option>
                     <option value="EXPENSE">Expense</option>
                   </select>
-                  <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-2 py-1.5 text-xs border border-white/10 rounded-lg">
+                  <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
                     <option value="all">Semua Kategori</option>
                     {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -256,14 +304,14 @@ export default function CashflowPage() {
                 {filteredTransactions.length > 0 ? (
                   <div className="space-y-2">
                     {filteredTransactions.slice(0, 5).map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between p-2 sm:p-3 bg-white/5 rounded-lg sm:rounded-xl">
+                      <div key={tx.id} className="flex items-center justify-between p-2 sm:p-3 bg-[#f5fbf9] rounded-lg sm:rounded-xl">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                             <svg className={`w-3 h-3 sm:w-4 sm:h-4 ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tx.type === 'INCOME' ? 'M7 11l5-5m0 0l5 5m-5-5v12' : 'M17 13l-5 5m0 0l-5-5m5 5V6'} /></svg>
                           </div>
                           <div>
-                            <p className="text-xs sm:text-sm font-medium text-white">{tx.category}</p>
-                            <p className="text-[10px] sm:text-xs text-zinc-500">{fmtD(tx.date)}</p>
+                            <p className="text-xs sm:text-sm font-medium text-[#16332f]">{tx.category}</p>
+                            <p className="text-[10px] sm:text-xs text-zinc-500">{fmtD(tx.date)}{tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2">
@@ -277,8 +325,8 @@ export default function CashflowPage() {
                 ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">{searchQuery || filterCategory !== 'all' || filterType !== 'all' ? 'Tidak ada hasil' : 'Belum ada transaksi'}</p>}
               </div>
 
-              <div className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
-                <h3 className="font-semibold text-white text-sm sm:text-base mb-3">Pengeluaran per Kategori</h3>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+                <h3 className="font-semibold text-[#16332f] text-sm sm:text-base mb-3">Pengeluaran per Kategori</h3>
                 {summary?.expense_by_category && Object.keys(summary.expense_by_category).length > 0 ? (
                   <div className="space-y-2">
                     {Object.entries(summary.expense_by_category).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cat, amt]) => (
@@ -289,9 +337,9 @@ export default function CashflowPage() {
                         <div className="flex-1">
                           <div className="flex justify-between mb-0.5">
                             <span className="text-xs sm:text-sm text-zinc-300">{cat}</span>
-                            <span className="text-xs sm:text-sm font-medium text-white">{fmt(amt)}</span>
+                            <span className="text-xs sm:text-sm font-medium text-[#16332f]">{fmt(amt)}</span>
                           </div>
-                          <div className="h-1 sm:h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-1 sm:h-1.5 bg-[#e9f5f2] rounded-full overflow-hidden">
                             <div className="h-full bg-red-400 rounded-full" style={{ width: `${expense > 0 ? (amt / expense) * 100 : 0}%` }}></div>
                           </div>
                         </div>
@@ -306,28 +354,28 @@ export default function CashflowPage() {
 
         {showAllModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAllModal(false)}>
-            <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <h3 className="font-semibold text-white">Semua Transaksi</h3>
+            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-4 border-b border-[#dcece8]">
+                <h3 className="font-semibold text-[#16332f]">Semua Transaksi</h3>
                 <button onClick={() => setShowAllModal(false)} className="p-1 text-zinc-500 hover:text-zinc-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
               </div>
               <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
                 {transactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <div key={tx.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                         <svg className={`w-4 h-4 ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tx.type === 'INCOME' ? 'M7 11l5-5m0 0l5 5m-5-5v12' : 'M17 13l-5 5m0 0l-5-5m5 5V6'} /></svg>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-white">{tx.category}</p>
-                        <p className="text-xs text-zinc-500">{fmtD(tx.date)}{tx.description && ` • ${tx.description}`}</p>
+                        <p className="text-sm font-medium text-[#16332f]">{tx.category}</p>
+                        <p className="text-xs text-zinc-500">{fmtD(tx.date)}{tx.description && ` • ${tx.description}`}{tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
                       </div>
                     </div>
                     <p className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>{tx.type === 'INCOME' ? '+' : '-'}{fmt(tx.amount)}</p>
                   </div>
                 ))}
               </div>
-              <div className="p-4 border-t border-white/10 flex justify-between text-sm">
+              <div className="p-4 border-t border-[#dcece8] flex justify-between text-sm">
                 <span className="text-zinc-400">{transactions.length} transaksi</span>
                 <span className={`font-semibold ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>Net: {fmt(net)}</span>
               </div>

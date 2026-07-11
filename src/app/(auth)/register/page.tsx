@@ -51,7 +51,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-[#f3faf8] flex items-center justify-center relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#00d4aa]/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#00d4aa]/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
@@ -62,7 +62,7 @@ export default function RegisterPage() {
           <div className="w-20 h-20 rounded-3xl gradient-accent flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#00d4aa]/20">
             <span className="text-4xl">💎</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Buat Akun</h1>
+          <h1 className="text-3xl font-bold text-[#16332f] mb-2">Buat Akun</h1>
           <p className="text-zinc-500">Mulai perjalanan finansialmu</p>
         </div>
 
@@ -83,7 +83,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
+              className="w-full px-4 py-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8] text-[#16332f] placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
               placeholder="nama@email.com"
             />
           </div>
@@ -96,7 +96,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
+              className="w-full px-4 py-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8] text-[#16332f] placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
               placeholder="Minimal 8 karakter"
             />
           </div>
@@ -109,7 +109,7 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
+              className="w-full px-4 py-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8] text-[#16332f] placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
               placeholder="Ulangi password"
             />
           </div>

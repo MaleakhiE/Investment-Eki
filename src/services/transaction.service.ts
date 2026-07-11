@@ -9,6 +9,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
+import { isSupportedReceiptDataUrl } from '@/lib/receipt-image';
 
 export type TransactionType = 'INCOME' | 'EXPENSE';
 
@@ -18,6 +19,8 @@ export interface TransactionInput {
   category: string;
   description: string;
   amount: number;
+  account?: string | null;
+  receipt_image?: string | null;
 }
 
 export interface TransactionRecord {
@@ -28,6 +31,9 @@ export interface TransactionRecord {
   category: string;
   description: string;
   amount: number;
+  account: string | null;
+  receipt_image: string | null;
+  has_receipt?: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -64,11 +70,29 @@ export const INCOME_CATEGORIES = [
   'Other',
 ] as const;
 
+export const ACCOUNT_PRESETS = [
+  'Cash',
+  'BCA',
+  'Mandiri',
+  'BRI',
+  'BNI',
+  'GoPay',
+  'OVO',
+  'Dana',
+  'Credit Card',
+] as const;
+
+function normalizeAccount(account: string | null | undefined): string | null {
+  const normalized = account?.trim();
+  return normalized ? normalized : null;
+}
+
 /**
  * Validate transaction input
  */
 export function validateTransactionInput(input: TransactionInput): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
+  const account = normalizeAccount(input.account);
 
   if (!input.date || !/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
     errors.push('Invalid date format. Use YYYY-MM-DD');
@@ -88,6 +112,14 @@ export function validateTransactionInput(input: TransactionInput): { valid: bool
 
   if (typeof input.amount !== 'number' || input.amount <= 0) {
     errors.push('Amount must be a positive number');
+  }
+
+  if (account && account.length > 100) {
+    errors.push('Account must be at most 100 characters');
+  }
+
+  if (input.receipt_image && !isSupportedReceiptDataUrl(input.receipt_image)) {
+    errors.push('Receipt image must be a valid JPEG, PNG, or WebP data URL up to 5 MiB');
   }
 
   return { valid: errors.length === 0, errors };
@@ -115,6 +147,8 @@ export async function createTransaction(
       category: input.category.trim(),
       description: input.description.trim(),
       amount: encryptedAmount,
+      account: normalizeAccount(input.account),
+      ...(input.receipt_image !== undefined ? { receipt_image: input.receipt_image } : {}),
     },
   });
 
@@ -128,6 +162,8 @@ export async function createTransaction(
       category: record.category,
       description: record.description,
       amount: input.amount,
+      account: record.account,
+      receipt_image: record.receipt_image,
       created_at: record.created_at,
       updated_at: record.updated_at,
     },
@@ -166,6 +202,8 @@ export async function updateTransaction(
       category: input.category.trim(),
       description: input.description.trim(),
       amount: encryptedAmount,
+      account: normalizeAccount(input.account),
+      ...(input.receipt_image !== undefined ? { receipt_image: input.receipt_image } : {}),
     },
   });
 
@@ -179,6 +217,8 @@ export async function updateTransaction(
       category: record.category,
       description: record.description,
       amount: input.amount,
+      account: record.account,
+      receipt_image: record.receipt_image,
       created_at: record.created_at,
       updated_at: record.updated_at,
     },
@@ -230,7 +270,7 @@ export async function getTransactions(
     ...(limit && limit > 0 ? { take: limit } : {}),
   });
 
-  return records.map((record: { id: bigint; user_id: bigint; date: Date; type: string; category: string; description: string; amount: string; created_at: Date; updated_at: Date }) => ({
+  return records.map((record: { id: bigint; user_id: bigint; date: Date; type: string; category: string; description: string; amount: string; account: string | null; receipt_image: string | null; created_at: Date; updated_at: Date }) => ({
     id: record.id,
     user_id: record.user_id,
     date: record.date,
@@ -238,6 +278,9 @@ export async function getTransactions(
     category: record.category,
     description: record.description,
     amount: decryptNumber(record.amount),
+    account: record.account,
+    receipt_image: null,
+    has_receipt: record.receipt_image !== null,
     created_at: record.created_at,
     updated_at: record.updated_at,
   }));
