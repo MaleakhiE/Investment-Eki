@@ -949,6 +949,38 @@
         }
       }
     },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Request a password-reset email",
+        "operationId": "requestPasswordReset",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Generic response returned regardless of account existence" },
+          "400": { "description": "Invalid request body" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Consume a reset token and set a new password",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["token", "password"], "properties": { "token": { "type": "string" }, "password": { "type": "string", "minLength": 8 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "description": "Invalid, expired, used token, or invalid password" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
     "/api/transactions/ocr-scan": {
       "post": {
         "tags": ["Cashflow"],

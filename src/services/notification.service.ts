@@ -11,9 +11,9 @@
  * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5
  */
 
-import nodemailer from 'nodemailer';
 import { prisma } from '@/lib/prisma';
 import { decrypt, decryptNumber } from '@/lib/encryption';
+import { sendSmtpMail } from './smtp.service';
 import { CashflowRecord } from './cashflow.service';
 import { PortfolioSummary } from './analytics.service';
 
@@ -249,37 +249,13 @@ export async function checkCashflowExists(
 }
 
 /**
- * Create SMTP transporter from environment variables
- * 
- * Requirements: 6.5
- */
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-}
-
-/**
  * Send email using Nodemailer
  * 
  * Requirements: 6.5
  */
 export async function sendEmail(content: EmailContent): Promise<boolean> {
   try {
-    const transporter = createTransporter();
-    
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: content.to,
-      subject: content.subject,
-      html: content.html,
-    });
+    await sendSmtpMail(content);
     
     return true;
   } catch (error) {

@@ -74,7 +74,12 @@ function LoginForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-2">Password</label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="block text-sm font-medium text-zinc-400">Password</label>
+            <Link href="/forgot-password" className="text-sm font-medium text-[#00a88a] hover:underline">
+              Lupa password?
+            </Link>
+          </div>
           <input
             type="password"
             value={password}

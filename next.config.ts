@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  async headers() {
+    return [{
+      source: '/reset-password',
+      headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }],
+    }];
+  },
 };
 
 export default nextConfig;
