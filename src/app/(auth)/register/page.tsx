@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AuthShell from '@/components/auth/AuthShell';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,12 +18,12 @@ export default function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Password tidak sama');
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-      setError('Password minimal 8 karakter');
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -38,32 +39,20 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.responseMessage || 'Gagal mendaftar');
+        setError(data.responseMessage || 'Unable to create account');
         return;
       }
 
       router.push('/login?registered=true');
     } catch {
-      setError('Terjadi kesalahan');
+      setError('Something went wrong');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f3faf8] flex items-center justify-center relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#00d4aa]/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#00d4aa]/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
-      
-      <div className="w-full max-w-md px-6">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="w-20 h-20 rounded-3xl gradient-accent flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#00d4aa]/20">
-          </div>
-          <h1 className="text-3xl font-bold text-[#16332f] mb-2">Buat Akun</h1>
-          <p className="text-zinc-500">Mulai perjalanan finansialmu</p>
-        </div>
+    <AuthShell title="Create your account" description="Start building a clearer financial future.">
 
         {/* Error */}
         {error && (
@@ -83,7 +72,7 @@ export default function RegisterPage() {
               required
               autoComplete="email"
               className="w-full px-4 py-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8] text-[#16332f] placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
-              placeholder="nama@email.com"
+              placeholder="name@email.com"
             />
           </div>
 
@@ -96,12 +85,12 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
               className="w-full px-4 py-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8] text-[#16332f] placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
-              placeholder="Minimal 8 karakter"
+              placeholder="At least 8 characters"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2">Konfirmasi Password</label>
+            <label className="block text-sm font-medium text-zinc-400 mb-2">Confirm password</label>
             <input
               type="password"
               value={confirmPassword}
@@ -109,7 +98,7 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
               className="w-full px-4 py-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8] text-[#16332f] placeholder-zinc-600 focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all"
-              placeholder="Ulangi password"
+              placeholder="Repeat password"
             />
           </div>
 
@@ -120,21 +109,20 @@ export default function RegisterPage() {
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
-                Mendaftar...
+                Creating account...
               </span>
-            ) : 'Daftar'}
+            ) : 'Create account'}
           </button>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-zinc-500">
-            Sudah punya akun?{' '}
+            Already have an account?{' '}
             <Link href="/login" className="text-[#00d4aa] hover:underline font-medium">
-              Masuk
+              Sign in
             </Link>
           </p>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
