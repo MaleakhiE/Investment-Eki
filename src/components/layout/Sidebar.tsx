@@ -12,7 +12,8 @@ function NavLink({ item, pathname, onClick }: { item: NavigationItem; pathname: 
   return <Link href={item.href} onClick={onClick} className={`app-nav-link ${active ? 'is-active' : ''}`}><AppIcon name={item.icon}/><span>{item.label}</span></Link>;
 }
 
-export default function Sidebar(_props: { mobileMenuOpen?: boolean; setMobileMenuOpen?: (open: boolean) => void } = {}) {
+export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenuOpen?: (open: boolean) => void } = {}) {
+  void props;
   const pathname = usePathname();
   const { data: session } = useSession();
   const [moreOpen, setMoreOpen] = useState(false);
