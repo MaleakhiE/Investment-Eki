@@ -37,7 +37,6 @@ export default function SuperadminSmtpPage() {
   const [activeAction, setActiveAction] = useState<'save' | 'verify' | 'test' | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -174,7 +173,7 @@ export default function SuperadminSmtpPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="p-4 pb-28 lg:ml-64 lg:p-8">
         <div className="mx-auto max-w-4xl space-y-5">
           <header>
