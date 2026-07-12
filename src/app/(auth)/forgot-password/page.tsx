@@ -43,7 +43,6 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md px-6">
         <div className="text-center mb-10">
           <div className="w-20 h-20 rounded-3xl gradient-accent flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#00d4aa]/20">
-            <span className="text-4xl">✉️</span>
           </div>
           <h1 className="text-3xl font-bold text-[#16332f] mb-2">Lupa Password</h1>
           <p className="text-zinc-500">Kami akan mengirimkan tautan untuk membuat password baru</p>

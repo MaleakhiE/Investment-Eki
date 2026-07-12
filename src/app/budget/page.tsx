@@ -25,7 +25,6 @@ export default function BudgetPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   // Form state
@@ -79,14 +78,14 @@ export default function BudgetPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[#16332f]">Budget</h2>
             <p className="text-sm text-zinc-600">Set spending limits per category</p>
           </div>
-          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">+ Set Budget</button>
+          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">Set Budget</button>
         </div>
 
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
@@ -115,7 +114,7 @@ export default function BudgetPage() {
                 <div className="flex items-center gap-2">
                   {overBudgetCount > 0 && <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">{overBudgetCount} over</span>}
                   {warningCount > 0 && <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full">{warningCount} warning</span>}
-                  {overBudgetCount === 0 && warningCount === 0 && <span className="text-green-400 text-sm">✓ All good</span>}
+                  {overBudgetCount === 0 && warningCount === 0 && <span className="text-green-400 text-sm">All good</span>}
                 </div>
               </div>
             </div>
@@ -157,7 +156,7 @@ export default function BudgetPage() {
             <div className="card rounded-xl p-5">
               <h3 className="font-semibold text-[#16332f] mb-4">Budget per Category</h3>
               {budgets.length === 0 ? (
-                <p className="text-sm text-zinc-500 text-center py-8">No budgets set. Click &quot;+ Set Budget&quot; to start!</p>
+                <p className="text-sm text-zinc-500 text-center py-8">No budgets set. Click &quot;Set Budget&quot; to start!</p>
               ) : (
                 <div className="space-y-3">
                   {budgets.sort((a, b) => b.percentage - a.percentage).map(budget => (
@@ -170,7 +169,7 @@ export default function BudgetPage() {
                           {!budget.isOverBudget && budget.percentage >= 80 && <span className="text-[10px] px-2 py-0.5 bg-amber-500 text-[#16332f] rounded-full">Warning</span>}
                         </div>
                         <button onClick={() => handleDelete(budget.id)} className="p-1 text-zinc-500 hover:text-red-400">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          Hapus
                         </button>
                       </div>
                       <div className="flex items-center gap-2 mb-2">
@@ -199,7 +198,7 @@ export default function BudgetPage() {
                 <div className="flex flex-wrap gap-2">
                   {unbugdetedCategories.map(cat => (
                     <button key={cat} onClick={() => { setCategory(cat); setShowForm(true); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg hover:bg-white/20">
-                      + {cat}
+                      {cat}
                     </button>
                   ))}
                 </div>

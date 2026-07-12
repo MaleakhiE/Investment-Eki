@@ -32,7 +32,6 @@ export default function DashboardPage() {
   const [suggestions, setSuggestions] = useState<SavingsSuggestion[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [periodLabel, setPeriodLabel] = useState('');
 
   const getSalaryPeriod = (date: Date) => {
@@ -108,7 +107,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f3faf8]">
-        <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <Sidebar />
         <main className="lg:ml-64 p-4 lg:p-6">
           <div className="space-y-4">
             <div className="skeleton h-48 rounded-3xl"></div>
@@ -124,13 +123,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-4 lg:p-6">
         {/* Greeting */}
         <div className="mb-6 animate-fade-in">
           <p className="text-zinc-500 text-sm">{periodLabel}</p>
           <h1 className="text-2xl lg:text-3xl font-bold text-[#16332f] mt-1">
-            Selamat datang! <span className="inline-block animate-bounce">👋</span>
+            Selamat datang
           </h1>
         </div>
 
@@ -154,18 +153,12 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-xl bg-[#00d4aa]/20 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
-                    </div>
                     <span className="text-zinc-400 text-xs">Pemasukan</span>
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(income)}</p>
                 </div>
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
-                    </div>
                     <span className="text-zinc-400 text-xs">Pengeluaran</span>
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(expense)}</p>
@@ -190,23 +183,20 @@ export default function DashboardPage() {
           {/* Quick Actions */}
           <div className="grid grid-cols-4 gap-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {[
-              { href: '/cashflow', emoji: '💳', label: 'Transaksi', color: 'from-blue-500/20 to-blue-600/20' },
-              { href: '/investments', emoji: '📈', label: 'Investasi', color: 'from-amber-500/20 to-amber-600/20' },
-              { href: '/budget', emoji: '💰', label: 'Budget', color: 'from-green-500/20 to-green-600/20' },
-              { href: '/goals', emoji: '🎯', label: 'Goals', color: 'from-purple-500/20 to-purple-600/20' },
+              { href: '/cashflow', label: 'Transaksi' },
+              { href: '/investments', label: 'Investasi' },
+              { href: '/budget', label: 'Budget' },
+              { href: '/goals', label: 'Goals' },
             ].map((item) => (
-              <Link key={item.href} href={item.href} className="card hover-scale p-4 flex flex-col items-center gap-2 stat-card">
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center`}>
-                  <span className="text-2xl">{item.emoji}</span>
-                </div>
-                <span className="text-[10px] lg:text-xs font-medium text-zinc-400">{item.label}</span>
+              <Link key={item.href} href={item.href} className="card hover-scale p-4 text-center stat-card">
+                <span className="text-xs font-semibold text-zinc-600">{item.label}</span>
               </Link>
             ))}
           </div>
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <section className="card rounded-3xl p-5">
-              <div className="mb-4 flex items-center gap-2"><span className="text-xl">💡</span><h2 className="font-semibold text-[#16332f]">Peluang Hemat</h2></div>
+              <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Peluang Hemat</h2></div>
               {suggestions.length > 0 ? <div className="space-y-3">{suggestions.slice(0, 3).map((item) => {
                 const saving = item.potential_saving ?? 0;
                 return <div key={item.category} className="rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.message ?? `Kembali ke rata-rata tiga bulan untuk menghemat ${formatCurrency(saving)}.`}</p></div><span className="whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
@@ -214,8 +204,8 @@ export default function DashboardPage() {
             </section>
 
             <section className="card rounded-3xl p-5">
-              <div className="mb-4 flex items-center gap-2"><span className="text-xl">🗓️</span><h2 className="font-semibold text-[#16332f]">Transaksi Mendatang</h2></div>
-              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00d4aa]/10 text-lg">{item.type === 'INCOME' ? '↗' : '↘'}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">Belum ada transaksi berulang yang aktif.</p>}
+              <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Transaksi Mendatang</h2></div>
+              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{item.type === 'INCOME' ? 'Pemasukan' : 'Pengeluaran'} · {new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">Belum ada transaksi berulang yang aktif.</p>}
             </section>
           </div>
 
@@ -224,10 +214,9 @@ export default function DashboardPage() {
             <div className="card rounded-3xl p-5 animate-fade-in stat-card" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">💎</span>
                   <h3 className="font-semibold text-[#16332f]">Portfolio</h3>
                 </div>
-                <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">Lihat Detail →</Link>
+                <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">Lihat Detail</Link>
               </div>
               
               <div className="flex items-end justify-between mb-4">
@@ -235,7 +224,7 @@ export default function DashboardPage() {
                   <p className="text-3xl font-bold text-[#16332f]">{formatCurrency(currentVal)}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#00d4aa]' : 'text-red-400'}`}>
-                      {gainLoss >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(gainLoss))}
+                      {gainLoss >= 0 ? 'Untung' : 'Rugi'} {formatCurrency(Math.abs(gainLoss))}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${gainLoss >= 0 ? 'bg-[#00d4aa]/10 text-[#00d4aa]' : 'bg-red-500/10 text-red-400'}`}>
                       {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(1)}%
@@ -270,10 +259,9 @@ export default function DashboardPage() {
           <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-xl">💳</span>
                 <h3 className="font-semibold text-[#16332f]">Transaksi Terakhir</h3>
               </div>
-              <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">Semua →</Link>
+              <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">Semua</Link>
             </div>
             
             {transactions.length > 0 ? (
@@ -282,9 +270,9 @@ export default function DashboardPage() {
                   <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-[#f5fbf9] hover:bg-[#e9f5f2] transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-[#00d4aa]/10' : 'bg-red-500/10'}`}>
                       {tx.type === 'INCOME' ? (
-                        <svg className="w-5 h-5 text-[#00d4aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
+                        <span className="text-[9px] font-semibold text-[#00a88a]">MASUK</span>
                       ) : (
-                        <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
+                        <span className="text-[9px] font-semibold text-red-500">KELUAR</span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -300,11 +288,10 @@ export default function DashboardPage() {
             ) : (
               <div className="text-center py-8">
                 <div className="w-16 h-16 rounded-full bg-[#f5fbf9] flex items-center justify-center mx-auto mb-3">
-                  <span className="text-3xl">📝</span>
                 </div>
                 <p className="text-zinc-500 text-sm mb-3">Belum ada transaksi</p>
                 <Link href="/cashflow" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
-                  <span>+</span> Tambah Transaksi
+                  Tambah Transaksi
                 </Link>
               </div>
             )}
@@ -314,7 +301,6 @@ export default function DashboardPage() {
           {trend.length > 0 && (
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">📊</span>
                 <h3 className="font-semibold text-[#16332f]">Tren 6 Bulan</h3>
               </div>
               
@@ -348,10 +334,9 @@ export default function DashboardPage() {
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.5s' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🎯</span>
                   <h3 className="font-semibold text-[#16332f]">Goals Aktif</h3>
                 </div>
-                <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">Semua →</Link>
+                <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">Semua</Link>
               </div>
               
               <div className="space-y-3">
@@ -378,7 +363,6 @@ export default function DashboardPage() {
           {summary?.expense_by_category && Object.keys(summary.expense_by_category).length > 0 && (
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">🔥</span>
                 <h3 className="font-semibold text-[#16332f]">Pengeluaran Terbesar</h3>
               </div>
               
@@ -409,12 +393,11 @@ export default function DashboardPage() {
           {!isLoading && transactions.length === 0 && currentVal === 0 && (
             <div className="card rounded-3xl p-8 text-center animate-fade-in">
               <div className="w-20 h-20 rounded-full bg-[#00d4aa]/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-4xl">🚀</span>
               </div>
               <h3 className="text-xl font-bold text-[#16332f] mb-2">Mulai Perjalanan Finansialmu!</h3>
               <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">Catat transaksi pertamamu dan mulai kelola keuangan dengan lebih baik</p>
               <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-black font-semibold hover:opacity-90 transition-opacity">
-                <span>+</span> Tambah Transaksi Pertama
+                Tambah Transaksi Pertama
               </Link>
             </div>
           )}

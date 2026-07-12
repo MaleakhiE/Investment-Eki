@@ -38,7 +38,6 @@ export default function CashflowPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAllModal, setShowAllModal] = useState(false);
   const [filterMonth, setFilterMonth] = useState(() => {
     const now = new Date();
@@ -180,7 +179,7 @@ export default function CashflowPage() {
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar />
       <main className="lg:ml-64 p-3 sm:p-4 lg:p-6">
         <div className="mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-[#16332f]">Transactions</h2>
@@ -245,7 +244,7 @@ export default function CashflowPage() {
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">{editingId ? 'Edit' : 'Tambah'} Transaksi</h3>
                   <label className="cursor-pointer rounded-lg border border-[#00d4aa]/30 bg-[#00d4aa]/10 px-3 py-2 text-[10px] font-semibold text-[#00a88a] hover:bg-[#00d4aa]/20 sm:text-xs">
-                    {isScanning ? 'Membaca...' : '📷 Scan Struk'}
+                    {isScanning ? 'Membaca...' : 'Scan Struk'}
                     <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={isScanning} onChange={(event) => { void handleReceiptScan(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
                   </label>
                 </div>
@@ -270,8 +269,8 @@ export default function CashflowPage() {
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Akun / Kartu</label><select value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{ACCOUNT_PRESETS.map((preset) => <option key={preset} value={preset}>{preset}</option>)}<option value={OTHER_ACCOUNT}>Lainnya...</option></select></div>
                     {accountChoice === OTHER_ACCOUNT && <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Nama akun</label><input type="text" maxLength={100} required value={customAccount} onChange={(e) => setCustomAccount(e.target.value)} placeholder="Contoh: Jago" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>}
                   </div>
-                  {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>✓ Gambar struk akan disimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
-                  {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>✓ Struk tersimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
+                  {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Gambar struk akan disimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
+                  {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Struk tersimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
                   <div className="flex gap-2">
                     <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-xs sm:text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Tambah'}</button>
                     {editingId && <button type="button" onClick={resetForm} className="px-3 py-2 bg-[#e9f5f2] text-zinc-600 rounded-lg text-xs sm:text-sm">Batal</button>}
@@ -307,7 +306,7 @@ export default function CashflowPage() {
                       <div key={tx.id} className="flex items-center justify-between p-2 sm:p-3 bg-[#f5fbf9] rounded-lg sm:rounded-xl">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                            <svg className={`w-3 h-3 sm:w-4 sm:h-4 ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tx.type === 'INCOME' ? 'M7 11l5-5m0 0l5 5m-5-5v12' : 'M17 13l-5 5m0 0l-5-5m5 5V6'} /></svg>
+                            <span className={`text-[9px] font-semibold sm:text-[10px] ${tx.type === 'INCOME' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'MASUK' : 'KELUAR'}</span>
                           </div>
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-[#16332f]">{tx.category}</p>
@@ -316,8 +315,8 @@ export default function CashflowPage() {
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2">
                           <p className={`text-xs sm:text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>{tx.type === 'INCOME' ? '+' : '-'}{fmtC(tx.amount)}</p>
-                          <button onClick={() => loadTransaction(tx)} className="p-1 text-zinc-500 hover:text-[#00d4aa]"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                          <button onClick={() => handleDelete(tx.id)} className="p-1 text-zinc-500 hover:text-red-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                          <button onClick={() => loadTransaction(tx)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>
+                          <button onClick={() => handleDelete(tx.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Hapus</button>
                         </div>
                       </div>
                     ))}
@@ -332,7 +331,7 @@ export default function CashflowPage() {
                     {Object.entries(summary.expense_by_category).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cat, amt]) => (
                       <div key={cat} className="flex items-center gap-2 sm:gap-3">
                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
+                          <span className="text-[9px] font-semibold text-red-500 sm:text-[10px]">KELUAR</span>
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between mb-0.5">
@@ -357,14 +356,14 @@ export default function CashflowPage() {
             <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between p-4 border-b border-[#dcece8]">
                 <h3 className="font-semibold text-[#16332f]">Semua Transaksi</h3>
-                <button onClick={() => setShowAllModal(false)} className="p-1 text-zinc-500 hover:text-zinc-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                <button onClick={() => setShowAllModal(false)} className="px-2 py-1 text-sm font-medium text-zinc-500 hover:text-zinc-700">Tutup</button>
               </div>
               <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
                 {transactions.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                        <svg className={`w-4 h-4 ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tx.type === 'INCOME' ? 'M7 11l5-5m0 0l5 5m-5-5v12' : 'M17 13l-5 5m0 0l-5-5m5 5V6'} /></svg>
+                        <span className={`text-[9px] font-semibold ${tx.type === 'INCOME' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'MASUK' : 'KELUAR'}</span>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-[#16332f]">{tx.category}</p>
