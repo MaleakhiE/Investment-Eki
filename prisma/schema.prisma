@@ -14,6 +14,7 @@ model User {
   ai_recommendation_enabled Boolean           @default(true)
   created_at                DateTime          @default(now())
   updated_at                DateTime          @updatedAt
+  role                      UserRole          @default(USER)
 
   cashflows            MonthlyCashflow[]
   transactions         Transaction[]
@@ -27,6 +28,11 @@ model User {
   passwordResetTokens  PasswordResetToken[]
 
   @@map("users")
+}
+
+enum UserRole {
+  USER
+  SUPERADMIN
 }
 
 model ApplicationSmtpSettings {

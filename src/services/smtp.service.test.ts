@@ -1,6 +1,7 @@
-const applicationSmtpSettings = { findUnique: jest.fn(), upsert: jest.fn() };
+const applicationSmtpSettings = { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn(), create: jest.fn() };
 const sendMail = jest.fn();
-const createTransport = jest.fn(() => ({ sendMail }));
+const verify = jest.fn();
+const createTransport = jest.fn(() => ({ sendMail, verify }));
 jest.mock('@/lib/prisma', () => ({ prisma: { applicationSmtpSettings } }));
 jest.mock('nodemailer', () => ({ __esModule: true, default: { createTransport } }));
 jest.mock('@/lib/encryption', () => ({
@@ -8,10 +9,13 @@ jest.mock('@/lib/encryption', () => ({
   decrypt: (value: string) => value.replace('encrypted:', ''),
 }));
 
-import { getSmtpSettings, importSmtpSettingsFromEnvironment, readSmtpEnvironment, sendSmtpMail } from './smtp.service';
+import { getGlobalSmtpStatus, getSmtpSettings, importSmtpSettingsFromEnvironment, readSmtpEnvironment, saveGlobalSmtpSettings, sendSmtpMail, verifyGlobalSmtp } from './smtp.service';
 
 describe('global SMTP settings', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.SMTP_ALLOWED_HOSTS = 'smtp.example.com,smtp.hostinger.com';
+  });
 
   it('stores one encrypted singleton from environment variables', async () => {
     applicationSmtpSettings.upsert.mockResolvedValue({});
@@ -55,5 +59,35 @@ describe('global SMTP settings', () => {
     sendMail.mockResolvedValue({});
     await sendSmtpMail({ to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' });
     expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({ port: 587, secure: false, requireTLS: true }));
+  });
+
+  it('returns a masked username and never returns encrypted credentials', async () => {
+    applicationSmtpSettings.findUnique.mockResolvedValue({ host: 'smtp.example.com', port: 465, smtp_user: 'encrypted:person@example.com', smtp_pass: 'encrypted:secret', from_email: 'from@example.com' });
+    await expect(getGlobalSmtpStatus()).resolves.toEqual({ configured: true, host: 'smtp.example.com', port: 465, username: 'p***@example.com', fromAddress: 'from@example.com' });
+  });
+
+  it('encrypts credentials and preserves the password when an update omits it', async () => {
+    applicationSmtpSettings.findUnique.mockResolvedValue({ id: 1, smtp_user: 'encrypted:existing@example.com' });
+    applicationSmtpSettings.update.mockResolvedValue({});
+    await saveGlobalSmtpSettings({ host: 'smtp.example.com', port: 587, user: 'person@example.com', from: 'from@example.com' });
+    expect(applicationSmtpSettings.update).toHaveBeenCalledWith({ where: { id: 1 }, data: expect.not.objectContaining({ smtp_pass: expect.anything() }) });
+  });
+
+  it('preserves the username when an update omits it', async () => {
+    applicationSmtpSettings.findUnique.mockResolvedValue({ id: 1, smtp_user: 'encrypted:existing@example.com' });
+    applicationSmtpSettings.update.mockResolvedValue({});
+    await saveGlobalSmtpSettings({ host: 'smtp.example.com', port: 465, user: '', from: 'from@example.com' });
+    expect(applicationSmtpSettings.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: expect.not.objectContaining({ smtp_user: expect.anything() }),
+    });
+  });
+
+  it('verifies the stored transport with implicit TLS on port 465', async () => {
+    applicationSmtpSettings.findUnique.mockResolvedValue({ host: 'smtp.example.com', port: 465, secure: true, smtp_user: 'encrypted:user', smtp_pass: 'encrypted:pass', from_email: 'from@example.com' });
+    verify.mockResolvedValue(undefined);
+    await verifyGlobalSmtp();
+    expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({ port: 465, secure: true, requireTLS: false }));
+    expect(verify).toHaveBeenCalled();
   });
 });

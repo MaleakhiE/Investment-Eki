@@ -92,6 +92,7 @@ export interface ValidateCredentialsResult {
     id: bigint;
     email: string;
     ai_recommendation_enabled: boolean;
+    role: 'USER' | 'SUPERADMIN';
     created_at: Date;
   } | null;
 }
@@ -129,6 +130,7 @@ export async function validateCredentials(
       id: user.id,
       email: decrypt(user.email),
       ai_recommendation_enabled: user.ai_recommendation_enabled,
+      role: user.role,
       created_at: user.created_at,
     },
   };
@@ -150,6 +152,7 @@ export async function getUserById(userId: bigint) {
     id: user.id,
     email: decrypt(user.email),
     ai_recommendation_enabled: user.ai_recommendation_enabled,
+    role: user.role,
     created_at: user.created_at,
     updated_at: user.updated_at,
   };
