@@ -104,7 +104,7 @@ export default function CashflowPage() {
       formData.append('image', file);
       const response = await fetch('/api/transactions/ocr-scan', { method: 'POST', body: formData });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.responseMessage || 'Gagal membaca struk');
+      if (!response.ok) throw new Error(data.responseMessage || 'Unable to scan receipt');
       const scan = data.responseDetails || {};
       if (scan.amount) setAmount(String(scan.amount));
       if (scan.date) setDate(scan.date);
@@ -113,9 +113,9 @@ export default function CashflowPage() {
       setType('EXPENSE');
       setReceiptImage(scan.receipt_image || null);
       setReceiptTouched(true);
-      setSuccess('Struk terbaca. Periksa kembali detail sebelum menyimpan.');
+      setSuccess('Receipt scanned. Review the details before saving.');
     } catch (scanError) {
-      setError(scanError instanceof Error ? scanError.message : 'Gagal membaca struk');
+      setError(scanError instanceof Error ? scanError.message : 'Unable to scan receipt');
     } finally { setIsScanning(false); }
   };
 
@@ -135,7 +135,7 @@ export default function CashflowPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus transaksi ini?')) return;
+    if (!confirm('Delete this transaction?')) return;
     try { const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' }); if (response.ok) { await Promise.all([fetchTransactions(), fetchSummary()]); } } catch (err) { console.error(err); }
   };
 
@@ -180,10 +180,10 @@ export default function CashflowPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="lg:ml-64 p-3 sm:p-4 lg:p-6">
+      <main className="app-page activity-page lg:ml-64 p-3 sm:p-4 lg:p-6">
         <div className="mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-[#16332f]">Transactions</h2>
-          <p className="text-xs sm:text-sm text-zinc-600">Kelola pemasukan dan pengeluaran</p>
+          <p className="text-xs sm:text-sm text-zinc-600">Track income and expenses</p>
         </div>
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-3 sm:space-y-4">
@@ -196,12 +196,12 @@ export default function CashflowPage() {
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
                 <p className="text-[10px] sm:text-sm text-zinc-600">Income</p>
                 <p className="text-base sm:text-2xl font-bold text-green-600">{fmtC(income)}</p>
-                <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">{transactions.filter(t => t.type === 'INCOME').length} transaksi</p>
+                <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">{transactions.filter(t => t.type === 'INCOME').length} transactions</p>
               </div>
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
                 <p className="text-[10px] sm:text-sm text-zinc-600">Expense</p>
                 <p className="text-base sm:text-2xl font-bold text-red-500">{fmtC(expense)}</p>
-                <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">{transactions.filter(t => t.type === 'EXPENSE').length} transaksi</p>
+                <p className="text-[9px] sm:text-xs text-zinc-500 mt-1">{transactions.filter(t => t.type === 'EXPENSE').length} transactions</p>
               </div>
             </div>
 
@@ -219,7 +219,7 @@ export default function CashflowPage() {
                 </div>
                 <div className="border-t border-[#dcece8] pt-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] sm:text-xs text-zinc-600">Trend Mingguan</p>
+                    <p className="text-[10px] sm:text-xs text-zinc-600">Weekly trend</p>
                     <div className="flex gap-2 text-[8px] sm:text-[10px]">
                       <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-green-400"></span><span className="text-zinc-600">In</span></span>
                       <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-400"></span><span className="text-zinc-600">Out</span></span>
@@ -242,9 +242,9 @@ export default function CashflowPage() {
 
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">{editingId ? 'Edit' : 'Tambah'} Transaksi</h3>
+                  <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">{editingId ? 'Edit' : 'Add'} Activity</h3>
                   <label className="cursor-pointer rounded-lg border border-[#00d4aa]/30 bg-[#00d4aa]/10 px-3 py-2 text-[10px] font-semibold text-[#00a88a] hover:bg-[#00d4aa]/20 sm:text-xs">
-                    {isScanning ? 'Membaca...' : 'Scan Struk'}
+                    {isScanning ? 'Scanning...' : 'Scan receipt'}
                     <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={isScanning} onChange={(event) => { void handleReceiptScan(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
                   </label>
                 </div>
@@ -252,7 +252,7 @@ export default function CashflowPage() {
                 {success && <div className="mb-2 p-2 bg-green-500/20 text-green-400 text-xs rounded-lg">{success}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Tanggal</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Tipe</label>
                       <div className="flex gap-1">
                         <button type="button" onClick={() => { setType('EXPENSE'); setCategory('Food'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Expense</button>
@@ -261,19 +261,19 @@ export default function CashflowPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Kategori</label><select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Jumlah</label><CurrencyInput value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Category</label><select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Amount</label><CurrencyInput value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
                   </div>
-                  <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Keterangan</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opsional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
+                  <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Description</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Akun / Kartu</label><select value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{ACCOUNT_PRESETS.map((preset) => <option key={preset} value={preset}>{preset}</option>)}<option value={OTHER_ACCOUNT}>Lainnya...</option></select></div>
-                    {accountChoice === OTHER_ACCOUNT && <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Nama akun</label><input type="text" maxLength={100} required value={customAccount} onChange={(e) => setCustomAccount(e.target.value)} placeholder="Contoh: Jago" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>}
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Account or card</label><select value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{ACCOUNT_PRESETS.map((preset) => <option key={preset} value={preset}>{preset}</option>)}<option value={OTHER_ACCOUNT}>Other...</option></select></div>
+                    {accountChoice === OTHER_ACCOUNT && <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Account name</label><input type="text" maxLength={100} required value={customAccount} onChange={(e) => setCustomAccount(e.target.value)} placeholder="Example: Jago" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>}
                   </div>
-                  {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Gambar struk akan disimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
-                  {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Struk tersimpan</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Hapus</button></div>}
+                  {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt image will be saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
+                  {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   <div className="flex gap-2">
-                    <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-xs sm:text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Tambah'}</button>
-                    {editingId && <button type="button" onClick={resetForm} className="px-3 py-2 bg-[#e9f5f2] text-zinc-600 rounded-lg text-xs sm:text-sm">Batal</button>}
+                    <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-xs sm:text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Add'}</button>
+                    {editingId && <button type="button" onClick={resetForm} className="px-3 py-2 bg-[#e9f5f2] text-zinc-600 rounded-lg text-xs sm:text-sm">Cancel</button>}
                   </div>
                 </form>
               </div>
@@ -282,8 +282,8 @@ export default function CashflowPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">Riwayat Transaksi</h3>
-                  {transactions.length > 5 && <button onClick={() => setShowAllModal(true)} className="text-[10px] sm:text-xs text-[#00d4aa] hover:underline">Lihat Semua</button>}
+                  <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">Transaction history</h3>
+                  {transactions.length > 5 && <button onClick={() => setShowAllModal(true)} className="text-[10px] sm:text-xs text-[#00d4aa] hover:underline">View all</button>}
                 </div>
                 {/* Search and Filter */}
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -291,12 +291,12 @@ export default function CashflowPage() {
                     <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari..." className="w-full px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg" />
                   </div>
                   <select value={filterType} onChange={(e) => setFilterType(e.target.value as typeof filterType)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
-                    <option value="all">Semua Tipe</option>
+                    <option value="all">All types</option>
                     <option value="INCOME">Income</option>
                     <option value="EXPENSE">Expense</option>
                   </select>
                   <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
-                    <option value="all">Semua Kategori</option>
+                    <option value="all">All categories</option>
                     {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
@@ -316,16 +316,16 @@ export default function CashflowPage() {
                         <div className="flex items-center gap-1 sm:gap-2">
                           <p className={`text-xs sm:text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>{tx.type === 'INCOME' ? '+' : '-'}{fmtC(tx.amount)}</p>
                           <button onClick={() => loadTransaction(tx)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>
-                          <button onClick={() => handleDelete(tx.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Hapus</button>
+                          <button onClick={() => handleDelete(tx.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Delete</button>
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">{searchQuery || filterCategory !== 'all' || filterType !== 'all' ? 'Tidak ada hasil' : 'Belum ada transaksi'}</p>}
+                ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">{searchQuery || filterCategory !== 'all' || filterType !== 'all' ? 'No results' : 'No transactions yet'}</p>}
               </div>
 
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
-                <h3 className="font-semibold text-[#16332f] text-sm sm:text-base mb-3">Pengeluaran per Kategori</h3>
+                <h3 className="font-semibold text-[#16332f] text-sm sm:text-base mb-3">Expenses per Category</h3>
                 {summary?.expense_by_category && Object.keys(summary.expense_by_category).length > 0 ? (
                   <div className="space-y-2">
                     {Object.entries(summary.expense_by_category).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cat, amt]) => (
@@ -345,7 +345,7 @@ export default function CashflowPage() {
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">Belum ada data</p>}
+                ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">No data yet</p>}
               </div>
             </div>
           </div>
@@ -355,7 +355,7 @@ export default function CashflowPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAllModal(false)}>
             <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between p-4 border-b border-[#dcece8]">
-                <h3 className="font-semibold text-[#16332f]">Semua Transaksi</h3>
+                <h3 className="font-semibold text-[#16332f]">All transactions</h3>
                 <button onClick={() => setShowAllModal(false)} className="px-2 py-1 text-sm font-medium text-zinc-500 hover:text-zinc-700">Tutup</button>
               </div>
               <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
@@ -375,7 +375,7 @@ export default function CashflowPage() {
                 ))}
               </div>
               <div className="p-4 border-t border-[#dcece8] flex justify-between text-sm">
-                <span className="text-zinc-400">{transactions.length} transaksi</span>
+                <span className="text-zinc-400">{transactions.length} transactions</span>
                 <span className={`font-semibold ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>Net: {fmt(net)}</span>
               </div>
             </div>

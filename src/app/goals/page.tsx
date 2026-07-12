@@ -31,14 +31,14 @@ interface GoalsSummary {
 
 const CATEGORIES = [
   { value: 'EMERGENCY_FUND', label: 'Dana Darurat' },
-  { value: 'INVESTMENT', label: 'Investasi' },
+  { value: 'INVESTMENT', label: 'Investment' },
   { value: 'VACATION', label: 'Liburan' },
   { value: 'GADGET', label: 'Gadget' },
   { value: 'VEHICLE', label: 'Kendaraan' },
   { value: 'PROPERTY', label: 'Properti' },
   { value: 'EDUCATION', label: 'Pendidikan' },
   { value: 'WEDDING', label: 'Pernikahan' },
-  { value: 'OTHER', label: 'Lainnya' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 export default function GoalsPage() {
@@ -120,7 +120,7 @@ export default function GoalsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Hapus goal ini?')) return;
+    if (!confirm('Delete this goal?')) return;
     try {
       const res = await fetch(`/api/goals/${id}`, { method: 'DELETE' });
       if (res.ok) fetchData();
@@ -150,7 +150,7 @@ export default function GoalsPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="lg:ml-64 p-4 lg:p-8">
+      <main className="app-page goals-page lg:ml-64 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[#16332f]">Financial Goals</h2>
@@ -199,8 +199,8 @@ export default function GoalsPage() {
                   <h3 className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Nama Goal</label>
-                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Dana Darurat 6 Bulan" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                      <label className="block text-xs text-zinc-400 mb-1">Goal name</label>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Six-month emergency fund" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -262,7 +262,7 @@ export default function GoalsPage() {
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full ${getPriorityColor(goal.priority)}`}>{getPriorityLabel(goal.priority)}</span>
                             <button onClick={() => loadGoal(goal)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>
-                            <button onClick={() => handleDelete(goal.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Hapus</button>
+                            <button onClick={() => handleDelete(goal.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Delete</button>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mb-2">

@@ -167,19 +167,19 @@ export default function InvestmentsPage() {
   }
 
   async function handleDelete(id: string, type: InvestmentType) {
-    if (!confirm('Hapus data investasi ini?')) return;
+    if (!confirm('Delete this investment record?')) return;
     setIsDeleting(id);
     try {
       const res = await fetch(`/api/investments/snapshot/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setSuccess('Data berhasil dihapus');
+        setSuccess('Record deleted');
         if (type === 'GOLD') {
           setGoldSnapshots(prev => prev.filter(s => s.id !== id));
         } else {
           setMfSnapshots(prev => prev.filter(s => s.id !== id));
         }
       } else {
-        setError('Gagal menghapus data');
+        setError('Unable to delete the record');
       }
     } catch { setError('Error occurred'); } finally { setIsDeleting(null); }
   }
@@ -230,7 +230,7 @@ export default function InvestmentsPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="lg:ml-64 p-4 lg:p-8">
+      <main className="app-page investments-page lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#16332f]">Investments</h2>
           <p className="text-sm text-zinc-600">Track your Gold and Mutual Fund investments</p>
@@ -353,7 +353,7 @@ export default function InvestmentsPage() {
                       </div>
                       <div className="col-span-2 md:col-span-1">
                         <label className="block text-xs text-blue-400 mb-1">Product Name</label>
-                        <input type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Nama reksa dana" className={`${inputClassWithPadding} border-blue-500/30`} />
+                        <input type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Mutual fund name" className={`${inputClassWithPadding} border-blue-500/30`} />
                       </div>
                       {useMfCalc && (
                         <>
@@ -412,7 +412,7 @@ export default function InvestmentsPage() {
                         <div className="flex gap-2 ml-3">
                           <button onClick={() => loadSnapshot(s, 'GOLD')} className="text-xs text-[#00d4aa] hover:underline">Edit</button>
                           <button onClick={() => handleDelete(s.id, 'GOLD')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">
-                            {isDeleting === s.id ? '...' : 'Hapus'}
+                            {isDeleting === s.id ? '...' : 'Delete'}
                           </button>
                         </div>
                       </div>
@@ -446,7 +446,7 @@ export default function InvestmentsPage() {
                         <div className="flex gap-2 ml-3">
                           <button onClick={() => loadSnapshot(s, 'MUTUAL_FUND')} className="text-xs text-[#00d4aa] hover:underline">Edit</button>
                           <button onClick={() => handleDelete(s.id, 'MUTUAL_FUND')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">
-                            {isDeleting === s.id ? '...' : 'Hapus'}
+                            {isDeleting === s.id ? '...' : 'Delete'}
                           </button>
                         </div>
                       </div>

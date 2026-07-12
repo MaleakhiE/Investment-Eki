@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="lg:ml-64 p-4 lg:p-8">
+      <main className="app-page analytics-page lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#16332f]">Analytics</h2>
           <p className="text-sm text-zinc-600">Insights & AI recommendations</p>

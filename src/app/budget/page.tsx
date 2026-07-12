@@ -56,7 +56,7 @@ export default function BudgetPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Hapus budget ini?')) return;
+    if (!confirm('Delete this budget?')) return;
     try {
       const res = await fetch(`/api/budgets/${id}`, { method: 'DELETE' });
       if (res.ok) fetchBudgets();
@@ -65,7 +65,7 @@ export default function BudgetPage() {
 
   const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
   const fmtC = (v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
-  const getPeriodLabel = (p: string) => p === 'WEEKLY' ? 'Mingguan' : p === 'YEARLY' ? 'Tahunan' : 'Bulanan';
+  const getPeriodLabel = (p: string) => p === 'WEEKLY' ? 'Weekly' : p === 'YEARLY' ? 'Yearly' : 'Monthly';
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0);
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
@@ -79,13 +79,13 @@ export default function BudgetPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="lg:ml-64 p-4 lg:p-8">
+      <main className="app-page budgets-page lg:ml-64 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[#16332f]">Budget</h2>
             <p className="text-sm text-zinc-600">Set spending limits per category</p>
           </div>
-          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">Set Budget</button>
+          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">Create budget</button>
         </div>
 
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
@@ -123,7 +123,7 @@ export default function BudgetPage() {
             {showForm && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
                 <div className="bg-white rounded-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
-                  <h3 className="font-semibold text-[#16332f] text-lg mb-4">Set Budget</h3>
+                  <h3 className="font-semibold text-[#16332f] text-lg mb-4">Create budget</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1">Category</label>
@@ -132,15 +132,15 @@ export default function BudgetPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Budget Amount</label>
+                      <label className="block text-xs text-zinc-400 mb-1">Budget amount</label>
                       <CurrencyInput value={amount} onChange={setAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div>
                       <label className="block text-xs text-zinc-400 mb-1">Period</label>
                       <select value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
-                        <option value="WEEKLY">Mingguan</option>
-                        <option value="MONTHLY">Bulanan</option>
-                        <option value="YEARLY">Tahunan</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
                       </select>
                     </div>
                     <div className="flex gap-2 pt-2">
@@ -154,9 +154,9 @@ export default function BudgetPage() {
 
             {/* Budget List */}
             <div className="card rounded-xl p-5">
-              <h3 className="font-semibold text-[#16332f] mb-4">Budget per Category</h3>
+              <h3 className="font-semibold text-[#16332f] mb-4">Budgets by category</h3>
               {budgets.length === 0 ? (
-                <p className="text-sm text-zinc-500 text-center py-8">No budgets set. Click &quot;Set Budget&quot; to start!</p>
+                <p className="text-sm text-zinc-500 text-center py-8">No budgets set. Click &quot;Create budget&quot; to start!</p>
               ) : (
                 <div className="space-y-3">
                   {budgets.sort((a, b) => b.percentage - a.percentage).map(budget => (
@@ -169,7 +169,7 @@ export default function BudgetPage() {
                           {!budget.isOverBudget && budget.percentage >= 80 && <span className="text-[10px] px-2 py-0.5 bg-amber-500 text-[#16332f] rounded-full">Warning</span>}
                         </div>
                         <button onClick={() => handleDelete(budget.id)} className="p-1 text-zinc-500 hover:text-red-400">
-                          Hapus
+                          Delete
                         </button>
                       </div>
                       <div className="flex items-center gap-2 mb-2">
@@ -194,7 +194,7 @@ export default function BudgetPage() {
             {/* Unbudgeted Categories */}
             {unbugdetedCategories.length > 0 && (
               <div className="card rounded-xl p-5">
-                <h3 className="font-semibold text-[#16332f] mb-3">Categories Without Budget</h3>
+                <h3 className="font-semibold text-[#16332f] mb-3">Categories without budgets</h3>
                 <div className="flex flex-wrap gap-2">
                   {unbugdetedCategories.map(cat => (
                     <button key={cat} onClick={() => { setCategory(cat); setShowForm(true); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg hover:bg-white/20">

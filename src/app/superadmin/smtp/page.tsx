@@ -174,7 +174,7 @@ export default function SuperadminSmtpPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="p-4 pb-28 lg:ml-64 lg:p-8">
+      <main className="app-page smtp-page p-4 pb-28 lg:ml-64 lg:p-8">
         <div className="mx-auto max-w-4xl space-y-5">
           <header>
             <p className="text-xs font-semibold uppercase tracking-wide text-[#008f78]">Superadmin</p>

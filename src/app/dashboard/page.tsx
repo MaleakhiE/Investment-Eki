@@ -108,7 +108,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#f3faf8]">
         <Sidebar />
-        <main className="lg:ml-64 p-4 lg:p-6">
+        <main className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
           <div className="space-y-4">
             <div className="skeleton h-48 rounded-3xl"></div>
             <div className="grid grid-cols-4 gap-3">
@@ -124,7 +124,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="lg:ml-64 p-4 lg:p-6">
+      <main className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
         {/* Greeting */}
         <div className="mb-6 animate-fade-in">
           <p className="text-zinc-500 text-sm">{periodLabel}</p>
@@ -153,13 +153,13 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 text-xs">Pemasukan</span>
+                    <span className="text-zinc-400 text-xs">Income</span>
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(income)}</p>
                 </div>
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 text-xs">Pengeluaran</span>
+                    <span className="text-zinc-400 text-xs">Expenses</span>
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(expense)}</p>
                 </div>
@@ -183,8 +183,8 @@ export default function DashboardPage() {
           {/* Quick Actions */}
           <div className="grid grid-cols-4 gap-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {[
-              { href: '/cashflow', label: 'Transaksi' },
-              { href: '/investments', label: 'Investasi' },
+              { href: '/cashflow', label: 'Activity' },
+              { href: '/investments', label: 'Investments' },
               { href: '/budget', label: 'Budget' },
               { href: '/goals', label: 'Goals' },
             ].map((item) => (
@@ -196,16 +196,16 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <section className="card rounded-3xl p-5">
-              <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Peluang Hemat</h2></div>
+              <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Savings opportunities</h2></div>
               {suggestions.length > 0 ? <div className="space-y-3">{suggestions.slice(0, 3).map((item) => {
                 const saving = item.potential_saving ?? 0;
-                return <div key={item.category} className="rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.message ?? `Kembali ke rata-rata tiga bulan untuk menghemat ${formatCurrency(saving)}.`}</p></div><span className="whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
-              })}</div> : <p className="text-sm text-zinc-500">Belum ada pola pengeluaran berlebih yang perlu ditindaklanjuti.</p>}
+                return <div key={item.category} className="rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.message ?? `Return to your three-month average to save ${formatCurrency(saving)}.`}</p></div><span className="whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
+              })}</div> : <p className="text-sm text-zinc-500">No overspending patterns need attention right now.</p>}
             </section>
 
             <section className="card rounded-3xl p-5">
-              <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Transaksi Mendatang</h2></div>
-              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{item.type === 'INCOME' ? 'Pemasukan' : 'Pengeluaran'} · {new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">Belum ada transaksi berulang yang aktif.</p>}
+              <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Upcoming transactions</h2></div>
+              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{item.type === 'INCOME' ? 'Income' : 'Expenses'} · {new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">No active recurring transactions.</p>}
             </section>
           </div>
 
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-[#16332f]">Portfolio</h3>
                 </div>
-                <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">Lihat Detail</Link>
+                <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">View details</Link>
               </div>
               
               <div className="flex items-end justify-between mb-4">
@@ -259,9 +259,9 @@ export default function DashboardPage() {
           <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-[#16332f]">Transaksi Terakhir</h3>
+                <h3 className="font-semibold text-[#16332f]">Recent transactions</h3>
               </div>
-              <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">Semua</Link>
+              <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">View all</Link>
             </div>
             
             {transactions.length > 0 ? (
@@ -289,9 +289,9 @@ export default function DashboardPage() {
               <div className="text-center py-8">
                 <div className="w-16 h-16 rounded-full bg-[#f5fbf9] flex items-center justify-center mx-auto mb-3">
                 </div>
-                <p className="text-zinc-500 text-sm mb-3">Belum ada transaksi</p>
+                <p className="text-zinc-500 text-sm mb-3">No transactions yet</p>
                 <Link href="/cashflow" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
-                  Tambah Transaksi
+                  Add transaction
                 </Link>
               </div>
             )}
@@ -301,7 +301,7 @@ export default function DashboardPage() {
           {trend.length > 0 && (
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-semibold text-[#16332f]">Tren 6 Bulan</h3>
+                <h3 className="font-semibold text-[#16332f]">Six-month trend</h3>
               </div>
               
               <div className="flex items-end gap-2 h-32">
@@ -319,11 +319,11 @@ export default function DashboardPage() {
               <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#00d4aa] to-[#00ffcc]"></div>
-                  <span className="text-xs text-zinc-400">Pemasukan</span>
+                  <span className="text-xs text-zinc-400">Income</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-400"></div>
-                  <span className="text-xs text-zinc-400">Pengeluaran</span>
+                  <span className="text-xs text-zinc-400">Expenses</span>
                 </div>
               </div>
             </div>
@@ -334,9 +334,9 @@ export default function DashboardPage() {
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.5s' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-[#16332f]">Goals Aktif</h3>
+                  <h3 className="font-semibold text-[#16332f]">Active goals</h3>
                 </div>
-                <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">Semua</Link>
+                <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">View all</Link>
               </div>
               
               <div className="space-y-3">
@@ -351,7 +351,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex justify-between text-xs text-zinc-500">
                       <span>{formatCompact(goal.current_amount)} / {formatCompact(goal.target_amount)}</span>
-                      {goal.days_left !== null && <span>{goal.days_left} hari lagi</span>}
+                      {goal.days_left !== null && <span>{goal.days_left} days remaining</span>}
                     </div>
                   </div>
                 ))}
@@ -363,7 +363,7 @@ export default function DashboardPage() {
           {summary?.expense_by_category && Object.keys(summary.expense_by_category).length > 0 && (
             <div className="card rounded-3xl p-5 animate-fade-in" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-semibold text-[#16332f]">Pengeluaran Terbesar</h3>
+                <h3 className="font-semibold text-[#16332f]">Expenses Terbesar</h3>
               </div>
               
               <div className="space-y-4">
@@ -395,9 +395,9 @@ export default function DashboardPage() {
               <div className="w-20 h-20 rounded-full bg-[#00d4aa]/10 flex items-center justify-center mx-auto mb-4">
               </div>
               <h3 className="text-xl font-bold text-[#16332f] mb-2">Mulai Perjalanan Finansialmu!</h3>
-              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">Catat transaksi pertamamu dan mulai kelola keuangan dengan lebih baik</p>
+              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">Add your first transaction and start managing your money with clarity</p>
               <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-black font-semibold hover:opacity-90 transition-opacity">
-                Tambah Transaksi Pertama
+                Add transaction Pertama
               </Link>
             </div>
           )}
