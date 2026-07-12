@@ -17,6 +17,7 @@ declare module 'next-auth' {
       id: string;
       email: string;
       ai_recommendation_enabled: boolean;
+      role: 'USER' | 'SUPERADMIN';
     } & DefaultSession['user'];
   }
 
@@ -24,6 +25,7 @@ declare module 'next-auth' {
     id: string;
     email: string;
     ai_recommendation_enabled: boolean;
+    role: 'USER' | 'SUPERADMIN';
   }
 }
 
@@ -56,6 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: result.user.id.toString(),
           email: result.user.email,
           ai_recommendation_enabled: result.user.ai_recommendation_enabled,
+          role: result.user.role,
         };
       },
     }),
@@ -88,4 +91,12 @@ export async function getCurrentUserId(): Promise<bigint | null> {
     return null;
   }
   return BigInt(session.user.id);
+}
+
+export async function requireSuperadmin(): Promise<{ userId: bigint } | { status: 401 | 403 }> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { status: 401 };
+  const { prisma } = await import('@/lib/prisma');
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  return user?.role === 'SUPERADMIN' ? { userId } : { status: 403 };
 }

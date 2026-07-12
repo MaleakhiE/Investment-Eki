@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 const navItems = [
@@ -20,7 +20,11 @@ const moreItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [showMore, setShowMore] = useState(false);
+  const visibleMoreItems = session?.user?.role === 'SUPERADMIN'
+    ? [...moreItems, { href: '/superadmin/smtp', label: 'Superadmin', emoji: '' }]
+    : moreItems;
 
   return (
     <>
@@ -47,7 +51,7 @@ export default function Sidebar() {
           
           <div className="pt-3 mt-3 border-t border-[#dcece8]">
             <p className="px-3 text-[10px] font-medium text-zinc-600 uppercase tracking-wider mb-2">Lainnya</p>
-            {moreItems.map((item) => {
+            {visibleMoreItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link key={item.href} href={item.href} className={`block border-l-2 px-3 py-2.5 rounded-r-xl transition-all ${isActive ? 'border-[#00d4aa] bg-[#d8f7ef] font-semibold text-[#087f6b]' : 'border-transparent text-[#63807a] hover:bg-[#f3faf8] hover:text-[#16332f]'}`}>
@@ -91,7 +95,7 @@ export default function Sidebar() {
             <div className="px-6 pb-8">
               <h3 className="text-lg font-bold text-[#16332f] mb-4">Menu Lainnya</h3>
               <div className="grid grid-cols-3 gap-4">
-                {moreItems.map((item) => {
+                {visibleMoreItems.map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setShowMore(false)} className={`p-4 text-center rounded-2xl transition-all hover-scale ${isActive ? 'border border-[#00d4aa] bg-[#00d4aa]/10' : 'border border-transparent bg-[#f5fbf9]'}`}>

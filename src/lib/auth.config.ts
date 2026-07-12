@@ -27,6 +27,7 @@ export const authConfig: NextAuthConfig = {
         '/investments',
         '/settings',
         '/analytics',
+        '/superadmin',
       ];
       
       // Public authentication routes. Authenticated users do not need these flows.
@@ -52,6 +53,7 @@ export const authConfig: NextAuthConfig = {
         token.id = user.id;
         token.email = user.email;
         token.ai_recommendation_enabled = user.ai_recommendation_enabled;
+        token.role = user.role;
       }
       return token;
     },
@@ -61,6 +63,7 @@ export const authConfig: NextAuthConfig = {
         id: token.id as string,
         email: token.email as string,
         ai_recommendation_enabled: token.ai_recommendation_enabled as boolean,
+        role: token.role as 'USER' | 'SUPERADMIN',
       };
       return session;
     },
