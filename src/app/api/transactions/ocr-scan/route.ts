@@ -10,13 +10,20 @@ import {
 import { getCurrentUserId } from '@/lib/auth';
 import { parseReceiptText } from '@/lib/receipt-parser';
 import { hasMatchingImageSignature, MAX_RECEIPT_BYTES, RECEIPT_IMAGE_TYPES } from '@/lib/receipt-image';
-import { recognizeReceipt } from '@/services/ocr.service';
+import { isReceiptOcrBusy, recognizeReceipt } from '@/services/ocr.service';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 function validationResponse(message: string) {
   return NextResponse.json(validationErrorResponse([message]), { status: 400 });
+}
+
+function busyResponse() {
+  return NextResponse.json(
+    errorResponse('Another receipt is being scanned. Try again shortly.', 429),
+    { status: 429 },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -25,6 +32,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(unauthorizedResponse(), { status: 401 });
     }
+    if (isReceiptOcrBusy()) return busyResponse();
 
     if (!request.headers.get('content-type')?.toLowerCase().startsWith('multipart/form-data')) {
       return validationResponse('Content-Type must be multipart/form-data');
@@ -68,6 +76,9 @@ export async function POST(request: NextRequest) {
         errorResponse('Receipt scan timed out. Try a clearer or smaller image.', 504),
         { status: 504 },
       );
+    }
+    if (error instanceof Error && error.name === 'OcrBusyError') {
+      return busyResponse();
     }
     return NextResponse.json(serverErrorResponse('Unable to scan receipt'), { status: 500 });
   }

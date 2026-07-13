@@ -1,4 +1,11 @@
 const OCR_MAX_SIDE = 1600;
+export const OCR_REQUEST_TIMEOUT_MS = 50_000;
+
+export function getOcrProgressMessage(elapsedSeconds: number) {
+  if (elapsedSeconds < 2) return 'Optimizing the image...';
+  if (elapsedSeconds < 8) return 'Reading receipt text...';
+  return 'Still working. The first scan can take up to 40 seconds.';
+}
 
 export function fitReceiptDimensions(width: number, height: number, maxSide: number) {
   const longestSide = Math.max(width, height);

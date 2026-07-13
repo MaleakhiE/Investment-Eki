@@ -4,7 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
-import { prepareReceiptForOcr } from '@/lib/receipt-image-client';
+import {
+  getOcrProgressMessage,
+  OCR_REQUEST_TIMEOUT_MS,
+  prepareReceiptForOcr,
+} from '@/lib/receipt-image-client';
 
 interface Transaction {
   id: string;
@@ -109,7 +113,7 @@ export default function CashflowPage() {
     if (!file) return;
     setError(''); setSuccess(''); setIsScanning(true);
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 25_000);
+    const timeout = window.setTimeout(() => controller.abort(), OCR_REQUEST_TIMEOUT_MS);
     try {
       const optimizedFile = await prepareReceiptForOcr(file);
       const formData = new FormData();
@@ -262,7 +266,7 @@ export default function CashflowPage() {
                     <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={isScanning} onChange={(event) => { void handleReceiptScan(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
                   </label>
                 </div>
-                {isScanning && <div role="status" className="mb-3 rounded-xl border border-[#bce9de] bg-[#eaf8f4] px-3 py-2 text-xs text-[#087f6b]">{scanElapsed < 2 ? 'Optimizing the image...' : scanElapsed < 8 ? 'Reading receipt text...' : 'Still working. Complex images can take up to 25 seconds.'}</div>}
+                {isScanning && <div role="status" className="mb-3 rounded-xl border border-[#bce9de] bg-[#eaf8f4] px-3 py-2 text-xs text-[#087f6b]">{getOcrProgressMessage(scanElapsed)}</div>}
                 {error && <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-xs rounded-lg">{error}</div>}
                 {success && <div className="mb-2 p-2 bg-green-500/20 text-green-400 text-xs rounded-lg">{success}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">

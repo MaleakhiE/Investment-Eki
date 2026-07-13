@@ -1,8 +1,9 @@
 const getCurrentUserId = jest.fn();
+const isReceiptOcrBusy = jest.fn();
 const recognizeReceipt = jest.fn();
 
 jest.mock('@/lib/auth', () => ({ getCurrentUserId }));
-jest.mock('@/services/ocr.service', () => ({ recognizeReceipt }));
+jest.mock('@/services/ocr.service', () => ({ isReceiptOcrBusy, recognizeReceipt }));
 
 import { maxDuration, POST, runtime } from './route';
 
@@ -14,13 +15,14 @@ const makeRequest = (body: FormData, contentType?: string) => new Request(
 beforeEach(() => {
   jest.clearAllMocks();
   getCurrentUserId.mockResolvedValue(BigInt(20));
+  isReceiptOcrBusy.mockReturnValue(false);
   recognizeReceipt.mockResolvedValue('TOKO MAJU\nTanggal 11/07/2026\nTOTAL Rp 125.000');
 });
 
 describe('POST /api/transactions/ocr-scan', () => {
   it('uses the Node.js runtime', () => {
     expect(runtime).toBe('nodejs');
-    expect(maxDuration).toBe(30);
+    expect(maxDuration).toBe(60);
   });
 
   it('rejects unauthenticated requests before reading the upload', async () => {
@@ -33,6 +35,20 @@ describe('POST /api/transactions/ocr-scan', () => {
       responseStatus: 'ERROR',
       responseDetails: null,
     }));
+    expect(recognizeReceipt).not.toHaveBeenCalled();
+  });
+
+  it('rejects a known-busy scan before parsing another multipart body', async () => {
+    isReceiptOcrBusy.mockReturnValue(true);
+
+    const response = await POST(new Request('http://localhost/api/transactions/ocr-scan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/octet-stream' },
+      body: 'not multipart data',
+    }) as never);
+
+    expect(response.status).toBe(429);
+    expect((await response.json()).responseMessage).toBe('Another receipt is being scanned. Try again shortly.');
     expect(recognizeReceipt).not.toHaveBeenCalled();
   });
 
@@ -126,6 +142,20 @@ describe('POST /api/transactions/ocr-scan', () => {
 
     expect(response.status).toBe(504);
     expect((await response.json()).responseMessage).toBe('Receipt scan timed out. Try a clearer or smaller image.');
+    consoleError.mockRestore();
+  });
+
+  it('returns a retryable busy response instead of queueing another image', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    recognizeReceipt.mockRejectedValue(Object.assign(new Error('OCR is busy'), { name: 'OcrBusyError' }));
+    const form = new FormData();
+    form.set('image', new File([Buffer.from('RIFF0000WEBP')], 'receipt.webp', { type: 'image/webp' }));
+
+    const response = await POST(makeRequest(form));
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBeNull();
+    expect((await response.json()).responseMessage).toBe('Another receipt is being scanned. Try again shortly.');
     consoleError.mockRestore();
   });
 });

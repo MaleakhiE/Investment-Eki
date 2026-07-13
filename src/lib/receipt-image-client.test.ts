@@ -1,6 +1,23 @@
-import { fitReceiptDimensions, prepareReceiptForOcr } from './receipt-image-client';
+import {
+  fitReceiptDimensions,
+  getOcrProgressMessage,
+  OCR_REQUEST_TIMEOUT_MS,
+  prepareReceiptForOcr,
+} from './receipt-image-client';
 
 describe('receipt image resizing', () => {
+  it('keeps the browser deadline above the OCR worker deadline', () => {
+    expect(OCR_REQUEST_TIMEOUT_MS).toBe(50_000);
+  });
+
+  it.each([
+    [0, 'Optimizing the image...'],
+    [4, 'Reading receipt text...'],
+    [12, 'Still working. The first scan can take up to 40 seconds.'],
+  ])('describes OCR progress at %i seconds', (elapsedSeconds, expected) => {
+    expect(getOcrProgressMessage(elapsedSeconds)).toBe(expected);
+  });
+
   it('keeps small images unchanged', () => {
     expect(fitReceiptDimensions(900, 1200, 1600)).toEqual({ width: 900, height: 1200 });
   });
