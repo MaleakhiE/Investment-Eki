@@ -82,6 +82,11 @@ function toIsoDate(day: number, month: number, year: number): string | null {
 }
 
 export function extractDate(text: string): string | null {
+  for (const iso of text.matchAll(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g)) {
+    const parsed = toIsoDate(Number(iso[3]), Number(iso[2]), Number(iso[1]));
+    if (parsed) return parsed;
+  }
+
   const numeric = text.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})\b/);
   if (numeric) return toIsoDate(Number(numeric[1]), Number(numeric[2]), Number(numeric[3]));
 
@@ -100,6 +105,7 @@ export function extractMerchant(text: string): string | null {
     if (
       line.length < 2
       || !/\p{L}/u.test(line)
+      || /^(\p{L})\1{5,}$/iu.test(line)
       || RECEIPT_METADATA.test(line)
       || /^(jl\.?|jalan|alamat|telp\.?|telepon)\b/i.test(line)
     ) continue;

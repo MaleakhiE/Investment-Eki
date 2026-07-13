@@ -34,9 +34,17 @@ describe('receipt parser', () => {
     expect(extractDate('31/02/2026')).toBeNull();
   });
 
+  it('continues after invalid ISO noise and finds a later valid date', () => {
+    expect(extractDate('2023-99-99\nTanggal 11/07/2026')).toBe('2026-07-11');
+  });
+
   it('uses the first meaningful non-metadata line as merchant', () => {
     expect(extractMerchant('*** TOKO MAJU ***\nJl. Merdeka 10\nTanggal 11/07/2026\nTOTAL 25.000'))
       .toBe('TOKO MAJU');
+  });
+
+  it('preserves a short repeated-letter merchant name', () => {
+    expect(extractMerchant('AAA\nTOTAL 10.000')).toBe('AAA');
   });
 
   test.each([
@@ -62,6 +70,31 @@ describe('receipt parser', () => {
       amount: 125_000,
       date: '2026-07-11',
       merchant: 'TOKO MAJU',
+      categoryGuess: 'Other',
+    });
+  });
+
+  it('parses the Karis Jaya sample despite logo noise and an ISO date', () => {
+    const recognizedText = [
+      '———',
+      'UUUUUU',
+      'Karis Jaya Shop',
+      'Jl. Dr. Ir. H. Soekarno No.19,Medokan Semampir',
+      'Surabaya',
+      'No. Telp 0812345678',
+      '16413520230802084636',
+      '2023-08-02 karis',
+      '08:46:36 Sheila',
+      'Sub Total Rp 70.000',
+      'Total Rp 70.000',
+      'Bayar (Cash) Rp 70.000',
+      'Kembali Rp 0',
+    ].join('\n');
+
+    expect(parseReceiptText(recognizedText)).toEqual({
+      amount: 70_000,
+      date: '2023-08-02',
+      merchant: 'Karis Jaya Shop',
       categoryGuess: 'Other',
     });
   });
