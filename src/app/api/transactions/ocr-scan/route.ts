@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import {
   serverErrorResponse,
+  errorResponse,
   successResponse,
   unauthorizedResponse,
   validationErrorResponse,
@@ -12,6 +13,7 @@ import { hasMatchingImageSignature, MAX_RECEIPT_BYTES, RECEIPT_IMAGE_TYPES } fro
 import { recognizeReceipt } from '@/services/ocr.service';
 
 export const runtime = 'nodejs';
+export const maxDuration = 30;
 
 function validationResponse(message: string) {
   return NextResponse.json(validationErrorResponse([message]), { status: 400 });
@@ -61,6 +63,12 @@ export async function POST(request: NextRequest) {
     ));
   } catch (error) {
     console.error('Error scanning receipt:', error);
+    if (error instanceof Error && error.name === 'OcrTimeoutError') {
+      return NextResponse.json(
+        errorResponse('Receipt scan timed out. Try a clearer or smaller image.', 504),
+        { status: 504 },
+      );
+    }
     return NextResponse.json(serverErrorResponse('Unable to scan receipt'), { status: 500 });
   }
 }

@@ -4,7 +4,7 @@ const recognizeReceipt = jest.fn();
 jest.mock('@/lib/auth', () => ({ getCurrentUserId }));
 jest.mock('@/services/ocr.service', () => ({ recognizeReceipt }));
 
-import { POST, runtime } from './route';
+import { maxDuration, POST, runtime } from './route';
 
 const makeRequest = (body: FormData, contentType?: string) => new Request(
   'http://localhost/api/transactions/ocr-scan',
@@ -20,6 +20,7 @@ beforeEach(() => {
 describe('POST /api/transactions/ocr-scan', () => {
   it('uses the Node.js runtime', () => {
     expect(runtime).toBe('nodejs');
+    expect(maxDuration).toBe(30);
   });
 
   it('rejects unauthenticated requests before reading the upload', async () => {
@@ -112,6 +113,19 @@ describe('POST /api/transactions/ocr-scan', () => {
       responseDetails: null,
     });
     expect(consoleError).toHaveBeenCalledWith('Error scanning receipt:', expect.any(Error));
+    consoleError.mockRestore();
+  });
+
+  it('returns a retryable timeout response when OCR exceeds its deadline', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    recognizeReceipt.mockRejectedValue(Object.assign(new Error('OCR timed out'), { name: 'OcrTimeoutError' }));
+    const form = new FormData();
+    form.set('image', new File([Buffer.from('RIFF0000WEBP')], 'receipt.webp', { type: 'image/webp' }));
+
+    const response = await POST(makeRequest(form));
+
+    expect(response.status).toBe(504);
+    expect((await response.json()).responseMessage).toBe('Receipt scan timed out. Try a clearer or smaller image.');
     consoleError.mockRestore();
   });
 });

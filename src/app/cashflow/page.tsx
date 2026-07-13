@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import { prepareReceiptForOcr } from '@/lib/receipt-image-client';
 
 interface Transaction {
   id: string;
@@ -54,6 +55,7 @@ export default function CashflowPage() {
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [receiptTouched, setReceiptTouched] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanElapsed, setScanElapsed] = useState(0);
   // New: Search and filter
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -93,16 +95,26 @@ export default function CashflowPage() {
     Promise.all([fetchTransactions(), fetchSummary()]).finally(() => setIsLoading(false));
   }, [fetchTransactions, fetchSummary]);
 
+  useEffect(() => {
+    if (!isScanning) { setScanElapsed(0); return; }
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => setScanElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => window.clearInterval(interval);
+  }, [isScanning]);
+
   const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setAccountChoice('Cash'); setCustomAccount(''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
   const loadTransaction = (tx: Transaction) => { const preset = tx.account && ACCOUNT_PRESETS.includes(tx.account as typeof ACCOUNT_PRESETS[number]); setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setAccountChoice(preset ? tx.account! : tx.account ? OTHER_ACCOUNT : 'Cash'); setCustomAccount(preset ? '' : tx.account || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
 
   const handleReceiptScan = async (file: File | undefined) => {
     if (!file) return;
     setError(''); setSuccess(''); setIsScanning(true);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 25_000);
     try {
+      const optimizedFile = await prepareReceiptForOcr(file);
       const formData = new FormData();
-      formData.append('image', file);
-      const response = await fetch('/api/transactions/ocr-scan', { method: 'POST', body: formData });
+      formData.append('image', optimizedFile);
+      const response = await fetch('/api/transactions/ocr-scan', { method: 'POST', body: formData, signal: controller.signal });
       const data = await response.json();
       if (!response.ok) throw new Error(data.responseMessage || 'Unable to scan receipt');
       const scan = data.responseDetails || {};
@@ -115,14 +127,16 @@ export default function CashflowPage() {
       setReceiptTouched(true);
       setSuccess('Receipt scanned. Review the details before saving.');
     } catch (scanError) {
-      setError(scanError instanceof Error ? scanError.message : 'Unable to scan receipt');
-    } finally { setIsScanning(false); }
+      setError(scanError instanceof DOMException && scanError.name === 'AbortError'
+        ? 'Receipt scan timed out. Try a clearer photo with the receipt filling the frame.'
+        : scanError instanceof Error ? scanError.message : 'Unable to scan receipt');
+    } finally { window.clearTimeout(timeout); setIsScanning(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
     const numAmount = parseFloat(amount.replace(/[^\d]/g, ''));
-    if (!numAmount || numAmount <= 0) { setError('Amount harus lebih dari 0'); setIsSaving(false); return; }
+    if (!numAmount || numAmount <= 0) { setError('Amount must be greater than zero'); setIsSaving(false); return; }
     try {
       const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions';
       const account = accountChoice === OTHER_ACCOUNT ? customAccount.trim() : accountChoice;
@@ -244,16 +258,17 @@ export default function CashflowPage() {
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">{editingId ? 'Edit' : 'Add'} Activity</h3>
                   <label className="cursor-pointer rounded-lg border border-[#00d4aa]/30 bg-[#00d4aa]/10 px-3 py-2 text-[10px] font-semibold text-[#00a88a] hover:bg-[#00d4aa]/20 sm:text-xs">
-                    {isScanning ? 'Scanning...' : 'Scan receipt'}
+                    {isScanning ? `Scanning ${scanElapsed}s` : 'Scan receipt'}
                     <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={isScanning} onChange={(event) => { void handleReceiptScan(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
                   </label>
                 </div>
+                {isScanning && <div role="status" className="mb-3 rounded-xl border border-[#bce9de] bg-[#eaf8f4] px-3 py-2 text-xs text-[#087f6b]">{scanElapsed < 2 ? 'Optimizing the image...' : scanElapsed < 8 ? 'Reading receipt text...' : 'Still working. Complex images can take up to 25 seconds.'}</div>}
                 {error && <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-xs rounded-lg">{error}</div>}
                 {success && <div className="mb-2 p-2 bg-green-500/20 text-green-400 text-xs rounded-lg">{success}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Tipe</label>
+                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Type</label>
                       <div className="flex gap-1">
                         <button type="button" onClick={() => { setType('EXPENSE'); setCategory('Food'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Expense</button>
                         <button type="button" onClick={() => { setType('INCOME'); setCategory('Salary'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'INCOME' ? 'bg-green-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Income</button>
