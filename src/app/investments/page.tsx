@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput, { formatNumber } from '@/components/ui/CurrencyInput';
+import ToggleSwitch from '@/components/ui/ToggleSwitch';
 
 interface InvestmentSnapshot {
   id: string;
@@ -299,36 +300,37 @@ export default function InvestmentsPage() {
 
                 {/* Gold Calculator */}
                 {selectedType === 'GOLD' && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-amber-400">Gold Calculator</h4>
-                      <div className="flex items-center gap-3">
-                        <button type="button" onClick={fetchGoldPrice} disabled={goldPriceLoading} className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1">
+                  <div className="rounded-2xl border border-[#e3cc8c] bg-[#fffaf0] p-4 sm:p-5">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h4 className="font-semibold text-[#5e4712]">Gold Calculator</h4>
+                        <p className="mt-0.5 text-xs text-[#806c3c]">Estimate the current value from live price and weight.</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button type="button" onClick={fetchGoldPrice} disabled={goldPriceLoading} className="min-h-11 rounded-full px-2 text-xs font-semibold text-[#9a6d08] hover:bg-[#fff2c8] hover:text-[#704e05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98512] disabled:cursor-not-allowed disabled:opacity-50">
                           {goldPriceLoading ? 'Loading...' : 'Refresh'}
                         </button>
-                        <label className="flex items-center text-sm text-amber-400 cursor-pointer">
-                          <input type="checkbox" checked={useGoldCalc} onChange={(e) => setUseGoldCalc(e.target.checked)} className="mr-2" />Use calculator
-                        </label>
+                        <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} label="Use gold calculator" />
                       </div>
                     </div>
                     {goldPriceData && (
-                      <div className="bg-amber-500/20 rounded-lg p-3 flex justify-between items-center mb-3">
-                        <div>
-                          <span className="text-sm text-amber-300">Live Price</span>
-                          <span className={`ml-2 text-xs px-2 py-0.5 rounded ${goldPriceData.source.includes('offline') ? 'bg-red-500/30 text-red-400' : 'bg-green-500/30 text-green-400'}`}>{goldPriceData.source}</span>
+                      <div className="mb-4 flex flex-col gap-2 rounded-xl border border-[#ead9a8] bg-[#fff2c8] p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-[#6c551d]">Live price</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${goldPriceData.source.includes('offline') ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#dcfce7] text-[#166534]'}`}>{goldPriceData.source}</span>
                         </div>
-                        <span className="font-bold text-amber-300">Rp {formatNumber(goldPriceData.sell_price)}/gram</span>
+                        <span className="font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram</span>
                       </div>
                     )}
                     {useGoldCalc && (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                          <label className="block text-xs text-amber-400 mb-1">Price/gram</label>
-                          <CurrencyInput value={goldPrice} onChange={setGoldPrice} className={`${inputClass} border-amber-500/30`} />
+                          <label className="mb-1 block text-xs font-medium text-[#5e4712]">Price/gram</label>
+                          <CurrencyInput value={goldPrice} onChange={setGoldPrice} className={`${inputClass} border-[#dfcf9f] bg-white focus:ring-[#c69218]`} />
                         </div>
                         <div>
-                          <label className="block text-xs text-amber-400 mb-1">Grams</label>
-                          <input type="number" value={goldGrams} onChange={(e) => setGoldGrams(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-amber-500/30`} />
+                          <label className="mb-1 block text-xs font-medium text-[#5e4712]">Grams</label>
+                          <input type="number" value={goldGrams} onChange={(e) => setGoldGrams(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-[#dfcf9f] bg-white focus:ring-[#c69218]`} />
                         </div>
                       </div>
                     )}
