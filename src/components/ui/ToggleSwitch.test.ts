@@ -20,11 +20,40 @@ describe('ToggleSwitch', () => {
       checked: false,
       onChange: () => undefined,
       label: 'Enable low balance alert',
+      disabled: true,
     }));
 
     expect(html).toContain('aria-checked="false"');
+    expect(html).toContain('disabled=""');
     expect(html).toContain('Off');
     expect(html).toContain('min-h-11');
+  });
+
+  it('reports the next checked state when activated', () => {
+    const onChange = jest.fn();
+    const element = ToggleSwitch({
+      checked: true,
+      onChange,
+      label: 'Enable monthly reminder',
+    });
+
+    element.props.onClick();
+
+    expect(onChange).toHaveBeenCalledWith(false);
+  });
+
+  it('does not report a state change while disabled', () => {
+    const onChange = jest.fn();
+    const element = ToggleSwitch({
+      checked: false,
+      onChange,
+      label: 'Enable low balance alert',
+      disabled: true,
+    });
+
+    element.props.onClick();
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('renders the approved gold enabled state', () => {

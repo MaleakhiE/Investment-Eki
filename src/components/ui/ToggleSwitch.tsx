@@ -29,6 +29,11 @@ export default function ToggleSwitch({
   tone = 'mint',
 }: ToggleSwitchProps) {
   const enabledTone = ENABLED_TONES[tone];
+  const handleChange = () => {
+    if (!disabled) {
+      onChange(!checked);
+    }
+  };
 
   return (
     <button
@@ -37,7 +42,7 @@ export default function ToggleSwitch({
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
+      onClick={handleChange}
       className={`group inline-flex min-h-11 flex-shrink-0 items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${enabledTone.focus}`}
     >
       <span className={`min-w-5 text-right text-xs font-semibold ${checked ? enabledTone.label : 'text-[#667c78]'}`}>
