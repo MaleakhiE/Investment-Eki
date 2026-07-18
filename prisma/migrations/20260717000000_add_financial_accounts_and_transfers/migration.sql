@@ -22,6 +22,10 @@ ALTER TABLE `transactions`
   ADD COLUMN `account_id` BIGINT NULL,
   ADD COLUMN `destination_account_id` BIGINT NULL;
 
+-- Prisma maps both transaction tables to the shared TransactionType enum.
+ALTER TABLE `recurring_transactions`
+  MODIFY `type` ENUM('INCOME', 'EXPENSE', 'TRANSFER') NOT NULL;
+
 -- Normalize existing labels into one account per user. Empty labels become a
 -- Cash wallet so all historical transactions participate in account balances.
 INSERT INTO `financial_accounts` (`user_id`, `name`, `type`, `opening_balance`, `color`, `is_archived`)
