@@ -10,6 +10,7 @@ export const primaryNavigation: NavigationItem[] = [
 ];
 
 export const moreNavigation: NavigationItem[] = [
+  { label: 'Accounts', href: '/accounts', icon: 'wallet', match: (path) => path.startsWith('/accounts') },
   { label: 'Analytics', href: '/analytics', icon: 'chart', match: (path) => path.startsWith('/analytics') },
   { label: 'Budgets', href: '/budget', icon: 'wallet', match: (path) => path.startsWith('/budget') },
   { label: 'Goals', href: '/goals', icon: 'target', match: (path) => path.startsWith('/goals') },

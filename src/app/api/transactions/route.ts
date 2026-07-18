@@ -49,6 +49,8 @@ export async function POST(request: NextRequest) {
       ...result.transaction!,
       id: result.transaction!.id.toString(),
       user_id: result.transaction!.user_id.toString(),
+      account_id: result.transaction!.account_id?.toString() ?? null,
+      destination_account_id: result.transaction!.destination_account_id?.toString() ?? null,
     };
 
     return NextResponse.json(
@@ -85,6 +87,8 @@ export async function GET(request: NextRequest) {
       ...t,
       id: t.id.toString(),
       user_id: t.user_id.toString(),
+      account_id: t.account_id?.toString() ?? null,
+      destination_account_id: t.destination_account_id?.toString() ?? null,
     }));
 
     return NextResponse.json(

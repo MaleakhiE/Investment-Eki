@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import { AccountTransferLabel, type AccountSummary } from '@/components/accounts/AccountCard';
 import {
   getOcrProgressMessage,
   OCR_REQUEST_TIMEOUT_MS,
@@ -13,11 +14,15 @@ import {
 interface Transaction {
   id: string;
   date: string;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   category: string;
   description: string;
   amount: number;
   account?: string | null;
+  account_id?: string | null;
+  destination_account_id?: string | null;
+  source_account_name?: string | null;
+  destination_account_name?: string | null;
   receipt_image?: string | null;
   has_receipt?: boolean;
 }
@@ -32,12 +37,10 @@ interface MonthlySummary {
 const EXPENSE_CATEGORIES = ['Rent', 'Living', 'Food', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Education', 'Investment', 'Other'];
 const INCOME_CATEGORIES = ['Salary', 'Bonus', 'Investment', 'Freelance', 'Gift', 'Other'];
 const ALL_CATEGORIES = [...new Set([...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES])];
-const ACCOUNT_PRESETS = ['Cash', 'BCA', 'Mandiri', 'BRI', 'BNI', 'GoPay', 'OVO', 'Dana', 'Credit Card'] as const;
-const OTHER_ACCOUNT = '__other__';
-
 export default function CashflowPage() {
   useSession();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,8 +57,7 @@ export default function CashflowPage() {
   const [category, setCategory] = useState('Food');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [accountChoice, setAccountChoice] = useState('Cash');
-  const [customAccount, setCustomAccount] = useState('');
+  const [accountChoice, setAccountChoice] = useState('');
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [receiptTouched, setReceiptTouched] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -63,7 +65,18 @@ export default function CashflowPage() {
   // New: Search and filter
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [filterType, setFilterType] = useState<'all' | 'INCOME' | 'EXPENSE'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('all');
+
+  const fetchAccounts = useCallback(async () => {
+    try {
+      const response = await fetch('/api/accounts');
+      if (!response.ok) return;
+      const data = await response.json();
+      const list = Array.isArray(data.responseDetails) ? data.responseDetails : [];
+      setAccounts(list);
+      setAccountChoice((current) => current || list[0]?.id || '');
+    } catch (err) { console.error(err); }
+  }, []);
 
   const fetchTransactions = useCallback(async () => {
     try {
@@ -96,8 +109,8 @@ export default function CashflowPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    Promise.all([fetchTransactions(), fetchSummary()]).finally(() => setIsLoading(false));
-  }, [fetchTransactions, fetchSummary]);
+    Promise.all([fetchTransactions(), fetchSummary(), fetchAccounts()]).finally(() => setIsLoading(false));
+  }, [fetchTransactions, fetchSummary, fetchAccounts]);
 
   useEffect(() => {
     if (!isScanning) { setScanElapsed(0); return; }
@@ -106,8 +119,8 @@ export default function CashflowPage() {
     return () => window.clearInterval(interval);
   }, [isScanning]);
 
-  const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setAccountChoice('Cash'); setCustomAccount(''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
-  const loadTransaction = (tx: Transaction) => { const preset = tx.account && ACCOUNT_PRESETS.includes(tx.account as typeof ACCOUNT_PRESETS[number]); setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setAccountChoice(preset ? tx.account! : tx.account ? OTHER_ACCOUNT : 'Cash'); setCustomAccount(preset ? '' : tx.account || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
+  const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setAccountChoice(accounts[0]?.id || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
+  const loadTransaction = (tx: Transaction) => { if (tx.type === 'TRANSFER') return; setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setAccountChoice(tx.account_id || accounts.find((account) => account.name === tx.account)?.id || accounts[0]?.id || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
 
   const handleReceiptScan = async (file: File | undefined) => {
     if (!file) return;
@@ -143,13 +156,13 @@ export default function CashflowPage() {
     if (!numAmount || numAmount <= 0) { setError('Amount must be greater than zero'); setIsSaving(false); return; }
     try {
       const url = editingId ? `/api/transactions/${editingId}` : '/api/transactions';
-      const account = accountChoice === OTHER_ACCOUNT ? customAccount.trim() : accountChoice;
-      const payload = { date, type, category, description, amount: numAmount, account: account || null, ...(!editingId || receiptTouched ? { receipt_image: receiptImage } : {}) };
+      if (!accountChoice) throw new Error('Create an account before adding a transaction');
+      const payload = { date, type, category, description, amount: numAmount, account_id: accountChoice, ...(!editingId || receiptTouched ? { receipt_image: receiptImage } : {}) };
       const response = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
-      if (response.ok) { setSuccess(editingId ? 'Updated!' : 'Added!'); resetForm(); await Promise.all([fetchTransactions(), fetchSummary()]); }
-      else { setError(data.responseMessage || 'Failed'); }
-    } catch { setError('Failed'); } finally { setIsSaving(false); }
+      if (response.ok) { setSuccess(editingId ? 'Updated!' : 'Added!'); resetForm(); await Promise.all([fetchTransactions(), fetchSummary(), fetchAccounts()]); }
+      else { setError(data.responseDetails?.errors?.[0] || data.responseMessage || 'Failed'); }
+    } catch (submitError) { setError(submitError instanceof Error ? submitError.message : 'Failed'); } finally { setIsSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
@@ -284,10 +297,7 @@ export default function CashflowPage() {
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Amount</label><CurrencyInput value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
                   </div>
                   <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Description</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Account or card</label><select value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{ACCOUNT_PRESETS.map((preset) => <option key={preset} value={preset}>{preset}</option>)}<option value={OTHER_ACCOUNT}>Other...</option></select></div>
-                    {accountChoice === OTHER_ACCOUNT && <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Account name</label><input type="text" maxLength={100} required value={customAccount} onChange={(e) => setCustomAccount(e.target.value)} placeholder="Example: Jago" className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>}
-                  </div>
+                  <div><div className="mb-1 flex items-center justify-between gap-2"><label className="block text-[10px] sm:text-xs text-zinc-600">Account or wallet</label><a href="/accounts" className="text-[10px] font-semibold text-[#00a88a] sm:text-xs">Manage accounts</a></div><select required value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full min-w-0 px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm"><option value="" disabled>Select an account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {fmt(account.balance)}</option>)}</select>{accounts.length === 0 && <p className="mt-1 text-[10px] text-red-600">Create an account before adding activity.</p>}</div>
                   {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt image will be saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   <div className="flex gap-2">
@@ -313,6 +323,7 @@ export default function CashflowPage() {
                     <option value="all">All types</option>
                     <option value="INCOME">Income</option>
                     <option value="EXPENSE">Expense</option>
+                    <option value="TRANSFER">Transfer</option>
                   </select>
                   <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
                     <option value="all">All categories</option>
@@ -324,17 +335,17 @@ export default function CashflowPage() {
                     {filteredTransactions.slice(0, 5).map((tx) => (
                       <div key={tx.id} className="flex items-center justify-between p-2 sm:p-3 bg-[#f5fbf9] rounded-lg sm:rounded-xl">
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                            <span className={`text-[9px] font-semibold sm:text-[10px] ${tx.type === 'INCOME' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'MASUK' : 'KELUAR'}</span>
+                          <div className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : tx.type === 'TRANSFER' ? 'bg-blue-500/15' : 'bg-red-500/20'}`}>
+                            <span className={`text-[8px] font-semibold sm:text-[9px] ${tx.type === 'INCOME' ? 'text-green-500' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'IN' : tx.type === 'TRANSFER' ? 'MOVE' : 'OUT'}</span>
                           </div>
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-[#16332f]">{tx.category}</p>
-                            <p className="text-[10px] sm:text-xs text-zinc-500">{fmtD(tx.date)}{tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
+                            <p className="text-[10px] sm:text-xs text-zinc-500">{fmtD(tx.date)}{tx.type === 'TRANSFER' ? <span className="ml-1"><AccountTransferLabel source={tx.source_account_name || tx.account || 'Account'} destination={tx.destination_account_name || 'Account'} /></span> : tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2">
-                          <p className={`text-xs sm:text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>{tx.type === 'INCOME' ? '+' : '-'}{fmtC(tx.amount)}</p>
-                          <button onClick={() => loadTransaction(tx)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>
+                          <p className={`text-xs sm:text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-600' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{fmtC(tx.amount)}</p>
+                          {tx.type !== 'TRANSFER' && <button onClick={() => loadTransaction(tx)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>}
                           <button onClick={() => handleDelete(tx.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Delete</button>
                         </div>
                       </div>
@@ -381,15 +392,15 @@ export default function CashflowPage() {
                 {transactions.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                        <span className={`text-[9px] font-semibold ${tx.type === 'INCOME' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'MASUK' : 'KELUAR'}</span>
+                      <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-green-500/20' : tx.type === 'TRANSFER' ? 'bg-blue-500/15' : 'bg-red-500/20'}`}>
+                        <span className={`text-[9px] font-semibold ${tx.type === 'INCOME' ? 'text-green-500' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'IN' : tx.type === 'TRANSFER' ? 'MOVE' : 'OUT'}</span>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-[#16332f]">{tx.category}</p>
                         <p className="text-xs text-zinc-500">{fmtD(tx.date)}{tx.description && ` • ${tx.description}`}{tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
                       </div>
                     </div>
-                    <p className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>{tx.type === 'INCOME' ? '+' : '-'}{fmt(tx.amount)}</p>
+                    <p className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-600' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{fmt(tx.amount)}</p>
                   </div>
                 ))}
               </div>

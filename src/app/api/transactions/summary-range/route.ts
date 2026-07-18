@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       
       if (record.type === 'INCOME') {
         totalIncome += amount;
-      } else {
+      } else if (record.type === 'EXPENSE') {
         totalExpense += amount;
         expenseByCategory[record.category] = (expenseByCategory[record.category] || 0) + amount;
       }

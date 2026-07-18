@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
+import { AccountCard, type AccountSummary } from '@/components/accounts/AccountCard';
 
 interface MonthlySummary {
   total_income: number;
@@ -16,7 +17,7 @@ interface PortfolioSummary { total_invested: number; total_current_value: number
 interface InvestmentComparison { gold: PortfolioSummary; mutual_fund: PortfolioSummary; }
 interface InvestmentDetail { type: string; platform: string; product_name: string; invested_amount: number; current_value: number; gain_loss: number; }
 interface CashflowTrend { month: string; income: number; expense: number; net_cashflow: number; }
-interface Transaction { id: string; date: string; type: string; category: string; amount: number; description?: string; }
+interface Transaction { id: string; date: string; type: 'INCOME' | 'EXPENSE' | 'TRANSFER'; category: string; amount: number; description?: string; source_account_name?: string | null; destination_account_name?: string | null; }
 interface GoalProgress { id: string; name: string; target_amount: number; current_amount: number; percentage: number; category: string; days_left: number | null; is_completed: boolean; }
 interface SavingsSuggestion { category: string; current_amount?: number; historical_average?: number; potential_saving?: number; message?: string; }
 interface UpcomingTransaction { id: string; category: string; description: string; amount: number; type: 'INCOME' | 'EXPENSE'; is_active: boolean; next_run: string | null; }
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const [goals, setGoals] = useState<GoalProgress[]>([]);
   const [suggestions, setSuggestions] = useState<SavingsSuggestion[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingTransaction[]>([]);
+  const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [periodLabel, setPeriodLabel] = useState('');
 
@@ -62,7 +64,7 @@ export default function DashboardPage() {
       try {
         const period = getSalaryPeriod(new Date());
         setPeriodLabel(period.label);
-        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes, suggestionsRes, recurringRes] = await Promise.all([
+        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes, suggestionsRes, recurringRes, accountsRes] = await Promise.all([
           fetch(`/api/transactions/summary-range?startDate=${period.startDate}&endDate=${period.endDate}`),
           fetch('/api/analytics/comparison'),
           fetch('/api/analytics/cashflow-trend'),
@@ -71,6 +73,7 @@ export default function DashboardPage() {
           fetch('/api/goals'),
           fetch('/api/analytics/savings-suggestions'),
           fetch('/api/recurring'),
+          fetch('/api/accounts'),
         ]);
         if (sumRes.ok) { const d = await sumRes.json(); setSummary(d.responseDetails); }
         if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
@@ -80,6 +83,7 @@ export default function DashboardPage() {
         if (goalsRes.ok) { const d = await goalsRes.json(); setGoals(Array.isArray(d.responseDetails) ? d.responseDetails.filter((g: GoalProgress) => !g.is_completed).slice(0, 3) : []); }
         if (suggestionsRes.ok) { const d = await suggestionsRes.json(); const list = d.responseDetails?.suggestions ?? d.responseDetails; setSuggestions(Array.isArray(list) ? list : []); }
         if (recurringRes.ok) { const d = await recurringRes.json(); const list = Array.isArray(d.responseDetails) ? d.responseDetails : []; setUpcoming(list.filter((item: UpcomingTransaction) => item.is_active && item.next_run).sort((a: UpcomingTransaction, b: UpcomingTransaction) => a.next_run!.localeCompare(b.next_run!)).slice(0, 5)); }
+        if (accountsRes.ok) { const d = await accountsRes.json(); setAccounts(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
       } catch (e) { console.error(e); } finally { setIsLoading(false); }
     }
     fetchData();
@@ -111,7 +115,7 @@ export default function DashboardPage() {
         <main className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
           <div className="space-y-4">
             <div className="skeleton h-48 rounded-3xl"></div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[1,2,3,4].map(i => <div key={i} className="skeleton h-24 rounded-2xl"></div>)}
             </div>
             <div className="skeleton h-64 rounded-3xl"></div>
@@ -180,16 +184,25 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Individual account balances */}
+          <section className="min-w-0 animate-fade-in" aria-labelledby="account-balances-title">
+            <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0"><h2 id="account-balances-title" className="truncate font-semibold text-[#16332f]">Accounts and wallets</h2><p className="text-xs text-zinc-500">Individual available balances</p></div>
+              <Link href="/accounts" className="shrink-0 text-xs font-semibold text-[#008f78]">Manage</Link>
+            </div>
+            {accounts.length > 0 ? <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">{accounts.map((account) => <div key={account.id} className="w-[min(82vw,280px)] shrink-0 snap-start"><AccountCard account={account} /></div>)}</div> : <Link href="/accounts" className="card block min-w-0 rounded-3xl p-5 text-sm text-zinc-500"><span className="break-words">Create your first bank account, wallet, or cash balance.</span></Link>}
+          </section>
+
           {/* Quick Actions */}
-          <div className="grid grid-cols-4 gap-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div className="grid min-w-0 grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {[
               { href: '/cashflow', label: 'Activity' },
               { href: '/investments', label: 'Investments' },
               { href: '/budget', label: 'Budget' },
               { href: '/goals', label: 'Goals' },
             ].map((item) => (
-              <Link key={item.href} href={item.href} className="card hover-scale p-4 text-center stat-card">
-                <span className="text-xs font-semibold text-zinc-600">{item.label}</span>
+              <Link key={item.href} href={item.href} className="card hover-scale min-w-0 p-3 text-center stat-card sm:p-4">
+                <span className="block min-w-0 break-words text-xs font-semibold leading-4 text-zinc-600">{item.label}</span>
               </Link>
             ))}
           </div>
@@ -199,7 +212,7 @@ export default function DashboardPage() {
               <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Savings opportunities</h2></div>
               {suggestions.length > 0 ? <div className="space-y-3">{suggestions.slice(0, 3).map((item) => {
                 const saving = item.potential_saving ?? 0;
-                return <div key={item.category} className="rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.message ?? `Return to your three-month average to save ${formatCurrency(saving)}.`}</p></div><span className="whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
+                return <div key={item.category} className="min-w-0 rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 break-words text-xs leading-relaxed text-zinc-500">{item.message ?? `Return to your three-month average to save ${formatCurrency(saving)}.`}</p></div><span className="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
               })}</div> : <p className="text-sm text-zinc-500">No overspending patterns need attention right now.</p>}
             </section>
 
@@ -268,19 +281,15 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {transactions.slice(0, 5).map((tx, i) => (
                   <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-[#f5fbf9] hover:bg-[#e9f5f2] transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-[#00d4aa]/10' : 'bg-red-500/10'}`}>
-                      {tx.type === 'INCOME' ? (
-                        <span className="text-[9px] font-semibold text-[#00a88a]">MASUK</span>
-                      ) : (
-                        <span className="text-[9px] font-semibold text-red-500">KELUAR</span>
-                      )}
+                    <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-[#00d4aa]/10' : tx.type === 'TRANSFER' ? 'bg-blue-500/10' : 'bg-red-500/10'}`}>
+                      <span className={`text-[9px] font-semibold ${tx.type === 'INCOME' ? 'text-[#00a88a]' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'IN' : tx.type === 'TRANSFER' ? 'MOVE' : 'OUT'}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#16332f] truncate">{tx.category}</p>
                       <p className="text-xs text-zinc-500">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                     </div>
-                    <p className={`text-sm font-bold ${tx.type === 'INCOME' ? 'text-[#00d4aa]' : 'text-red-400'}`}>
-                      {tx.type === 'INCOME' ? '+' : '-'}{formatCompact(tx.amount)}
+                    <p className={`shrink-0 text-sm font-bold ${tx.type === 'INCOME' ? 'text-[#00a88a]' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>
+                      {tx.type === 'INCOME' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{formatCompact(tx.amount)}
                     </p>
                   </div>
                 ))}

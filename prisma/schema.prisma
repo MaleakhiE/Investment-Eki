@@ -8,24 +8,25 @@ datasource db {
 }
 
 model User {
-  id                        BigInt            @id @default(autoincrement())
-  email                     String            @unique @db.VarChar(512)
-  password_hash             String            @db.VarChar(255)
-  ai_recommendation_enabled Boolean           @default(true)
-  created_at                DateTime          @default(now())
-  updated_at                DateTime          @updatedAt
-  role                      UserRole          @default(USER)
+  id                        BigInt   @id @default(autoincrement())
+  email                     String   @unique @db.VarChar(512)
+  password_hash             String   @db.VarChar(255)
+  ai_recommendation_enabled Boolean  @default(true)
+  created_at                DateTime @default(now())
+  updated_at                DateTime @updatedAt
+  role                      UserRole @default(USER)
 
-  cashflows            MonthlyCashflow[]
-  transactions         Transaction[]
-  investments          Investment[]
-  notifications        NotificationLog[]
-  smtpSettings         SmtpSettings?
-  notificationSettings NotificationSettings?
-  budgets              Budget[]
+  cashflows             MonthlyCashflow[]
+  transactions          Transaction[]
+  investments           Investment[]
+  notifications         NotificationLog[]
+  smtpSettings          SmtpSettings?
+  notificationSettings  NotificationSettings?
+  budgets               Budget[]
   recurringTransactions RecurringTransaction[]
-  financialGoals       FinancialGoal[]
-  passwordResetTokens  PasswordResetToken[]
+  financialGoals        FinancialGoal[]
+  passwordResetTokens   PasswordResetToken[]
+  financialAccounts     FinancialAccount[]
 
   @@map("users")
 }
@@ -50,13 +51,13 @@ model ApplicationSmtpSettings {
 }
 
 model PasswordResetToken {
-  id         BigInt    @id @default(autoincrement())
-  user_id    BigInt
-  token_hash String    @unique @db.Char(64)
-  active_user_id BigInt? @unique
-  expires_at DateTime
-  used_at    DateTime?
-  created_at DateTime  @default(now())
+  id             BigInt    @id @default(autoincrement())
+  user_id        BigInt
+  token_hash     String    @unique @db.Char(64)
+  active_user_id BigInt?   @unique
+  expires_at     DateTime
+  used_at        DateTime?
+  created_at     DateTime  @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -83,22 +84,48 @@ model MonthlyCashflow {
 }
 
 model Transaction {
-  id          BigInt          @id @default(autoincrement())
-  user_id     BigInt
-  date        DateTime        @db.Date
-  type        TransactionType
-  category    String          @db.VarChar(50)
-  description String          @db.VarChar(512)
-  amount      String          @db.VarChar(255)
-  account       String?       @db.VarChar(100)
-  receipt_image String?       @db.LongText
-  created_at  DateTime        @default(now())
-  updated_at  DateTime        @updatedAt
+  id                     BigInt          @id @default(autoincrement())
+  user_id                BigInt
+  date                   DateTime        @db.Date
+  type                   TransactionType
+  category               String          @db.VarChar(50)
+  description            String          @db.VarChar(512)
+  amount                 String          @db.VarChar(255)
+  account                String?         @db.VarChar(100)
+  account_id             BigInt?
+  destination_account_id BigInt?
+  receipt_image          String?         @db.LongText
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
 
-  user User @relation(fields: [user_id], references: [id])
+  user               User              @relation(fields: [user_id], references: [id])
+  sourceAccount      FinancialAccount? @relation("TransactionSourceAccount", fields: [account_id], references: [id], onDelete: SetNull)
+  destinationAccount FinancialAccount? @relation("TransactionDestinationAccount", fields: [destination_account_id], references: [id], onDelete: SetNull)
 
   @@index([user_id, date])
+  @@index([account_id, type])
+  @@index([destination_account_id, type])
   @@map("transactions")
+}
+
+model FinancialAccount {
+  id              BigInt               @id @default(autoincrement())
+  user_id         BigInt
+  name            String               @db.VarChar(100)
+  type            FinancialAccountType @default(BANK)
+  opening_balance String?              @db.VarChar(255)
+  color           String?              @db.VarChar(20)
+  is_archived     Boolean              @default(false)
+  created_at      DateTime             @default(now())
+  updated_at      DateTime             @updatedAt
+
+  user                    User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sourceTransactions      Transaction[] @relation("TransactionSourceAccount")
+  destinationTransactions Transaction[] @relation("TransactionDestinationAccount")
+
+  @@unique([user_id, name])
+  @@index([user_id, is_archived])
+  @@map("financial_accounts")
 }
 
 model SmtpSettings {
@@ -120,6 +147,13 @@ model SmtpSettings {
 enum TransactionType {
   INCOME
   EXPENSE
+  TRANSFER
+}
+
+enum FinancialAccountType {
+  BANK
+  WALLET
+  CASH
 }
 
 model Investment {
@@ -166,16 +200,16 @@ model NotificationLog {
 }
 
 model NotificationSettings {
-  id                      BigInt   @id @default(autoincrement())
-  user_id                 BigInt   @unique
-  monthly_reminder        Boolean  @default(true)
-  monthly_reminder_day    Int      @default(25)
-  monthly_summary         Boolean  @default(true)
-  low_balance_alert       Boolean  @default(false)
-  low_balance_threshold   String   @db.VarChar(255) @default("0")
-  custom_alerts           String?  @db.Text
-  created_at              DateTime @default(now())
-  updated_at              DateTime @updatedAt
+  id                    BigInt   @id @default(autoincrement())
+  user_id               BigInt   @unique
+  monthly_reminder      Boolean  @default(true)
+  monthly_reminder_day  Int      @default(25)
+  monthly_summary       Boolean  @default(true)
+  low_balance_alert     Boolean  @default(false)
+  low_balance_threshold String   @default("0") @db.VarChar(255)
+  custom_alerts         String?  @db.Text
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 
@@ -196,13 +230,13 @@ enum NotificationType {
 
 // Budget per kategori
 model Budget {
-  id          BigInt   @id @default(autoincrement())
-  user_id     BigInt
-  category    String   @db.VarChar(50)
-  amount      String   @db.VarChar(255) // Encrypted
-  period      BudgetPeriod @default(MONTHLY)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id         BigInt       @id @default(autoincrement())
+  user_id    BigInt
+  category   String       @db.VarChar(50)
+  amount     String       @db.VarChar(255) // Encrypted
+  period     BudgetPeriod @default(MONTHLY)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 
@@ -218,21 +252,21 @@ enum BudgetPeriod {
 
 // Recurring transactions (transaksi berulang)
 model RecurringTransaction {
-  id          BigInt          @id @default(autoincrement())
-  user_id     BigInt
-  type        TransactionType
-  category    String          @db.VarChar(50)
-  description String          @db.VarChar(512)
-  amount      String          @db.VarChar(255) // Encrypted
-  frequency   RecurringFrequency
-  day_of_month Int?           // For monthly: 1-28
-  day_of_week  Int?           // For weekly: 0-6 (Sunday-Saturday)
-  start_date  DateTime        @db.Date
-  end_date    DateTime?       @db.Date
-  is_active   Boolean         @default(true)
-  last_run    DateTime?       @db.Date
-  created_at  DateTime        @default(now())
-  updated_at  DateTime        @updatedAt
+  id           BigInt             @id @default(autoincrement())
+  user_id      BigInt
+  type         TransactionType
+  category     String             @db.VarChar(50)
+  description  String             @db.VarChar(512)
+  amount       String             @db.VarChar(255) // Encrypted
+  frequency    RecurringFrequency
+  day_of_month Int? // For monthly: 1-28
+  day_of_week  Int? // For weekly: 0-6 (Sunday-Saturday)
+  start_date   DateTime           @db.Date
+  end_date     DateTime?          @db.Date
+  is_active    Boolean            @default(true)
+  last_run     DateTime?          @db.Date
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 
@@ -248,17 +282,17 @@ enum RecurringFrequency {
 
 // Financial Goals (target keuangan)
 model FinancialGoal {
-  id              BigInt   @id @default(autoincrement())
-  user_id         BigInt
-  name            String   @db.VarChar(100)
-  target_amount   String   @db.VarChar(255) // Encrypted
-  current_amount  String   @db.VarChar(255) // Encrypted
-  deadline        DateTime? @db.Date
-  category        GoalCategory
-  priority        Int      @default(1) // 1=high, 2=medium, 3=low
-  is_completed    Boolean  @default(false)
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id             BigInt       @id @default(autoincrement())
+  user_id        BigInt
+  name           String       @db.VarChar(100)
+  target_amount  String       @db.VarChar(255) // Encrypted
+  current_amount String       @db.VarChar(255) // Encrypted
+  deadline       DateTime?    @db.Date
+  category       GoalCategory
+  priority       Int          @default(1) // 1=high, 2=medium, 3=low
+  is_completed   Boolean      @default(false)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 

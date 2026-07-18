@@ -60,6 +60,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       ...result.transaction!,
       id: result.transaction!.id.toString(),
       user_id: result.transaction!.user_id.toString(),
+      account_id: result.transaction!.account_id?.toString() ?? null,
+      destination_account_id: result.transaction!.destination_account_id?.toString() ?? null,
     };
 
     return NextResponse.json(

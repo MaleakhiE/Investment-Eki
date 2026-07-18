@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
 import { isSupportedReceiptDataUrl } from '@/lib/receipt-image';
 
-export type TransactionType = 'INCOME' | 'EXPENSE';
+export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
 export interface TransactionInput {
   date: string; // YYYY-MM-DD
@@ -20,7 +20,16 @@ export interface TransactionInput {
   description: string;
   amount: number;
   account?: string | null;
+  account_id?: string | bigint | null;
   receipt_image?: string | null;
+}
+
+export interface TransferInput {
+  date: string;
+  source_account_id: string | bigint;
+  destination_account_id: string | bigint;
+  amount: number;
+  description: string;
 }
 
 export interface TransactionRecord {
@@ -32,6 +41,10 @@ export interface TransactionRecord {
   description: string;
   amount: number;
   account: string | null;
+  account_id: bigint | null;
+  destination_account_id: bigint | null;
+  source_account_name?: string | null;
+  destination_account_name?: string | null;
   receipt_image: string | null;
   has_receipt?: boolean;
   created_at: Date;
@@ -87,6 +100,23 @@ function normalizeAccount(account: string | null | undefined): string | null {
   return normalized ? normalized : null;
 }
 
+function parseAccountId(value: string | bigint | null | undefined): bigint | null {
+  if (value === null || value === undefined || value === '') return null;
+  try {
+    const accountId = typeof value === 'bigint' ? value : BigInt(value);
+    return accountId > 0 ? accountId : null;
+  } catch {
+    return null;
+  }
+}
+
+async function findOwnedAccount(userId: bigint, accountId: bigint) {
+  return prisma.financialAccount.findFirst({
+    where: { id: accountId, user_id: userId, is_archived: false },
+    select: { id: true, name: true },
+  });
+}
+
 /**
  * Validate transaction input
  */
@@ -138,6 +168,12 @@ export async function createTransaction(
   }
 
   const encryptedAmount = encryptNumber(input.amount);
+  const requestedAccountId = parseAccountId(input.account_id);
+  if (input.account_id !== undefined && !requestedAccountId) {
+    return { success: false, error: 'Account not found' };
+  }
+  const linkedAccount = requestedAccountId ? await findOwnedAccount(userId, requestedAccountId) : null;
+  if (requestedAccountId && !linkedAccount) return { success: false, error: 'Account not found' };
 
   const record = await prisma.transaction.create({
     data: {
@@ -147,7 +183,8 @@ export async function createTransaction(
       category: input.category.trim(),
       description: input.description.trim(),
       amount: encryptedAmount,
-      account: normalizeAccount(input.account),
+      account: linkedAccount?.name ?? normalizeAccount(input.account),
+      ...(requestedAccountId ? { account_id: requestedAccountId } : {}),
       ...(input.receipt_image !== undefined ? { receipt_image: input.receipt_image } : {}),
     },
   });
@@ -163,6 +200,8 @@ export async function createTransaction(
       description: record.description,
       amount: input.amount,
       account: record.account,
+      account_id: record.account_id,
+      destination_account_id: record.destination_account_id,
       receipt_image: record.receipt_image,
       created_at: record.created_at,
       updated_at: record.updated_at,
@@ -193,6 +232,12 @@ export async function updateTransaction(
   }
 
   const encryptedAmount = encryptNumber(input.amount);
+  const requestedAccountId = parseAccountId(input.account_id);
+  if (input.account_id !== undefined && input.account_id !== null && !requestedAccountId) {
+    return { success: false, error: 'Account not found' };
+  }
+  const linkedAccount = requestedAccountId ? await findOwnedAccount(userId, requestedAccountId) : null;
+  if (requestedAccountId && !linkedAccount) return { success: false, error: 'Account not found' };
 
   const record = await prisma.transaction.update({
     where: { id: transactionId },
@@ -202,7 +247,8 @@ export async function updateTransaction(
       category: input.category.trim(),
       description: input.description.trim(),
       amount: encryptedAmount,
-      account: normalizeAccount(input.account),
+      account: linkedAccount?.name ?? normalizeAccount(input.account),
+      ...(input.account_id !== undefined ? { account_id: requestedAccountId } : {}),
       ...(input.receipt_image !== undefined ? { receipt_image: input.receipt_image } : {}),
     },
   });
@@ -218,6 +264,8 @@ export async function updateTransaction(
       description: record.description,
       amount: input.amount,
       account: record.account,
+      account_id: record.account_id,
+      destination_account_id: record.destination_account_id,
       receipt_image: record.receipt_image,
       created_at: record.created_at,
       updated_at: record.updated_at,
@@ -267,10 +315,14 @@ export async function getTransactions(
   const records = await prisma.transaction.findMany({
     where,
     orderBy: { date: 'desc' },
+    include: {
+      sourceAccount: { select: { name: true } },
+      destinationAccount: { select: { name: true } },
+    },
     ...(limit && limit > 0 ? { take: limit } : {}),
   });
 
-  return records.map((record: { id: bigint; user_id: bigint; date: Date; type: string; category: string; description: string; amount: string; account: string | null; receipt_image: string | null; created_at: Date; updated_at: Date }) => ({
+  return records.map((record) => ({
     id: record.id,
     user_id: record.user_id,
     date: record.date,
@@ -278,7 +330,11 @@ export async function getTransactions(
     category: record.category,
     description: record.description,
     amount: decryptNumber(record.amount),
-    account: record.account,
+    account: record.sourceAccount?.name ?? record.account,
+    account_id: record.account_id,
+    destination_account_id: record.destination_account_id,
+    source_account_name: record.sourceAccount?.name ?? record.account,
+    destination_account_name: record.destinationAccount?.name ?? null,
     receipt_image: null,
     has_receipt: record.receipt_image !== null,
     created_at: record.created_at,
@@ -316,7 +372,7 @@ export async function getMonthlySummary(
     
     if (record.type === 'INCOME') {
       totalIncome += amount;
-    } else {
+    } else if (record.type === 'EXPENSE') {
       totalExpense += amount;
       expenseByCategory[record.category] = (expenseByCategory[record.category] || 0) + amount;
     }
@@ -329,4 +385,72 @@ export async function getMonthlySummary(
     net_cashflow: totalIncome - totalExpense,
     expense_by_category: expenseByCategory,
   };
+}
+
+export async function createTransfer(
+  userId: bigint,
+  input: TransferInput
+): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string }> {
+  if (!input.date || !/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
+    return { success: false, error: 'Invalid date format. Use YYYY-MM-DD' };
+  }
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return { success: false, error: 'Amount must be a positive number' };
+  }
+
+  const sourceId = parseAccountId(input.source_account_id);
+  const destinationId = parseAccountId(input.destination_account_id);
+  if (!sourceId || !destinationId) return { success: false, error: 'Source and destination accounts are required' };
+  if (sourceId === destinationId) {
+    return { success: false, error: 'Source and destination accounts must be different' };
+  }
+
+  return prisma.$transaction(async (client) => {
+    const accounts = await client.financialAccount.findMany({
+      where: { id: { in: [sourceId, destinationId] }, user_id: userId, is_archived: false },
+      select: { id: true, name: true },
+    });
+    if (accounts.length !== 2) return { success: false, error: 'One or more accounts were not found' };
+
+    const source = accounts.find((account) => account.id === sourceId);
+    const destination = accounts.find((account) => account.id === destinationId);
+    if (!source || !destination) return { success: false, error: 'Source or destination account not found' };
+
+    const record = await client.transaction.create({
+      data: {
+        user_id: userId,
+        date: new Date(input.date),
+        type: 'TRANSFER',
+        category: 'Transfer',
+        description: typeof input.description === 'string' && input.description.trim()
+          ? input.description.trim()
+          : 'Account transfer',
+        amount: encryptNumber(input.amount),
+        account: source.name,
+        account_id: sourceId,
+        destination_account_id: destinationId,
+      },
+    });
+
+    return {
+      success: true,
+      transaction: {
+        id: record.id,
+        user_id: record.user_id,
+        date: record.date,
+        type: 'TRANSFER' as const,
+        category: record.category,
+        description: record.description,
+        amount: input.amount,
+        account: record.account,
+        account_id: record.account_id,
+        destination_account_id: record.destination_account_id,
+        source_account_name: source.name,
+        destination_account_name: destination.name,
+        receipt_image: record.receipt_image,
+        created_at: record.created_at,
+        updated_at: record.updated_at,
+      },
+    };
+  });
 }

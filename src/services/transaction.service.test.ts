@@ -5,9 +5,18 @@ const transactionRepository = {
   findMany: jest.fn(),
   delete: jest.fn(),
 };
+const financialAccountRepository = { findMany: jest.fn(), findFirst: jest.fn() };
+const databaseTransaction = jest.fn(async (callback: (client: unknown) => unknown) => callback({
+  transaction: transactionRepository,
+  financialAccount: financialAccountRepository,
+}));
 
 jest.mock('@/lib/prisma', () => ({
-  prisma: { transaction: transactionRepository },
+  prisma: {
+    transaction: transactionRepository,
+    financialAccount: financialAccountRepository,
+    $transaction: databaseTransaction,
+  },
 }));
 
 jest.mock('@/lib/encryption', () => ({
@@ -17,7 +26,9 @@ jest.mock('@/lib/encryption', () => ({
 
 import {
   ACCOUNT_PRESETS,
+  createTransfer,
   createTransaction,
+  getMonthlySummary,
   getTransactions,
   updateTransaction,
   validateTransactionInput,
@@ -128,6 +139,109 @@ describe('transaction optional field round trips', () => {
     const result = await getTransactions(BigInt(20));
 
     expect(result[0]).toEqual(expect.objectContaining({ account: 'BCA', receipt_image: null, has_receipt: true }));
+  });
+});
+
+describe('linked account transactions', () => {
+  it('rejects a transaction linked to an account the user does not own', async () => {
+    financialAccountRepository.findFirst.mockResolvedValue(null);
+
+    const result = await createTransaction(BigInt(20), {
+      ...baseInput,
+      account_id: '99',
+    });
+
+    expect(result).toEqual({ success: false, error: 'Account not found' });
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('persists the owned account id and compatibility name', async () => {
+    financialAccountRepository.findFirst.mockResolvedValue({ id: BigInt(2), name: 'Mandiri' });
+    transactionRepository.create.mockResolvedValue({
+      ...persisted,
+      account: 'Mandiri',
+      account_id: BigInt(2),
+      destination_account_id: null,
+    });
+
+    await createTransaction(BigInt(20), { ...baseInput, account_id: '2' });
+
+    expect(transactionRepository.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      account_id: BigInt(2),
+      account: 'Mandiri',
+    }) });
+  });
+});
+
+describe('account transfers', () => {
+  it('rejects transfers to the same account', async () => {
+    await expect(createTransfer(BigInt(20), {
+      date: '2026-07-17',
+      source_account_id: '1',
+      destination_account_id: '1',
+      amount: 50_000,
+      description: 'Move funds',
+    })).resolves.toEqual({ success: false, error: 'Source and destination accounts must be different' });
+  });
+
+  it('creates one atomic transfer between two owned active accounts', async () => {
+    financialAccountRepository.findMany.mockResolvedValue([
+      { id: BigInt(1), name: 'BCA' },
+      { id: BigInt(2), name: 'Mandiri' },
+    ]);
+    transactionRepository.create.mockResolvedValue({
+      ...persisted,
+      type: 'TRANSFER',
+      category: 'Transfer',
+      account: 'BCA',
+      account_id: BigInt(1),
+      destination_account_id: BigInt(2),
+    });
+
+    const result = await createTransfer(BigInt(20), {
+      date: '2026-07-17', source_account_id: '1', destination_account_id: '2',
+      amount: 50_000, description: 'Move funds',
+    });
+
+    expect(databaseTransaction).toHaveBeenCalledTimes(1);
+    expect(transactionRepository.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      type: 'TRANSFER', account_id: BigInt(1), destination_account_id: BigInt(2),
+      amount: 'encrypted:50000',
+    }) });
+    expect(result.success).toBe(true);
+  });
+
+  it('defaults a missing transfer description at the API boundary', async () => {
+    financialAccountRepository.findMany.mockResolvedValue([
+      { id: BigInt(1), name: 'BCA' },
+      { id: BigInt(2), name: 'Mandiri' },
+    ]);
+    transactionRepository.create.mockResolvedValue({
+      ...persisted, type: 'TRANSFER', category: 'Transfer', account: 'BCA',
+      account_id: BigInt(1), destination_account_id: BigInt(2),
+    });
+
+    const result = await createTransfer(BigInt(20), {
+      date: '2026-07-17', source_account_id: '1', destination_account_id: '2',
+      amount: 50_000, description: undefined as unknown as string,
+    });
+
+    expect(result.success).toBe(true);
+    expect(transactionRepository.create).toHaveBeenCalledWith({ data: expect.objectContaining({ description: 'Account transfer' }) });
+  });
+
+  it('excludes transfers from income and expense summaries', async () => {
+    transactionRepository.findMany.mockResolvedValue([
+      { type: 'INCOME', category: 'Salary', amount: 'encrypted:100000' },
+      { type: 'EXPENSE', category: 'Food', amount: 'encrypted:20000' },
+      { type: 'TRANSFER', category: 'Transfer', amount: 'encrypted:50000' },
+    ]);
+
+    await expect(getMonthlySummary(BigInt(20), '2026-07')).resolves.toEqual(expect.objectContaining({
+      total_income: 100_000,
+      total_expense: 20_000,
+      net_cashflow: 80_000,
+    }));
   });
 });
 import fc from 'fast-check';
