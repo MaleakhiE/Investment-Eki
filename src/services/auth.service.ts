@@ -93,6 +93,7 @@ export interface ValidateCredentialsResult {
     email: string;
     ai_recommendation_enabled: boolean;
     role: 'USER' | 'SUPERADMIN';
+    session_version: number;
     created_at: Date;
   } | null;
 }
@@ -131,6 +132,7 @@ export async function validateCredentials(
       email: decrypt(user.email),
       ai_recommendation_enabled: user.ai_recommendation_enabled,
       role: user.role,
+      session_version: user.session_version,
       created_at: user.created_at,
     },
   };

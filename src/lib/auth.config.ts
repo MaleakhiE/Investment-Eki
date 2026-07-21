@@ -6,6 +6,7 @@
  */
 
 import type { NextAuthConfig } from 'next-auth';
+import { isSessionVersionCurrent } from './auth-session';
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -17,7 +18,7 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
+      const isLoggedIn = !!auth?.user && !auth.user.session_invalidated;
       const pathname = nextUrl.pathname;
       
       // Protected routes
@@ -54,16 +55,25 @@ export const authConfig: NextAuthConfig = {
         token.email = user.email;
         token.ai_recommendation_enabled = user.ai_recommendation_enabled;
         token.role = user.role;
+        token.session_version = user.session_version;
+        token.session_invalidated = false;
+      } else if (token.id) {
+        token.session_invalidated = !(await isSessionVersionCurrent(
+          token.id as string,
+          token.session_version as number | undefined,
+        ));
       }
       return token;
     },
     async session({ session, token }) {
+      const sessionInvalidated = Boolean(token.session_invalidated);
       session.user = {
         ...session.user,
-        id: token.id as string,
+        id: sessionInvalidated ? '' : token.id as string,
         email: token.email as string,
         ai_recommendation_enabled: token.ai_recommendation_enabled as boolean,
         role: token.role as 'USER' | 'SUPERADMIN',
+        session_invalidated: sessionInvalidated,
       };
       return session;
     },

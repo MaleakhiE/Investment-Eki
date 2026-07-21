@@ -1,0 +1,47 @@
+jest.mock('./auth-session', () => ({ isSessionVersionCurrent: jest.fn() }));
+
+import { isSessionVersionCurrent } from './auth-session';
+import { authConfig } from './auth.config';
+
+type JwtCallback = (input: { token: Record<string, unknown>; user?: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+type AuthorizedCallback = (input: { auth: { user: Record<string, unknown> } | null; request: { nextUrl: URL } }) => boolean | Response;
+type SessionCallback = (input: { session: { user: Record<string, unknown> }; token: Record<string, unknown> }) => Promise<{ user: Record<string, unknown> }>;
+
+const jwt = authConfig.callbacks?.jwt as unknown as JwtCallback;
+const authorized = authConfig.callbacks?.authorized as unknown as AuthorizedCallback;
+const session = authConfig.callbacks?.session as unknown as SessionCallback;
+
+describe('JWT session revocation', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('stores the authoritative session version in a newly issued token', async () => {
+    const token = await jwt({
+      token: {},
+      user: {
+        id: '7', email: 'person@example.com', role: 'USER',
+        ai_recommendation_enabled: true, session_version: 4,
+      },
+    });
+
+    expect(token).toEqual(expect.objectContaining({
+      id: '7', session_version: 4, session_invalidated: false,
+    }));
+  });
+
+  it('marks an existing token invalid when the database version changes', async () => {
+    jest.mocked(isSessionVersionCurrent).mockResolvedValue(false);
+    const token = await jwt({ token: { id: '7', session_version: 3 } });
+
+    expect(token.session_invalidated).toBe(true);
+    expect(authorized({
+      auth: { user: { id: '7', session_invalidated: true } },
+      request: { nextUrl: new URL('https://fintrack.example/dashboard') },
+    })).toBe(false);
+    await expect(session({
+      session: { user: {} },
+      token: { id: '7', email: 'person@example.com', role: 'USER', session_invalidated: true },
+    })).resolves.toEqual(expect.objectContaining({
+      user: expect.objectContaining({ id: '', session_invalidated: true }),
+    }));
+  });
+});

@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { successResponse, serverErrorResponse } from '@/lib/api-response';
+import { successResponse } from '@/lib/api-response';
 
 interface GoldPriceResponse {
   sell_price: number;

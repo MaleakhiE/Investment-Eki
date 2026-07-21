@@ -1,8 +1,7 @@
 /**
- * Auth Middleware
- * 
- * Protects routes that require authentication.
- * Uses Edge-compatible auth configuration.
+ * Auth proxy for routes that require authentication.
+ *
+ * Next.js 16 runs this network boundary on the Node.js runtime.
  */
 
 import NextAuth from 'next-auth';
@@ -11,7 +10,7 @@ import { NextRequest } from 'next/server';
 
 const { auth } = NextAuth(authConfig);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // NextAuth's overloaded middleware type does not expose the request-only call,
   // although that is the supported runtime shape for this wrapper.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +26,8 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      * - api/auth (NextAuth routes)
+     * - api/health (public platform health probes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/|api/auth).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/|api/auth|api/health).*)',
   ],
 };

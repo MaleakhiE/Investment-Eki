@@ -28,7 +28,9 @@ All endpoints except the authentication endpoints require a valid session. Unaut
 
 ### Session Duration
 
-Sessions are valid for 30 days by default.
+Sessions are valid for 30 days by default. A successful password reset increments
+the account's session version and immediately invalidates every previously issued
+session on all devices. Users must sign in again with the new password.
 
 ## Response Format
 
@@ -155,6 +157,21 @@ Content-Type: application/json
 ```
 
 The raw reset token is never stored. Only its SHA-256 hash is persisted, and successful use consumes it.
+Successful reset also signs the account out on every device by revoking older JWT session versions.
+
+### Scheduler endpoints
+
+`POST /api/notifications/send-monthly` and `POST /api/jobs/process-recurring`
+are deployment-only scheduler endpoints. Both fail closed unless `CRON_SECRET`
+is configured and the request contains `Authorization: Bearer <CRON_SECRET>`.
+Monthly notification and recurring occurrence keys make scheduler retries
+idempotent.
+
+### Health endpoints
+
+- `GET /api/health/live` reports process liveness without checking dependencies.
+- `GET /api/health/ready` returns `200` only when MySQL responds and the global
+  SMTP row is configured; failures return a generic `503` without dependency details.
 
 #### Global SMTP configuration
 

@@ -49,9 +49,9 @@
 - Produces: `npm run db:status`, `npm run db:deploy`, and a baseline that creates the pre-OCR schema before later migrations run.
 
 - [ ] Introspect the current remote schema into a temporary Prisma schema and generate a reviewed baseline from empty to the pre-OCR data model.
-- [ ] Verify the baseline contains `CREATE TABLE transactions` and excludes `account`, `receipt_image`, `application_smtp_settings`, and `password_reset_tokens`.
-- [ ] Replace `spawn(..., { shell: true })` with a non-shell Prisma invocation and add deploy/status scripts.
-- [ ] Add a disposable-MySQL verification script that applies every migration from empty and runs `prisma migrate status`.
+- [x] Verify the baseline contains `CREATE TABLE transactions` and excludes `account`, `receipt_image`, `application_smtp_settings`, and `password_reset_tokens`.
+- [x] Replace `spawn(..., { shell: true })` with a non-shell Prisma invocation and add deploy/status scripts.
+- [x] Add a disposable-MySQL verification script that applies every migration from empty and runs `prisma migrate status`.
 - [ ] Mark only the baseline applied on the existing database, run `migrate deploy`, then verify the OCR and SMTP/reset migrations applied.
 
 Verification:
@@ -73,10 +73,10 @@ bash scripts/verify-migrations.sh
 **Interfaces:**
 - Produces: `verifyCronBearer(request: Request): boolean` using constant-time comparison and rejecting missing `CRON_SECRET`.
 
-- [ ] Test missing, malformed, and incorrect secrets return 401 without executing notification work.
-- [ ] Test a correct secret executes once and returns the existing response envelope.
-- [ ] Implement fail-closed authorization and remove the current optional-secret behavior.
-- [ ] Add an idempotency key `(user_id, month, notification_type)` so scheduler retries do not send duplicate monthly mail.
+- [x] Test missing, malformed, and incorrect secrets return 401 without executing notification work.
+- [x] Test a correct secret executes once and returns the existing response envelope.
+- [x] Implement fail-closed authorization and remove the current optional-secret behavior.
+- [x] Add an idempotency key `(user_id, month, notification_type)` so scheduler retries do not send duplicate monthly mail.
 
 ### Task 3: Session revocation after password reset
 
@@ -93,10 +93,10 @@ bash scripts/verify-migrations.sh
 - Adds: `User.session_version Int @default(1)`.
 - Produces: reset increments `session_version`; protected API authorization rejects JWTs with an older version.
 
-- [ ] Test reset atomically updates the password, consumes the token, and increments session version.
-- [ ] Test an existing JWT is rejected after the version increments.
-- [ ] Add version to newly issued JWTs and verify it on protected server/API access.
-- [ ] Document that password reset signs out all devices.
+- [x] Test reset atomically updates the password, consumes the token, and increments session version.
+- [x] Test an existing JWT is rejected after the version increments.
+- [x] Add version to newly issued JWTs and verify it on protected server/API access.
+- [x] Document that password reset signs out all devices.
 
 ### Task 4: Security and recovery baseline
 
@@ -109,11 +109,11 @@ bash scripts/verify-migrations.sh
 - Create: `.github/workflows/ci.yml`
 - Create: `docs/runbooks/backup-restore.md`
 
-- [ ] Add CSP, HSTS in production, `nosniff`, frame restrictions, Referrer-Policy, and Permissions-Policy.
-- [ ] Add `Cache-Control: no-store, private` to decrypted exports and neutralize CSV cells beginning with `=`, `+`, `-`, or `@`.
-- [ ] Add liveness and readiness endpoints; readiness checks database access and global SMTP row presence without sending mail.
-- [ ] Add CI gates for clean install, Prisma generation/validation, typecheck, lint, tests, production build, dependency audit, and migration replay.
-- [ ] Document provider backups, point-in-time recovery, retention, and a quarterly restore drill.
+- [x] Add CSP, HSTS in production, `nosniff`, frame restrictions, Referrer-Policy, and Permissions-Policy.
+- [x] Add `Cache-Control: no-store, private` to decrypted exports and neutralize CSV cells beginning with `=`, `+`, `-`, or `@`.
+- [x] Add liveness and readiness endpoints; readiness checks database access and global SMTP row presence without sending mail.
+- [x] Add CI gates for clean install, Prisma generation/validation, typecheck, lint, tests, production build, dependency audit, and migration replay.
+- [x] Document provider backups, point-in-time recovery, retention, and a quarterly restore drill.
 
 Phase 0 exit gate:
 
@@ -205,10 +205,10 @@ Phase 1 exit gate: opening balances, transactions, and transfers reconcile exact
 - Adds a unique occurrence key `(recurring_transaction_id, scheduled_date)`.
 - Produces: `processDueRecurrings(asOf: Date): Promise<ProcessResult>`.
 
-- [ ] Test concurrent/retried processing creates one transaction per occurrence.
+- [x] Test concurrent/retried processing creates one transaction per occurrence.
 - [ ] Define explicit timezone, month-end, leap-year, yearly month/day, and catch-up behavior.
-- [ ] Store account association and validate ownership.
-- [ ] Create the transaction and occurrence record in one database transaction.
+- [x] Store account association and validate ownership.
+- [x] Create the transaction and occurrence record in one database transaction.
 
 ### Task 9: Scheduler and recurring management UI
 
@@ -218,7 +218,7 @@ Phase 1 exit gate: opening balances, transactions, and transfers reconcile exact
 - Create: `src/app/recurring/page.tsx`
 - Modify: `src/components/layout/Sidebar.tsx`
 
-- [ ] Protect the job with the fail-closed cron helper.
+- [x] Protect the job with the fail-closed cron helper.
 - [ ] Add create/edit/pause/delete recurring rules and show next/last occurrence.
 - [ ] Surface failed occurrences without silently losing them.
 

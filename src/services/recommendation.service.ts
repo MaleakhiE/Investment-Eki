@@ -10,8 +10,6 @@
  * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7
  */
 
-import { prisma } from '@/lib/prisma';
-import { decryptNumber } from '@/lib/encryption';
 import { CashflowRecord, getCashflowHistory } from './cashflow.service';
 import { InvestmentSnapshotRecord, getSnapshotsByUserAndType } from './investment.service';
 import { InvestmentType } from '@/lib/validation';

@@ -45,10 +45,11 @@ if (!process.env.DATABASE_URL) {
 
 // Run prisma with the remaining arguments
 const args = process.argv.slice(2);
-const prisma = spawn('npx', ['prisma', ...args], {
+const prismaCli = require.resolve('prisma/build/index.js');
+const prisma = spawn(process.execPath, [prismaCli, ...args], {
   stdio: 'inherit',
   env: process.env,
-  shell: true
+  shell: false
 });
 
 prisma.on('close', (code) => {

@@ -18,6 +18,7 @@ declare module 'next-auth' {
       email: string;
       ai_recommendation_enabled: boolean;
       role: 'USER' | 'SUPERADMIN';
+      session_invalidated?: boolean;
     } & DefaultSession['user'];
   }
 
@@ -26,6 +27,7 @@ declare module 'next-auth' {
     email: string;
     ai_recommendation_enabled: boolean;
     role: 'USER' | 'SUPERADMIN';
+    session_version: number;
   }
 }
 
@@ -59,6 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: result.user.email,
           ai_recommendation_enabled: result.user.ai_recommendation_enabled,
           role: result.user.role,
+          session_version: result.user.session_version,
         };
       },
     }),

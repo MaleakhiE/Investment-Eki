@@ -65,7 +65,10 @@ describe('password reset', () => {
     user.update.mockResolvedValue({});
     passwordResetToken.updateMany.mockResolvedValue({ count: 1 });
     await expect(resetPassword('raw-token', 'new-password')).resolves.toEqual({ success: true });
-    expect(user.update).toHaveBeenCalledWith({ where: { id: BigInt(7) }, data: { password_hash: 'hashed-password' } });
+    expect(user.update).toHaveBeenCalledWith({
+      where: { id: BigInt(7) },
+      data: { password_hash: 'hashed-password', session_version: { increment: 1 } },
+    });
     expect(passwordResetToken.updateMany).toHaveBeenCalledWith({ where: { id: BigInt(9), used_at: null }, data: { used_at: expect.any(Date), active_user_id: null } });
   });
 

@@ -90,11 +90,25 @@ export function exportToCSV(transactions: ExportData['transactions']): string {
     tx.date,
     tx.type,
     tx.category,
-    `"${tx.description.replace(/"/g, '""')}"`,
-    tx.amount.toString(),
+    tx.description,
+    tx.amount,
   ]);
 
-  return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  return [headers, ...rows]
+    .map(row => row.map(escapeCSVCell).join(','))
+    .join('\n');
+}
+
+function escapeCSVCell(value: string | number): string {
+  const rawValue = String(value);
+  // Spreadsheet applications can ignore leading whitespace or a UTF-8 BOM
+  // before deciding whether a cell is a formula. Detect against that
+  // normalized prefix while preserving the user's original text.
+  const spreadsheetSafeValue = /^[\s\uFEFF]*[=+\-@]/.test(rawValue)
+    ? `'${rawValue}`
+    : rawValue;
+
+  return `"${spreadsheetSafeValue.replace(/"/g, '""')}"`;
 }
 
 export async function getExportSummary(userId: bigint) {

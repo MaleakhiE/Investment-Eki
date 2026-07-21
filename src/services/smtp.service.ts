@@ -92,7 +92,17 @@ export async function saveGlobalSmtpSettings(input: GlobalSmtpInput): Promise<vo
 }
 
 function transporter(settings: SmtpSettings) {
-  return nodemailer.createTransport({ host: settings.host, port: settings.port, secure: settings.port === 465, requireTLS: settings.port !== 465, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 15_000, auth: { user: settings.user, pass: settings.pass } });
+  return nodemailer.createTransport({
+    host: settings.host,
+    port: settings.port,
+    secure: settings.port === 465,
+    requireTLS: settings.port !== 465,
+    tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+    auth: { user: settings.user, pass: settings.pass },
+  });
 }
 
 export async function verifyGlobalSmtp(): Promise<void> {
@@ -104,5 +114,10 @@ export async function verifyGlobalSmtp(): Promise<void> {
 export async function sendSmtpMail(content: { to: string; subject: string; html: string }): Promise<void> {
   const settings = await getSmtpSettings();
   if (!settings) throw new Error('Global SMTP configuration is not initialized');
-  await transporter(settings).sendMail({ from: settings.from_email, ...content });
+  await transporter(settings).sendMail({
+    from: settings.from_email,
+    ...content,
+    disableFileAccess: true,
+    disableUrlAccess: true,
+  });
 }

@@ -14,7 +14,6 @@
 import { prisma } from '@/lib/prisma';
 import { decrypt, decryptNumber } from '@/lib/encryption';
 import { sendSmtpMail } from './smtp.service';
-import { CashflowRecord } from './cashflow.service';
 import { PortfolioSummary } from './analytics.service';
 
 /**
@@ -39,7 +38,10 @@ export interface NotificationLogRecord {
   user_id: bigint;
   month: string;
   type: NotificationType;
-  sent_at: Date;
+  status: 'PENDING' | 'SENT' | 'FAILED';
+  claimed_at: Date;
+  attempt_count: number;
+  sent_at: Date | null;
 }
 
 /**
@@ -211,9 +213,14 @@ export function buildSummaryEmailContent(
  * Get current month in YYYY-MM format
  */
 export function getCurrentMonth(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  if (!year || !month) throw new Error('Unable to resolve the Jakarta calendar month');
   return `${year}-${month}`;
 }
 
@@ -279,6 +286,9 @@ export async function logNotification(
       user_id: userId,
       month: month,
       type: type,
+      status: 'PENDING',
+      claimed_at: new Date(),
+      sent_at: null,
     },
   });
   
@@ -287,6 +297,9 @@ export async function logNotification(
     user_id: log.user_id,
     month: log.month,
     type: log.type as NotificationType,
+    status: log.status,
+    claimed_at: log.claimed_at,
+    attempt_count: log.attempt_count,
     sent_at: log.sent_at,
   };
 }
@@ -300,11 +313,9 @@ export async function getNotificationLog(
   month: string,
   type: NotificationType
 ): Promise<NotificationLogRecord | null> {
-  const log = await prisma.notificationLog.findFirst({
+  const log = await prisma.notificationLog.findUnique({
     where: {
-      user_id: userId,
-      month: month,
-      type: type,
+      user_id_month_type: { user_id: userId, month, type },
     },
   });
   
@@ -317,6 +328,9 @@ export async function getNotificationLog(
     user_id: log.user_id,
     month: log.month,
     type: log.type as NotificationType,
+    status: log.status,
+    claimed_at: log.claimed_at,
+    attempt_count: log.attempt_count,
     sent_at: log.sent_at,
   };
 }
@@ -330,22 +344,42 @@ export async function getNotificationLog(
 export async function sendMonthlyNotifications(): Promise<{
   sent: number;
   failed: number;
-  results: Array<{ userId: bigint; type: NotificationType; success: boolean }>;
+  skipped: number;
+  results: Array<{ userId: bigint; type: NotificationType; success: boolean; skipped?: boolean }>;
 }> {
   const currentMonth = getCurrentMonth();
   
   // Get all users
   const users = await prisma.user.findMany();
   
-  const results: Array<{ userId: bigint; type: NotificationType; success: boolean }> = [];
+  const results: Array<{ userId: bigint; type: NotificationType; success: boolean; skipped?: boolean }> = [];
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
   
   for (const user of users) {
+    let notificationType: NotificationType = 'REMINDER';
+    let claim: NotificationLogRecord | null = null;
     try {
       // Check if cashflow exists for current month
       const cashflowExists = await checkCashflowExists(user.id, currentMonth);
-      const notificationType = determineNotificationType(cashflowExists);
+      notificationType = determineNotificationType(cashflowExists);
+
+      try {
+        claim = await claimNotification(user.id, currentMonth, notificationType);
+        if (!claim) {
+          skipped++;
+          results.push({ userId: user.id, type: notificationType, success: true, skipped: true });
+          continue;
+        }
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          skipped++;
+          results.push({ userId: user.id, type: notificationType, success: true, skipped: true });
+          continue;
+        }
+        throw error;
+      }
       
       // Decrypt user email
       const userEmail = decrypt(user.email);
@@ -364,22 +398,108 @@ export async function sendMonthlyNotifications(): Promise<{
       const emailSent = await sendEmail(emailContent);
       
       if (emailSent) {
-        // Log notification
-        await logNotification(user.id, currentMonth, notificationType);
+        await markNotificationSent(claim.id);
+        claim = null;
         sent++;
         results.push({ userId: user.id, type: notificationType, success: true });
       } else {
+        await markNotificationFailed(claim.id);
+        claim = null;
         failed++;
         results.push({ userId: user.id, type: notificationType, success: false });
       }
     } catch (error) {
+      if (claim) {
+        try {
+          await markNotificationFailed(claim.id);
+        } catch (claimError) {
+          console.error(`Failed to release notification claim ${claim.id}:`, claimError);
+        }
+      }
       console.error(`Failed to process notification for user ${user.id}:`, error);
       failed++;
-      results.push({ userId: user.id, type: 'REMINDER', success: false });
+      results.push({ userId: user.id, type: notificationType, success: false });
     }
   }
   
-  return { sent, failed, results };
+  return { sent, failed, skipped, results };
+}
+
+function isUniqueConstraintError(error: unknown): error is { code: string } {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002';
+}
+
+const NOTIFICATION_CLAIM_LEASE_MS = 15 * 60 * 1000;
+
+async function claimNotification(
+  userId: bigint,
+  month: string,
+  type: NotificationType
+): Promise<NotificationLogRecord | null> {
+  const claimedAt = new Date();
+  const staleBefore = new Date(claimedAt.getTime() - NOTIFICATION_CLAIM_LEASE_MS);
+  const key = { user_id: userId, month, type };
+
+  const reclaimed = await prisma.notificationLog.updateMany({
+    where: {
+      ...key,
+      OR: [
+        { status: 'FAILED' },
+        { status: 'PENDING', claimed_at: { lt: staleBefore } },
+      ],
+    },
+    data: {
+      status: 'PENDING',
+      claimed_at: claimedAt,
+      sent_at: null,
+      attempt_count: { increment: 1 },
+    },
+  });
+
+  if (reclaimed.count > 0) {
+    const log = await prisma.notificationLog.findUnique({
+      where: { user_id_month_type: key },
+    });
+    return log ? mapNotificationLog(log) : null;
+  }
+
+  return logNotification(userId, month, type);
+}
+
+function mapNotificationLog(log: {
+  id: bigint;
+  user_id: bigint;
+  month: string;
+  type: string;
+  status: 'PENDING' | 'SENT' | 'FAILED';
+  claimed_at: Date;
+  attempt_count: number;
+  sent_at: Date | null;
+}): NotificationLogRecord {
+  return {
+    id: log.id,
+    user_id: log.user_id,
+    month: log.month,
+    type: log.type as NotificationType,
+    status: log.status,
+    claimed_at: log.claimed_at,
+    attempt_count: log.attempt_count,
+    sent_at: log.sent_at,
+  };
+}
+
+async function markNotificationSent(id: bigint): Promise<void> {
+  await prisma.notificationLog.update({
+    where: { id },
+    data: { status: 'SENT', sent_at: new Date() },
+  });
+}
+
+async function markNotificationFailed(id: bigint): Promise<void> {
+  await prisma.notificationLog.update({
+    where: { id },
+    data: { status: 'FAILED' },
+  });
 }
 
 /**

@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { encrypt, decrypt, encryptNumber, decryptNumber } from '@/lib/encryption';
+import { encryptNumber, decryptNumber } from '@/lib/encryption';
 
 export interface BudgetInput {
   category: string;

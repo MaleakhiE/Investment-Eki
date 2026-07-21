@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
-import { createRecurring, getRecurrings, processRecurrings } from '@/services/recurring.service';
+import { createRecurring, getRecurrings, processRecurrings, RecurringInputError } from '@/services/recurring.service';
 
 export async function GET() {
   try {
@@ -48,12 +48,17 @@ export async function POST(request: NextRequest) {
       frequency: body.frequency,
       day_of_month: body.day_of_month,
       day_of_week: body.day_of_week,
+      month_of_year: body.month_of_year,
+      account_id: body.account_id,
       start_date: body.start_date,
       end_date: body.end_date,
     });
 
     return NextResponse.json(responseAPI(201, 'SUCCESS', 'Recurring transaction created', recurring), { status: 201 });
   } catch (error) {
+    if (error instanceof RecurringInputError) {
+      return NextResponse.json(responseAPI(400, 'ERROR', error.message, null), { status: 400 });
+    }
     console.error('Create recurring error:', error);
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
   }

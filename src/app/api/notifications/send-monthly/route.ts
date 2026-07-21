@@ -16,6 +16,7 @@ import {
   unauthorizedResponse,
   serverErrorResponse,
 } from '@/lib/api-response';
+import { verifyCronBearer } from '@/lib/cron-auth';
 
 /**
  * POST /api/notifications/send-monthly - Trigger monthly notifications
@@ -29,19 +30,11 @@ import {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret for security (optional but recommended)
-    const cronSecret = process.env.CRON_SECRET;
-    
-    if (cronSecret) {
-      const authHeader = request.headers.get('authorization');
-      const providedSecret = authHeader?.replace('Bearer ', '');
-      
-      if (providedSecret !== cronSecret) {
-        return NextResponse.json(
-          unauthorizedResponse('Invalid cron secret'),
-          { status: 401 }
-        );
-      }
+    if (!verifyCronBearer(request)) {
+      return NextResponse.json(
+        unauthorizedResponse('Invalid cron credentials'),
+        { status: 401 }
+      );
     }
 
     // Send monthly notifications to all users
@@ -52,14 +45,15 @@ export async function POST(request: NextRequest) {
         {
           sent: result.sent,
           failed: result.failed,
-          total: result.sent + result.failed,
+          skipped: result.skipped,
+          total: result.sent + result.failed + result.skipped,
           details: result.results.map((r) => ({
             userId: r.userId.toString(),
             type: r.type,
             success: r.success,
           })),
         },
-        `Monthly notifications processed: ${result.sent} sent, ${result.failed} failed`
+        `Monthly notifications processed: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`
       )
     );
   } catch (error) {

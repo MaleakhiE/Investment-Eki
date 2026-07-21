@@ -54,7 +54,13 @@ export async function resetPassword(token: string, password: string): Promise<{ 
     }
     const consumed = await tx.passwordResetToken.updateMany({ where: { id: record.id, used_at: null }, data: { used_at: new Date(), active_user_id: null } });
     if (consumed.count !== 1) return { success: false, error: 'Invalid or expired reset token' };
-    await tx.user.update({ where: { id: record.user_id }, data: { password_hash: await bcrypt.hash(password, 10) } });
+    await tx.user.update({
+      where: { id: record.user_id },
+      data: {
+        password_hash: await bcrypt.hash(password, 10),
+        session_version: { increment: 1 },
+      },
+    });
     return { success: true };
   });
 }

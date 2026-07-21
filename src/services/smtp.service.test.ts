@@ -58,7 +58,16 @@ describe('global SMTP settings', () => {
     });
     sendMail.mockResolvedValue({});
     await sendSmtpMail({ to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' });
-    expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({ port: 587, secure: false, requireTLS: true }));
+    expect(createTransport).toHaveBeenCalledWith(expect.objectContaining({
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
+    }));
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({
+      disableFileAccess: true,
+      disableUrlAccess: true,
+    }));
   });
 
   it('returns a masked username and never returns encrypted credentials', async () => {

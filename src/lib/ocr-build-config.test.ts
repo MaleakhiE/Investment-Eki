@@ -20,3 +20,31 @@ describe('OCR production bundle', () => {
     expect(packageJson.scripts.build).toContain('node scripts/verify-ocr-build-trace.js');
   });
 });
+
+describe('Next.js production hardening', () => {
+  it('uses the repository root for Turbopack and output tracing', () => {
+    expect(nextConfig.turbopack?.root).toBe(process.cwd());
+    expect(nextConfig.outputFileTracingRoot).toBe(process.cwd());
+  });
+
+  it('sets baseline security headers on every route', async () => {
+    const rules = await nextConfig.headers?.();
+    const globalRule = rules?.find(rule => rule.source === '/(.*)');
+
+    expect(globalRule?.headers).toEqual(expect.arrayContaining([
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+      { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+      expect.objectContaining({ key: 'Content-Security-Policy' }),
+    ]));
+
+    expect(rules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        source: '/reset-password',
+        headers: expect.arrayContaining([{ key: 'Referrer-Policy', value: 'no-referrer' }]),
+      }),
+    ]));
+  });
+});

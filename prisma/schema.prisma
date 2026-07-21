@@ -15,6 +15,7 @@ model User {
   created_at                DateTime @default(now())
   updated_at                DateTime @updatedAt
   role                      UserRole @default(USER)
+  session_version           Int      @default(1)
 
   cashflows             MonthlyCashflow[]
   transactions          Transaction[]
@@ -98,9 +99,10 @@ model Transaction {
   created_at             DateTime        @default(now())
   updated_at             DateTime        @updatedAt
 
-  user               User              @relation(fields: [user_id], references: [id])
-  sourceAccount      FinancialAccount? @relation("TransactionSourceAccount", fields: [account_id], references: [id], onDelete: SetNull)
-  destinationAccount FinancialAccount? @relation("TransactionDestinationAccount", fields: [destination_account_id], references: [id], onDelete: SetNull)
+  user                User                 @relation(fields: [user_id], references: [id])
+  sourceAccount       FinancialAccount?    @relation("TransactionSourceAccount", fields: [account_id], references: [id], onDelete: SetNull)
+  destinationAccount  FinancialAccount?    @relation("TransactionDestinationAccount", fields: [destination_account_id], references: [id], onDelete: SetNull)
+  recurringOccurrence RecurringOccurrence?
 
   @@index([user_id, date])
   @@index([account_id, type])
@@ -119,11 +121,13 @@ model FinancialAccount {
   created_at      DateTime             @default(now())
   updated_at      DateTime             @updatedAt
 
-  user                    User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  sourceTransactions      Transaction[] @relation("TransactionSourceAccount")
-  destinationTransactions Transaction[] @relation("TransactionDestinationAccount")
+  user                    User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sourceTransactions      Transaction[]          @relation("TransactionSourceAccount")
+  destinationTransactions Transaction[]          @relation("TransactionDestinationAccount")
+  recurringTransactions   RecurringTransaction[] @relation("RecurringSourceAccount")
 
   @@unique([user_id, name])
+  @@unique([id, user_id])
   @@index([user_id, is_archived])
   @@map("financial_accounts")
 }
@@ -188,14 +192,18 @@ model InvestmentSnapshot {
 }
 
 model NotificationLog {
-  id      BigInt           @id @default(autoincrement())
-  user_id BigInt
-  month   String           @db.VarChar(7)
-  type    NotificationType
-  sent_at DateTime         @default(now())
+  id            BigInt                     @id @default(autoincrement())
+  user_id       BigInt
+  month         String                     @db.VarChar(7)
+  type          NotificationType
+  status        NotificationDeliveryStatus @default(PENDING)
+  claimed_at    DateTime                   @default(now())
+  attempt_count Int                        @default(1)
+  sent_at       DateTime?
 
   user User @relation(fields: [user_id], references: [id])
 
+  @@unique([user_id, month, type])
   @@map("notification_logs")
 }
 
@@ -228,6 +236,12 @@ enum NotificationType {
   CUSTOM
 }
 
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 // Budget per kategori
 model Budget {
   id         BigInt       @id @default(autoincrement())
@@ -252,25 +266,44 @@ enum BudgetPeriod {
 
 // Recurring transactions (transaksi berulang)
 model RecurringTransaction {
-  id           BigInt             @id @default(autoincrement())
-  user_id      BigInt
-  type         TransactionType
-  category     String             @db.VarChar(50)
-  description  String             @db.VarChar(512)
-  amount       String             @db.VarChar(255) // Encrypted
-  frequency    RecurringFrequency
-  day_of_month Int? // For monthly: 1-28
-  day_of_week  Int? // For weekly: 0-6 (Sunday-Saturday)
-  start_date   DateTime           @db.Date
-  end_date     DateTime?          @db.Date
-  is_active    Boolean            @default(true)
-  last_run     DateTime?          @db.Date
-  created_at   DateTime           @default(now())
-  updated_at   DateTime           @updatedAt
+  id            BigInt             @id @default(autoincrement())
+  user_id       BigInt
+  type          TransactionType
+  category      String             @db.VarChar(50)
+  description   String             @db.VarChar(512)
+  amount        String             @db.VarChar(255) // Encrypted
+  frequency     RecurringFrequency
+  day_of_month  Int? // For monthly: 1-28
+  day_of_week   Int? // For weekly: 0-6 (Sunday-Saturday)
+  month_of_year Int? // For yearly: 1-12
+  account_id    BigInt?
+  start_date    DateTime           @db.Date
+  end_date      DateTime?          @db.Date
+  is_active     Boolean            @default(true)
+  last_run      DateTime?          @db.Date
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
 
-  user User @relation(fields: [user_id], references: [id])
+  user        User                  @relation(fields: [user_id], references: [id])
+  account     FinancialAccount?     @relation("RecurringSourceAccount", fields: [account_id, user_id], references: [id, user_id], onDelete: Restrict)
+  occurrences RecurringOccurrence[]
 
+  @@index([account_id])
   @@map("recurring_transactions")
+}
+
+model RecurringOccurrence {
+  id                       BigInt   @id @default(autoincrement())
+  recurring_transaction_id BigInt
+  scheduled_date           DateTime @db.Date
+  transaction_id           BigInt?  @unique
+  created_at               DateTime @default(now())
+
+  recurringTransaction RecurringTransaction @relation(fields: [recurring_transaction_id], references: [id], onDelete: Cascade)
+  transaction          Transaction?         @relation(fields: [transaction_id], references: [id], onDelete: SetNull)
+
+  @@unique([recurring_transaction_id, scheduled_date])
+  @@map("recurring_occurrences")
 }
 
 enum RecurringFrequency {
