@@ -46,9 +46,14 @@ if (!process.env.DATABASE_URL) {
 // Run prisma with the remaining arguments
 const args = process.argv.slice(2);
 const prismaCli = require.resolve('prisma/build/index.js');
+const localBinPath = path.join(__dirname, '..', 'node_modules', '.bin');
+const childEnv = {
+  ...process.env,
+  PATH: [localBinPath, process.env.PATH].filter(Boolean).join(path.delimiter),
+};
 const prisma = spawn(process.execPath, [prismaCli, ...args], {
   stdio: 'inherit',
-  env: process.env,
+  env: childEnv,
   shell: false
 });
 

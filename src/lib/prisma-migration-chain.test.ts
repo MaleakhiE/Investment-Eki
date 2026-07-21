@@ -21,7 +21,23 @@ describe('Prisma migration replay chain', () => {
     const hardening = migration('20260721000000_production_hardening');
     expect(hardening).toContain('notification_logs_user_id_month_type_key');
     expect(hardening).toContain('CREATE TABLE `recurring_occurrences`');
-    expect(hardening).toContain('recurring_occurrences_recurring_transaction_id_scheduled_date_key');
+    expect(hardening).toContain('recurring_occurrence_schedule_key');
     expect(hardening).toContain('session_version');
+  });
+
+  it('keeps every explicit MySQL identifier within the 64-character limit', () => {
+    const migrationsDirectory = path.join(process.cwd(), 'prisma/migrations');
+    const migrationFiles = fs.readdirSync(migrationsDirectory, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(migrationsDirectory, entry.name, 'migration.sql'));
+
+    const oversizedIdentifiers = migrationFiles.flatMap((file) => {
+      const sql = fs.readFileSync(file, 'utf8');
+      return [...sql.matchAll(/(?:INDEX|CONSTRAINT)\s+`([^`]+)`/g)]
+        .map((match) => match[1])
+        .filter((identifier) => identifier.length > 64);
+    });
+
+    expect(oversizedIdentifiers).toEqual([]);
   });
 });

@@ -61,7 +61,7 @@ CREATE TABLE `recurring_occurrences` (
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
   UNIQUE INDEX `recurring_occurrences_transaction_id_key`(`transaction_id`),
-  UNIQUE INDEX `recurring_occurrences_recurring_transaction_id_scheduled_date_key`(`recurring_transaction_id`, `scheduled_date`),
+  UNIQUE INDEX `recurring_occurrence_schedule_key`(`recurring_transaction_id`, `scheduled_date`),
   PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

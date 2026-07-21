@@ -10,6 +10,6 @@ if (existsSync(environmentFile)) {
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
-    seed: 'ts-node --compiler-options \'{"module":"CommonJS"}\' prisma/seed.ts',
+    seed: 'tsx prisma/seed.ts',
   },
 });

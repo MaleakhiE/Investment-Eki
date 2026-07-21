@@ -302,7 +302,7 @@ model RecurringOccurrence {
   recurringTransaction RecurringTransaction @relation(fields: [recurring_transaction_id], references: [id], onDelete: Cascade)
   transaction          Transaction?         @relation(fields: [transaction_id], references: [id], onDelete: SetNull)
 
-  @@unique([recurring_transaction_id, scheduled_date])
+  @@unique([recurring_transaction_id, scheduled_date], map: "recurring_occurrence_schedule_key")
   @@map("recurring_occurrences")
 }
 

@@ -1,6 +1,8 @@
 import { PrismaClient, InvestmentType } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { resolveSeedAdminConfig } from './seed-config';
+import { ensureSeedSuperadmin } from './seed-superadmin';
 
 const prisma = new PrismaClient();
 
@@ -63,21 +65,15 @@ function encryptNumber(value: number): string {
 async function main() {
   console.log('Starting database seed...');
 
-  // Create default admin user
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  const encryptedEmail = encryptDeterministic('admin@example.com');
-
-  const adminUser = await prisma.user.upsert({
-    where: { email: encryptedEmail },
-    update: {},
-    create: {
-      email: encryptedEmail,
-      password_hash: hashedPassword,
-      ai_recommendation_enabled: true,
-    },
+  // Bootstrap the configured owner account. On reruns, the environment-backed
+  // password remains authoritative and old sessions are revoked.
+  const adminConfig = resolveSeedAdminConfig();
+  const adminUser = await ensureSeedSuperadmin(prisma, adminConfig, {
+    encryptEmail: encryptDeterministic,
+    hashPassword: (password) => bcrypt.hash(password, 10),
   });
 
-  console.log(`Created admin user with ID: ${adminUser.id}`);
+  console.log(`Ensured superadmin user with ID: ${adminUser.id}`);
 
   // Create sample cashflow data (last 6 months)
   const currentDate = new Date();
