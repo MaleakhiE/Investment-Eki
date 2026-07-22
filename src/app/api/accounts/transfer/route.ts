@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(validationErrorResponse([result.error || 'Failed to transfer funds']), { status: 400 });
     }
 
-    const transaction = result.transaction;
+    const { user_id: internalUserId, ...transaction } = result.transaction;
+    void internalUserId;
     const serialized = {
       ...transaction,
       id: transaction.id.toString(),
-      user_id: transaction.user_id.toString(),
       account_id: transaction.account_id?.toString() ?? null,
       destination_account_id: transaction.destination_account_id?.toString() ?? null,
     };

@@ -11,6 +11,7 @@ import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import { authConfig } from './auth.config';
+import { resolveInternalUserId } from './auth-session';
 
 declare module 'next-auth' {
   interface Session {
@@ -58,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         return {
-          id: result.user.id.toString(),
+          id: result.user.id,
           email: result.user.email,
           ai_recommendation_enabled: result.user.ai_recommendation_enabled,
           role: result.user.role,
@@ -98,7 +99,7 @@ export async function getCurrentUserId(): Promise<bigint | null> {
   if (!session?.user?.id) {
     return null;
   }
-  return BigInt(session.user.id);
+  return resolveInternalUserId(session.user.id);
 }
 
 export async function requireSuperadmin(): Promise<{ userId: bigint } | { status: 401 | 403 }> {

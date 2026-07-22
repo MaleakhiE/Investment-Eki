@@ -3,8 +3,9 @@ import { getCurrentUserId } from '@/lib/auth';
 import { createAccount, getAccounts, type AccountInput, type AccountRecord } from '@/services/account.service';
 import { serverErrorResponse, successResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-response';
 
-function serializeAccount(account: AccountRecord) {
-  return { ...account, id: account.id.toString(), user_id: account.user_id.toString() };
+function serializeAccount({ user_id: internalUserId, ...account }: AccountRecord) {
+  void internalUserId;
+  return { ...account, id: account.id.toString() };
 }
 
 export async function GET() {

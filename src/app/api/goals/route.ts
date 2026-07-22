@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
 import { createGoal, getGoals, getGoalsSummary } from '@/services/goals.service';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
     }
 
-    const userId = BigInt(session.user.id);
     const url = new URL(request.url);
     const summaryOnly = url.searchParams.get('summary') === 'true';
 
@@ -29,12 +28,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
     }
 
-    const userId = BigInt(session.user.id);
     const body = await request.json();
 
     if (!body.name || !body.target_amount || !body.category) {

@@ -17,6 +17,7 @@ type SessionCallback = (input: { session: { user: Record<string, unknown> }; tok
 const jwt = authConfig.callbacks?.jwt as unknown as JwtCallback;
 const authorized = authConfig.callbacks?.authorized as unknown as AuthorizedCallback;
 const session = authConfig.callbacks?.session as unknown as SessionCallback;
+const publicUserId = '3d594650-3436-4aa2-bb39-9fc9f5bc521d';
 
 describe('JWT session revocation', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -25,19 +26,19 @@ describe('JWT session revocation', () => {
     const token = await jwt({
       token: {},
       user: {
-        id: '7', email: 'person@example.com', role: 'USER',
+        id: publicUserId, email: 'person@example.com', role: 'USER',
         ai_recommendation_enabled: true, session_version: 4,
       },
     });
 
     expect(token).toEqual(expect.objectContaining({
-      id: '7', session_version: 4, session_invalidated: false,
+      id: publicUserId, session_version: 4, session_invalidated: false,
     }));
   });
 
   it('stores the FinTrack user rather than the temporary Auth.js UUID for Google login', async () => {
     jest.mocked(resolveSessionUserForProvider).mockResolvedValue({
-      id: '7',
+      id: publicUserId,
       email: 'person@example.com',
       ai_recommendation_enabled: true,
       role: 'USER',
@@ -52,7 +53,7 @@ describe('JWT session revocation', () => {
     });
 
     expect(token).toEqual(expect.objectContaining({
-      id: '7',
+      id: publicUserId,
       session_version: 2,
       session_invalidated: false,
     }));
@@ -60,16 +61,16 @@ describe('JWT session revocation', () => {
 
   it('marks an existing token invalid when the database version changes', async () => {
     jest.mocked(isSessionVersionCurrent).mockResolvedValue(false);
-    const token = await jwt({ token: { id: '7', session_version: 3 } });
+    const token = await jwt({ token: { id: publicUserId, session_version: 3 } });
 
     expect(token.session_invalidated).toBe(true);
     expect(authorized({
-      auth: { user: { id: '7', session_invalidated: true } },
+      auth: { user: { id: publicUserId, session_invalidated: true } },
       request: { nextUrl: new URL('https://fintrack.example/dashboard') },
     })).toBe(false);
     await expect(session({
       session: { user: {} },
-      token: { id: '7', email: 'person@example.com', role: 'USER', session_invalidated: true },
+      token: { id: publicUserId, email: 'person@example.com', role: 'USER', session_invalidated: true },
     })).resolves.toEqual(expect.objectContaining({
       user: expect.objectContaining({ id: '', session_invalidated: true }),
     }));

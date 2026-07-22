@@ -10,8 +10,9 @@ function parseId(id: string): bigint | null {
   catch { return null; }
 }
 
-function serializeAccount(account: AccountRecord) {
-  return { ...account, id: account.id.toString(), user_id: account.user_id.toString() };
+function serializeAccount({ user_id: internalUserId, ...account }: AccountRecord) {
+  void internalUserId;
+  return { ...account, id: account.id.toString() };
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {

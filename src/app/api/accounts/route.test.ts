@@ -35,7 +35,8 @@ describe('/api/accounts', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.responseDetails[0]).toEqual(expect.objectContaining({ id: '3', user_id: '7', name: 'BCA' }));
+    expect(body.responseDetails[0]).toEqual(expect.objectContaining({ id: '3', name: 'BCA' }));
+    expect(body.responseDetails[0]).not.toHaveProperty('user_id');
   });
 
   it('creates an account through the domain service', async () => {
@@ -85,8 +86,10 @@ describe('POST /api/accounts/transfer', () => {
     }) as never);
 
     expect(response.status).toBe(201);
-    expect((await response.json()).responseDetails).toEqual(expect.objectContaining({
+    const body = (await response.json()).responseDetails;
+    expect(body).toEqual(expect.objectContaining({
       id: '9', account_id: '1', destination_account_id: '2',
     }));
+    expect(body).not.toHaveProperty('user_id');
   });
 });

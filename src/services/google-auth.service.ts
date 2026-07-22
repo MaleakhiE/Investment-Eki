@@ -1,6 +1,7 @@
 import { encryptDeterministic } from '@/lib/encryption';
 import { prisma } from '@/lib/prisma';
 import { validateEmail } from '@/lib/validation';
+import { ensureUserPublicId } from './user-identity.service';
 
 const GOOGLE_PROVIDER = 'google';
 
@@ -14,6 +15,7 @@ export interface GoogleIdentityProfile {
 
 interface FinTrackUser {
   id: bigint;
+  public_id: string | null;
   ai_recommendation_enabled: boolean;
   role: 'USER' | 'SUPERADMIN';
   session_version: number;
@@ -35,13 +37,14 @@ interface ProviderSessionUserInput {
   profile?: GoogleIdentityProfile;
 }
 
-function toSessionUser(
+async function toSessionUser(
   user: FinTrackUser,
   email: string,
   profile: GoogleIdentityProfile,
-): GoogleSessionUser {
+  repository: Parameters<typeof ensureUserPublicId>[1],
+): Promise<GoogleSessionUser> {
   return {
-    id: user.id.toString(),
+    id: await ensureUserPublicId(user, repository),
     email,
     name: profile.name ?? null,
     image: profile.picture ?? null,
@@ -77,7 +80,7 @@ export async function provisionGoogleUser(profile: GoogleIdentityProfile): Promi
       },
       include: { user: true },
     });
-    if (linkedAccount) return toSessionUser(linkedAccount.user, email, profile);
+    if (linkedAccount) return toSessionUser(linkedAccount.user, email, profile, tx.user);
 
     const existingUser = await tx.user.findUnique({ where: { email: encryptedEmail } });
     if (existingUser) {
@@ -100,7 +103,7 @@ export async function provisionGoogleUser(profile: GoogleIdentityProfile): Promi
           provider_account_id: subject,
         },
       });
-      return toSessionUser(existingUser, email, profile);
+      return toSessionUser(existingUser, email, profile, tx.user);
     }
 
     const newUser = await tx.user.create({
@@ -117,7 +120,7 @@ export async function provisionGoogleUser(profile: GoogleIdentityProfile): Promi
         provider_account_id: subject,
       },
     });
-    return toSessionUser(newUser, email, profile);
+    return toSessionUser(newUser, email, profile, tx.user);
   });
 }
 

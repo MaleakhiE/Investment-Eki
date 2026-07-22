@@ -20,6 +20,7 @@ import { provisionGoogleUser, resolveSessionUserForProvider } from './google-aut
 
 const existingUser = {
   id: BigInt(7),
+  public_id: '3d594650-3436-4aa2-bb39-9fc9f5bc521d',
   ai_recommendation_enabled: true,
   role: 'USER',
   session_version: 3,
@@ -54,7 +55,7 @@ describe('Google OAuth user provisioning', () => {
       sub: 'google-user-7',
       email: 'new-address@example.com',
       email_verified: true,
-    })).resolves.toEqual(expect.objectContaining({ id: '7', role: 'USER' }));
+    })).resolves.toEqual(expect.objectContaining({ id: existingUser.public_id, role: 'USER' }));
 
     expect(oauthAccountRepository.findUnique).toHaveBeenCalledWith({
       where: {
@@ -80,7 +81,7 @@ describe('Google OAuth user provisioning', () => {
         email_verified: true,
       },
     })).resolves.toEqual(expect.objectContaining({
-      id: '7',
+      id: existingUser.public_id,
       session_version: 3,
       role: 'USER',
     }));
@@ -98,7 +99,7 @@ describe('Google OAuth user provisioning', () => {
       email: ' Ekiputra234@gmail.com ',
       email_verified: true,
     })).resolves.toEqual(expect.objectContaining({
-      id: '7',
+      id: existingUser.public_id,
       role: 'SUPERADMIN',
     }));
 

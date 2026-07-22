@@ -11,6 +11,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '@/lib/prisma';
 import { encryptDeterministic, decrypt } from '@/lib/encryption';
 import { validateEmail, validatePassword } from '@/lib/validation';
+import { ensureUserPublicId } from './user-identity.service';
 
 const SALT_ROUNDS = 10;
 
@@ -31,7 +32,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export interface RegisterResult {
   success: boolean;
   user?: {
-    id: bigint;
+    id: string;
     email: string;
     created_at: Date;
   };
@@ -80,7 +81,7 @@ export async function register(email: string, password: string): Promise<Registe
   return {
     success: true,
     user: {
-      id: user.id,
+      id: await ensureUserPublicId(user),
       email: email.toLowerCase().trim(), // Return original email, not encrypted
       created_at: user.created_at,
     },
@@ -89,7 +90,7 @@ export async function register(email: string, password: string): Promise<Registe
 
 export interface ValidateCredentialsResult {
   user: {
-    id: bigint;
+    id: string;
     email: string;
     ai_recommendation_enabled: boolean;
     role: 'USER' | 'SUPERADMIN';
@@ -133,7 +134,7 @@ export async function validateCredentials(
   // Return user with decrypted email
   return {
     user: {
-      id: user.id,
+      id: await ensureUserPublicId(user),
       email: decrypt(user.email),
       ai_recommendation_enabled: user.ai_recommendation_enabled,
       role: user.role,
@@ -156,7 +157,7 @@ export async function getUserById(userId: bigint) {
   }
 
   return {
-    id: user.id,
+    id: await ensureUserPublicId(user),
     email: decrypt(user.email),
     ai_recommendation_enabled: user.ai_recommendation_enabled,
     role: user.role,

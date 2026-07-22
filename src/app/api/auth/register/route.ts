@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       successResponse(
         {
-          id: result.user!.id.toString(),
+          id: result.user!.id,
           email: result.user!.email,
           created_at: result.user!.created_at,
         },

@@ -9,6 +9,7 @@ datasource db {
 
 model User {
   id                        BigInt   @id @default(autoincrement())
+  public_id                 String?  @unique @default(uuid()) @db.Char(36)
   email                     String   @unique @db.VarChar(512)
   password_hash             String?  @db.VarChar(255)
   ai_recommendation_enabled Boolean  @default(true)

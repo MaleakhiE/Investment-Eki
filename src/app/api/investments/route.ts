@@ -35,7 +35,6 @@ export async function GET() {
     // Convert bigint to string for JSON serialization
     const investmentsResponse = investments.map((investment) => ({
       id: investment.id.toString(),
-      user_id: investment.user_id.toString(),
       type: investment.type,
       created_at: investment.created_at,
     }));

@@ -1,9 +1,9 @@
-const auth = jest.fn();
+const getCurrentUserId = jest.fn();
 const exportToJSON = jest.fn();
 const exportToCSV = jest.fn();
 const getExportSummary = jest.fn();
 
-jest.mock('@/lib/auth', () => ({ auth }));
+jest.mock('@/lib/auth', () => ({ getCurrentUserId }));
 jest.mock('@/services/export.service', () => ({
   exportToJSON,
   exportToCSV,
@@ -16,7 +16,7 @@ const makeRequest = (query = '') => new Request(`http://localhost/api/export${qu
 
 beforeEach(() => {
   jest.clearAllMocks();
-  auth.mockResolvedValue({ user: { id: '20' } });
+  getCurrentUserId.mockResolvedValue(BigInt(20));
   exportToJSON.mockResolvedValue({ transactions: [] });
   exportToCSV.mockReturnValue('"Date","Type","Category","Description","Amount"');
   getExportSummary.mockResolvedValue({ total_records: 0 });
@@ -35,7 +35,7 @@ describe('GET /api/export', () => {
   });
 
   it('also prevents caching authentication and server errors', async () => {
-    auth.mockResolvedValueOnce(null);
+    getCurrentUserId.mockResolvedValueOnce(null);
     const unauthorized = await GET(makeRequest());
 
     exportToJSON.mockRejectedValueOnce(new Error('database unavailable'));

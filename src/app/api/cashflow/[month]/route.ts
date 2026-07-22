@@ -55,10 +55,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Convert bigint to string for JSON serialization
+    const { user_id: internalUserId, ...publicCashflow } = cashflow;
+    void internalUserId;
     const cashflowResponse = {
-      ...cashflow,
-      id: cashflow.id.toString(),
-      user_id: cashflow.user_id.toString(),
+      ...publicCashflow,
+      id: publicCashflow.id.toString(),
     };
 
     return NextResponse.json(

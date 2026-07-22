@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
 import { updateGoal, addToGoal, deleteGoal } from '@/services/goals.service';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
     }
 
     const { id } = await params;
-    const userId = BigInt(session.user.id);
     const goalId = BigInt(id);
     const body = await request.json();
 
@@ -39,13 +38,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
     }
 
     const { id } = await params;
-    const userId = BigInt(session.user.id);
     const goalId = BigInt(id);
 
     await deleteGoal(userId, goalId);

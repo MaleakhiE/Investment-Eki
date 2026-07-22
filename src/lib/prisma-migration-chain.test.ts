@@ -33,6 +33,15 @@ describe('Prisma migration replay chain', () => {
     expect(oauth).toContain('oauth_accounts_user_provider_key');
   });
 
+  it('adds a unique public UUID without replacing the internal user primary key', () => {
+    const publicIdentity = migration('20260723000000_add_user_public_id');
+    expect(publicIdentity).toContain('ADD COLUMN `public_id` CHAR(36) NULL');
+    expect(publicIdentity).toContain('RANDOM_BYTES');
+    expect(publicIdentity).not.toContain('LOWER(UUID())');
+    expect(publicIdentity).toContain('CREATE UNIQUE INDEX `users_public_id_key`');
+    expect(publicIdentity).not.toContain('DROP PRIMARY KEY');
+  });
+
   it('keeps every explicit MySQL identifier within the 64-character limit', () => {
     const migrationsDirectory = path.join(process.cwd(), 'prisma/migrations');
     const migrationFiles = fs.readdirSync(migrationsDirectory, { withFileTypes: true })

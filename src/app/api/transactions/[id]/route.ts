@@ -56,12 +56,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const { user_id: internalUserId, ...transaction } = result.transaction!;
+    void internalUserId;
     const transactionResponse = {
-      ...result.transaction!,
-      id: result.transaction!.id.toString(),
-      user_id: result.transaction!.user_id.toString(),
-      account_id: result.transaction!.account_id?.toString() ?? null,
-      destination_account_id: result.transaction!.destination_account_id?.toString() ?? null,
+      ...transaction,
+      id: transaction.id.toString(),
+      account_id: transaction.account_id?.toString() ?? null,
+      destination_account_id: transaction.destination_account_id?.toString() ?? null,
     };
 
     return NextResponse.json(

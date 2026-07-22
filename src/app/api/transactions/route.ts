@@ -45,12 +45,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { user_id: internalUserId, ...transaction } = result.transaction!;
+    void internalUserId;
     const transactionResponse = {
-      ...result.transaction!,
-      id: result.transaction!.id.toString(),
-      user_id: result.transaction!.user_id.toString(),
-      account_id: result.transaction!.account_id?.toString() ?? null,
-      destination_account_id: result.transaction!.destination_account_id?.toString() ?? null,
+      ...transaction,
+      id: transaction.id.toString(),
+      account_id: transaction.account_id?.toString() ?? null,
+      destination_account_id: transaction.destination_account_id?.toString() ?? null,
     };
 
     return NextResponse.json(
@@ -83,13 +84,15 @@ export async function GET(request: NextRequest) {
 
     const transactions = await getTransactions(userId, startDate, endDate, limit);
 
-    const transactionsResponse = transactions.map((t) => ({
-      ...t,
-      id: t.id.toString(),
-      user_id: t.user_id.toString(),
-      account_id: t.account_id?.toString() ?? null,
-      destination_account_id: t.destination_account_id?.toString() ?? null,
-    }));
+    const transactionsResponse = transactions.map(({ user_id: internalUserId, ...transaction }) => {
+      void internalUserId;
+      return {
+        ...transaction,
+        id: transaction.id.toString(),
+        account_id: transaction.account_id?.toString() ?? null,
+        destination_account_id: transaction.destination_account_id?.toString() ?? null,
+      };
+    });
 
     return NextResponse.json(
       successResponse({ transactions: transactionsResponse }, 'Transactions retrieved successfully')

@@ -60,10 +60,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert bigint to string for JSON serialization
+    const { user_id: internalUserId, ...cashflow } = result.cashflow!;
+    void internalUserId;
     const cashflowResponse = {
-      ...result.cashflow!,
-      id: result.cashflow!.id.toString(),
-      user_id: result.cashflow!.user_id.toString(),
+      ...cashflow,
+      id: cashflow.id.toString(),
     };
 
     return NextResponse.json(
@@ -91,11 +92,13 @@ export async function GET() {
     const history = await getCashflowHistory(userId);
 
     // Convert bigint to string for JSON serialization
-    const historyResponse = history.map((record) => ({
-      ...record,
-      id: record.id.toString(),
-      user_id: record.user_id.toString(),
-    }));
+    const historyResponse = history.map(({ user_id: internalUserId, ...record }) => {
+      void internalUserId;
+      return {
+        ...record,
+        id: record.id.toString(),
+      };
+    });
 
     return NextResponse.json(
       successResponse(historyResponse, 'Cashflow history retrieved successfully')

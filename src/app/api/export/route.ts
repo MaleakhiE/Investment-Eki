@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
 import { exportToJSON, exportToCSV, getExportSummary } from '@/services/export.service';
 
@@ -9,15 +9,14 @@ const PRIVATE_NO_STORE_HEADERS = {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), {
         status: 401,
         headers: PRIVATE_NO_STORE_HEADERS,
       });
     }
 
-    const userId = BigInt(session.user.id);
     const url = new URL(request.url);
     const format = url.searchParams.get('format') || 'json';
     const summaryOnly = url.searchParams.get('summary') === 'true';

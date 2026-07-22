@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
 import { createRecurring, getRecurrings, processRecurrings, RecurringInputError } from '@/services/recurring.service';
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
     }
 
-    const userId = BigInt(session.user.id);
     const recurrings = await getRecurrings(userId);
 
     return NextResponse.json(responseAPI(200, 'SUCCESS', 'Recurring transactions retrieved', recurrings));
@@ -22,12 +21,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await getCurrentUserId();
+    if (!userId) {
       return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
     }
 
-    const userId = BigInt(session.user.id);
     const body = await request.json();
 
     // Check if this is a process request
