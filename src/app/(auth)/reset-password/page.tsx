@@ -1,18 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 function ResetPasswordForm() {
+  const router = useRouter();
+  const { showFeedback } = useFeedback();
   const searchParams = useSearchParams();
   const [token] = useState(() => searchParams.get('token')?.trim() || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     if (token) window.history.replaceState(null, '', '/reset-password');
@@ -45,13 +47,29 @@ function ResetPasswordForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.responseMessage || 'This link is invalid or has expired.');
+        void showFeedback({
+          tone: 'error',
+          title: 'Password not updated',
+          message: data.responseMessage || 'This reset link is invalid or has expired.',
+          primaryLabel: 'Review request',
+        });
         return;
       }
 
-      setIsComplete(true);
+      await showFeedback({
+        tone: 'success',
+        title: 'Password updated',
+        message: 'Your new password is active and previous sessions have been signed out.',
+        primaryLabel: 'Sign in now',
+      });
+      router.push('/login');
     } catch {
-      setError('Something went wrong. Check your connection and try again.');
+      void showFeedback({
+        tone: 'error',
+        title: 'Connection problem',
+        message: 'Something went wrong. Check your connection and try again.',
+        primaryLabel: 'Try again',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -59,24 +77,13 @@ function ResetPasswordForm() {
 
   return (
     <>
-
-      {isComplete ? (
-        <div className="rounded-2xl border border-[#00d4aa]/30 bg-white/70 p-6 text-center shadow-sm">
-          <h2 className="font-semibold text-[#16332f]">Password updated</h2>
-          <p className="mt-2 text-sm text-zinc-500">Sign in using your new password.</p>
-          <Link href="/login" className="mt-6 inline-block font-medium text-[#00a88a] hover:underline">
-            Sign in now
-          </Link>
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+          <p className="text-sm text-red-500 text-center">{error}</p>
         </div>
-      ) : (
-        <>
-          {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-red-500 text-center">{error}</p>
-            </div>
-          )}
+      )}
 
-          {!token ? (
+      {!token ? (
             <div className="rounded-2xl border border-amber-500/30 bg-amber-50 p-6 text-center">
               <p className="text-sm leading-6 text-amber-800">This reset link is invalid or incomplete.</p>
               <Link href="/forgot-password" className="mt-4 inline-block font-medium text-[#00a88a] hover:underline">
@@ -122,8 +129,6 @@ function ResetPasswordForm() {
                 {isLoading ? 'Saving...' : 'Save new password'}
               </button>
             </form>
-          )}
-        </>
       )}
     </>
   );

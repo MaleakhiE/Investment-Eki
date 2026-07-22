@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 import { AccountTransferLabel, type AccountSummary } from '@/components/accounts/AccountCard';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 import {
   getOcrProgressMessage,
   OCR_REQUEST_TIMEOUT_MS,
@@ -39,13 +40,13 @@ const INCOME_CATEGORIES = ['Salary', 'Bonus', 'Investment', 'Freelance', 'Gift',
 const ALL_CATEGORIES = [...new Set([...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES])];
 export default function CashflowPage() {
   useSession();
+  const { showFeedback, confirmAction } = useFeedback();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showAllModal, setShowAllModal] = useState(false);
   const [filterMonth, setFilterMonth] = useState(() => {
     const now = new Date();
@@ -119,12 +120,12 @@ export default function CashflowPage() {
     return () => window.clearInterval(interval);
   }, [isScanning]);
 
-  const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setAccountChoice(accounts[0]?.id || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
-  const loadTransaction = (tx: Transaction) => { if (tx.type === 'TRANSFER') return; setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setAccountChoice(tx.account_id || accounts.find((account) => account.name === tx.account)?.id || accounts[0]?.id || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); setSuccess(''); };
+  const resetForm = () => { setEditingId(null); setDate(new Date().toISOString().split('T')[0]); setType('EXPENSE'); setCategory('Food'); setDescription(''); setAmount(''); setAccountChoice(accounts[0]?.id || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); };
+  const loadTransaction = (tx: Transaction) => { if (tx.type === 'TRANSFER') return; setEditingId(tx.id); setDate(tx.date.split('T')[0]); setType(tx.type); setCategory(tx.category); setDescription(tx.description || ''); setAmount(tx.amount.toString()); setAccountChoice(tx.account_id || accounts.find((account) => account.name === tx.account)?.id || accounts[0]?.id || ''); setReceiptImage(null); setReceiptTouched(false); setError(''); };
 
   const handleReceiptScan = async (file: File | undefined) => {
     if (!file) return;
-    setError(''); setSuccess(''); setIsScanning(true);
+    setError(''); setIsScanning(true);
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), OCR_REQUEST_TIMEOUT_MS);
     try {
@@ -142,16 +143,22 @@ export default function CashflowPage() {
       setType('EXPENSE');
       setReceiptImage(scan.receipt_image || null);
       setReceiptTouched(true);
-      setSuccess('Receipt scanned. Review the details before saving.');
+      void showFeedback({
+        tone: 'success',
+        title: 'Receipt scanned',
+        message: 'The receipt details were added to the form. Review them before saving the transaction.',
+        primaryLabel: 'Review details',
+      });
     } catch (scanError) {
-      setError(scanError instanceof DOMException && scanError.name === 'AbortError'
+      const message = scanError instanceof DOMException && scanError.name === 'AbortError'
         ? 'Receipt scan timed out. Try a clearer photo with the receipt filling the frame.'
-        : scanError instanceof Error ? scanError.message : 'Unable to scan receipt');
+        : scanError instanceof Error ? scanError.message : 'Unable to scan receipt';
+      void showFeedback({ tone: 'error', title: 'Receipt scan failed', message });
     } finally { window.clearTimeout(timeout); setIsScanning(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
+    e.preventDefault(); setError(''); setIsSaving(true);
     const numAmount = parseFloat(amount.replace(/[^\d]/g, ''));
     if (!numAmount || numAmount <= 0) { setError('Amount must be greater than zero'); setIsSaving(false); return; }
     try {
@@ -160,14 +167,53 @@ export default function CashflowPage() {
       const payload = { date, type, category, description, amount: numAmount, account_id: accountChoice, ...(!editingId || receiptTouched ? { receipt_image: receiptImage } : {}) };
       const response = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
-      if (response.ok) { setSuccess(editingId ? 'Updated!' : 'Added!'); resetForm(); await Promise.all([fetchTransactions(), fetchSummary(), fetchAccounts()]); }
-      else { setError(data.responseDetails?.errors?.[0] || data.responseMessage || 'Failed'); }
-    } catch (submitError) { setError(submitError instanceof Error ? submitError.message : 'Failed'); } finally { setIsSaving(false); }
+      if (!response.ok) throw new Error(data.responseDetails?.errors?.[0] || data.responseMessage || 'Unable to save transaction');
+
+      const wasEditing = Boolean(editingId);
+      resetForm();
+      await Promise.all([fetchTransactions(), fetchSummary(), fetchAccounts()]);
+      void showFeedback({
+        tone: 'success',
+        title: wasEditing ? 'Transaction updated' : 'Transaction added',
+        message: wasEditing
+          ? 'Your transaction changes have been saved.'
+          : 'The transaction has been added to your cashflow.',
+      });
+    } catch (submitError) {
+      void showFeedback({
+        tone: 'error',
+        title: editingId ? 'Unable to update transaction' : 'Unable to add transaction',
+        message: submitError instanceof Error ? submitError.message : 'Unable to save transaction',
+      });
+    } finally { setIsSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this transaction?')) return;
-    try { const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' }); if (response.ok) { await Promise.all([fetchTransactions(), fetchSummary()]); } } catch (err) { console.error(err); }
+    const confirmed = await confirmAction({
+      title: 'Delete transaction?',
+      message: 'This transaction will be permanently removed and the related account balance will be recalculated.',
+      tone: 'error',
+      confirmLabel: 'Delete transaction',
+    });
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.responseDetails?.errors?.[0] || data?.responseMessage || 'Unable to delete transaction');
+      await Promise.all([fetchTransactions(), fetchSummary(), fetchAccounts()]);
+      void showFeedback({
+        tone: 'success',
+        title: 'Transaction deleted',
+        message: 'The transaction was removed and your account balances were refreshed.',
+      });
+    } catch (deleteError) {
+      void showFeedback({
+        tone: 'error',
+        title: 'Unable to delete transaction',
+        message: deleteError instanceof Error ? deleteError.message : 'Please try again.',
+      });
+    }
   };
 
   const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
@@ -281,7 +327,6 @@ export default function CashflowPage() {
                 </div>
                 {isScanning && <div role="status" className="mb-3 rounded-xl border border-[#bce9de] bg-[#eaf8f4] px-3 py-2 text-xs text-[#087f6b]">{getOcrProgressMessage(scanElapsed)}</div>}
                 {error && <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-xs rounded-lg">{error}</div>}
-                {success && <div className="mb-2 p-2 bg-green-500/20 text-green-400 text-xs rounded-lg">{success}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>

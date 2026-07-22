@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface BudgetWithSpent {
   id: string;
@@ -20,11 +21,11 @@ const EXPENSE_CATEGORIES = ['Rent', 'Living', 'Food', 'Transport', 'Entertainmen
 
 export default function BudgetPage() {
   useSession();
+  const { showFeedback, confirmAction } = useFeedback();
   const [budgets, setBudgets] = useState<BudgetWithSpent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   // Form state
@@ -42,7 +43,7 @@ export default function BudgetPage() {
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
+    e.preventDefault(); setError(''); setIsSaving(true);
     try {
       const res = await fetch('/api/budgets', {
         method: 'POST',
@@ -50,17 +51,38 @@ export default function BudgetPage() {
         body: JSON.stringify({ category, amount: parseFloat(amount) || 0, period }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.responseMessage || 'Failed'); return; }
-      setSuccess('Budget saved!'); setShowForm(false); setAmount(''); fetchBudgets();
-    } catch { setError('Error'); } finally { setIsSaving(false); }
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Budget tidak tersimpan', message: data.responseMessage || 'Periksa data budget lalu coba kembali.' });
+        return;
+      }
+      setShowForm(false);
+      setAmount('');
+      await fetchBudgets();
+      void showFeedback({ tone: 'success', title: 'Budget berhasil disimpan', message: `Budget ${category} telah diperbarui untuk periode ${getPeriodLabel(period).toLowerCase()}.` });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Budget tidak tersimpan', message: 'Terjadi gangguan saat menyimpan budget. Silakan coba kembali.' });
+    } finally { setIsSaving(false); }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this budget?')) return;
+    const confirmed = await confirmAction({
+      title: 'Hapus budget?',
+      message: 'Budget ini akan dihapus secara permanen. Transaksi yang sudah tercatat tidak ikut dihapus.',
+      confirmLabel: 'Hapus budget',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/budgets/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchBudgets();
-    } catch { setError('Error'); }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Budget tidak terhapus', message: data?.responseMessage || 'Budget tidak dapat dihapus. Silakan coba kembali.' });
+        return;
+      }
+      await fetchBudgets();
+      void showFeedback({ tone: 'success', title: 'Budget berhasil dihapus', message: 'Budget telah dihapus dari daftar.' });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Budget tidak terhapus', message: 'Terjadi gangguan saat menghapus budget. Silakan coba kembali.' });
+    }
   }
 
   const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
@@ -89,7 +111,6 @@ export default function BudgetPage() {
         </div>
 
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
-        {success && <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-sm text-green-400">{success}</div>}
 
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput, { formatNumber } from '@/components/ui/CurrencyInput';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface InvestmentSnapshot {
   id: string;
@@ -38,13 +39,12 @@ const PLATFORMS = [
 
 export default function InvestmentsPage() {
   useSession();
+  const { showFeedback, confirmAction } = useFeedback();
   const [goldSnapshots, setGoldSnapshots] = useState<InvestmentSnapshot[]>([]);
   const [mfSnapshots, setMfSnapshots] = useState<InvestmentSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [selectedType, setSelectedType] = useState<InvestmentType>('GOLD');
   const [month, setMonth] = useState(() => {
@@ -142,7 +142,7 @@ export default function InvestmentsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(''); setSuccess(''); setIsSaving(true);
+    setIsSaving(true);
     try {
       const payload: Record<string, unknown> = {
         type: selectedType,
@@ -162,27 +162,42 @@ export default function InvestmentsPage() {
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.responseMessage || 'Failed'); return; }
-      setSuccess('Saved!'); resetForm(); fetchSnapshots();
-    } catch { setError('Error occurred'); } finally { setIsSaving(false); }
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Snapshot tidak tersimpan', message: data.responseMessage || 'Periksa data investasi lalu coba kembali.' });
+        return;
+      }
+      resetForm();
+      await fetchSnapshots();
+      void showFeedback({ tone: 'success', title: 'Snapshot berhasil disimpan', message: `Snapshot ${selectedType === 'GOLD' ? 'emas' : 'reksa dana'} untuk ${formatMonth(month)} telah diperbarui.` });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Snapshot tidak tersimpan', message: 'Terjadi gangguan saat menyimpan snapshot investasi. Silakan coba kembali.' });
+    } finally { setIsSaving(false); }
   }
 
   async function handleDelete(id: string, type: InvestmentType) {
-    if (!confirm('Delete this investment record?')) return;
+    const confirmed = await confirmAction({
+      title: 'Hapus snapshot investasi?',
+      message: 'Catatan investasi ini akan dihapus secara permanen dan tidak dapat dipulihkan.',
+      confirmLabel: 'Hapus snapshot',
+    });
+    if (!confirmed) return;
     setIsDeleting(id);
     try {
       const res = await fetch(`/api/investments/snapshot/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setSuccess('Record deleted');
         if (type === 'GOLD') {
           setGoldSnapshots(prev => prev.filter(s => s.id !== id));
         } else {
           setMfSnapshots(prev => prev.filter(s => s.id !== id));
         }
+        void showFeedback({ tone: 'success', title: 'Snapshot berhasil dihapus', message: 'Catatan investasi telah dihapus dari riwayat.' });
       } else {
-        setError('Unable to delete the record');
+        const data = await res.json().catch(() => null);
+        void showFeedback({ tone: 'error', title: 'Snapshot tidak terhapus', message: data?.responseMessage || 'Catatan investasi tidak dapat dihapus.' });
       }
-    } catch { setError('Error occurred'); } finally { setIsDeleting(null); }
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Snapshot tidak terhapus', message: 'Terjadi gangguan saat menghapus catatan investasi.' });
+    } finally { setIsDeleting(null); }
   }
 
   function resetForm() {
@@ -276,9 +291,6 @@ export default function InvestmentsPage() {
             {/* Form */}
             <div className="card rounded-2xl p-6">
               <h3 className="font-semibold text-[#16332f] mb-4">Add/Update Snapshot</h3>
-              {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
-              {success && <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-sm text-green-400">{success}</div>}
-
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>

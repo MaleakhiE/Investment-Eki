@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { useState } from 'react';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 import AppIcon from '@/components/ui/AppIcon';
 import { moreNavigation, primaryNavigation, type NavigationItem } from './navigation';
 
@@ -16,10 +17,24 @@ export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenu
   void props;
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { confirmAction } = useFeedback();
   const [moreOpen, setMoreOpen] = useState(false);
   const extraItems: NavigationItem[] = session?.user?.role === 'SUPERADMIN'
     ? [...moreNavigation, { label: 'Email delivery', href: '/superadmin/smtp', icon: 'mail', match: (path) => path.startsWith('/superadmin') }]
     : moreNavigation;
+
+  const handleSignOut = async () => {
+    const confirmed = await confirmAction({
+      tone: 'info',
+      title: 'Sign out?',
+      message: 'You will need to sign in again to access your financial workspace.',
+      confirmLabel: 'Sign out',
+      cancelLabel: 'Stay signed in',
+    });
+    if (!confirmed) return;
+
+    await signOut({ callbackUrl: '/login' });
+  };
 
   return <>
     <aside className="app-sidebar">
@@ -29,7 +44,7 @@ export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenu
         <p className="app-nav-section">Plan and insights</p>
         {extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname}/>)}
       </nav>
-      <button onClick={() => signOut({ callbackUrl: '/login' })} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button>
+      <button type="button" onClick={() => void handleSignOut()} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button>
     </aside>
 
     <header className="app-mobile-header"><Link href="/dashboard" className="app-brand"><span className="app-brand-mark">F</span><strong>FinTrack</strong></Link><Link href="/settings" className="app-avatar" aria-label="Open settings">{session?.user?.email?.slice(0, 1).toUpperCase() || 'A'}</Link></header>
@@ -41,7 +56,7 @@ export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenu
     </nav>
 
     {moreOpen && <div className="app-sheet-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setMoreOpen(false); }}>
-      <section className="app-sheet" role="dialog" aria-modal="true" aria-labelledby="more-title"><div className="app-sheet-handle"/><div className="app-sheet-heading"><div><p className="app-eyebrow">Navigation</p><h2 id="more-title">More</h2></div><button type="button" onClick={() => setMoreOpen(false)} className="app-sheet-close">Close</button></div><div className="app-more-grid">{extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setMoreOpen(false)}/>)}</div><button onClick={() => signOut({ callbackUrl: '/login' })} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button></section>
+      <section className="app-sheet" role="dialog" aria-modal="true" aria-labelledby="more-title"><div className="app-sheet-handle"/><div className="app-sheet-heading"><div><p className="app-eyebrow">Navigation</p><h2 id="more-title">More</h2></div><button type="button" onClick={() => setMoreOpen(false)} className="app-sheet-close">Close</button></div><div className="app-more-grid">{extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setMoreOpen(false)}/>)}</div><button type="button" onClick={() => void handleSignOut()} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button></section>
     </div>}
   </>;
 }

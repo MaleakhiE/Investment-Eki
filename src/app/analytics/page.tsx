@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface Recommendation {
   gold_percentage: number;
@@ -22,11 +23,13 @@ interface InvestmentComparison { gold: PortfolioSummary; mutual_fund: PortfolioS
 
 export default function AnalyticsPage() {
   useSession();
+  const { showFeedback } = useFeedback();
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [trend, setTrend] = useState<CashflowTrend[]>([]);
   const [comparison, setComparison] = useState<InvestmentComparison | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshingRecommendation, setIsRefreshingRecommendation] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'cashflow' | 'investment'>('overview');
 
@@ -53,6 +56,40 @@ export default function AnalyticsPage() {
     }
     fetchData();
   }, []);
+
+  async function refreshRecommendation() {
+    setIsRefreshingRecommendation(true);
+    try {
+      const response = await fetch('/api/analytics/recommendation', { cache: 'no-store' });
+      let body: { responseMessage?: string; responseDetails?: Recommendation | null } = {};
+      try {
+        body = await response.json();
+      } catch { /* A malformed response is handled as an action failure below. */ }
+      if (!response.ok || !body.responseDetails) {
+        void showFeedback({
+          tone: 'error',
+          title: 'Recommendation not refreshed',
+          message: body.responseMessage || 'The AI recommendation could not be generated. Please try again.',
+        });
+        return;
+      }
+      setRecommendation(body.responseDetails);
+      setError('');
+      void showFeedback({
+        tone: 'success',
+        title: 'Recommendation refreshed',
+        message: 'Your recommendation has been recalculated using the latest financial data.',
+      });
+    } catch {
+      void showFeedback({
+        tone: 'error',
+        title: 'Recommendation not refreshed',
+        message: 'The AI recommendation could not be generated. Check your connection and try again.',
+      });
+    } finally {
+      setIsRefreshingRecommendation(false);
+    }
+  }
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
   const formatCompact = (v: number) => v >= 1e9 ? `${(v/1e9).toFixed(1)}M` : v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
@@ -100,7 +137,14 @@ export default function AnalyticsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>
         ) : error && !recommendation ? (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-2xl p-6"><p className="text-red-400 text-sm">{error}</p></div>
+          <div className="bg-red-500/20 border border-red-500/30 rounded-2xl p-6">
+            <p className="text-red-400 text-sm">{error}</p>
+            {settings?.ai_recommendation_enabled && (
+              <button type="button" onClick={() => { void refreshRecommendation(); }} disabled={isRefreshingRecommendation} className="mt-3 rounded-lg bg-[#16332f] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                {isRefreshingRecommendation ? 'Refreshing...' : 'Retry recommendation'}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="space-y-4">
             {/* Overview Tab */}
@@ -140,7 +184,12 @@ export default function AnalyticsPage() {
                         <h3 className="font-semibold text-[#16332f] text-sm">AI Recommendation</h3>
                         <p className="text-xs text-zinc-500 mt-0.5">Based on your financial data</p>
                       </div>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getRiskColor(recommendation.risk_profile)}`}>{getRiskLabel(recommendation.risk_profile)}</span>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => { void refreshRecommendation(); }} disabled={isRefreshingRecommendation} className="rounded-lg border border-blue-500/30 px-2 py-1 text-[10px] font-semibold text-blue-500 hover:bg-blue-500/10 disabled:opacity-50">
+                          {isRefreshingRecommendation ? 'Refreshing...' : 'Refresh'}
+                        </button>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getRiskColor(recommendation.risk_profile)}`}>{getRiskLabel(recommendation.risk_profile)}</span>
+                      </div>
                     </div>
                     {recommendation.warnings.length > 0 && (
                       <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg p-2 mb-3">

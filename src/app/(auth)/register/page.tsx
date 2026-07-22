@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthShell from '@/components/auth/AuthShell';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { showFeedback } = useFeedback();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,13 +41,29 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.responseMessage || 'Unable to create account');
+        void showFeedback({
+          tone: 'error',
+          title: 'Account not created',
+          message: data.responseMessage || 'FinTrack could not create the account. Review your details and try again.',
+          primaryLabel: 'Review details',
+        });
         return;
       }
 
-      router.push('/login?registered=true');
+      await showFeedback({
+        tone: 'success',
+        title: 'Registration successful',
+        message: 'Your FinTrack account has been created. You can now sign in securely.',
+        primaryLabel: 'Continue to sign in',
+      });
+      router.push('/login');
     } catch {
-      setError('Something went wrong');
+      void showFeedback({
+        tone: 'error',
+        title: 'Connection problem',
+        message: 'FinTrack could not complete registration. Check your connection and try again.',
+        primaryLabel: 'Try again',
+      });
     } finally {
       setIsLoading(false);
     }

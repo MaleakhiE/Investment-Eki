@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface UserSettings { ai_recommendation_enabled: boolean; }
 interface CustomAlert { id: string; name: string; type: 'expense_limit' | 'income_target' | 'savings_goal'; threshold: number; enabled: boolean; }
@@ -20,19 +21,18 @@ interface ExportSummary { transactions: number; investment_snapshots: number; bu
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { showFeedback, confirmAction } = useFeedback();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingNotif, setIsSavingNotif] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [notifError, setNotifError] = useState('');
-  const [notifSuccess, setNotifSuccess] = useState('');
   const [showCustomAlertForm, setShowCustomAlertForm] = useState(false);
   const [newAlertName, setNewAlertName] = useState('');
   const [newAlertType, setNewAlertType] = useState<'expense_limit' | 'income_target' | 'savings_goal'>('expense_limit');
   const [newAlertThreshold, setNewAlertThreshold] = useState('');
+  const [lowBalanceDraft, setLowBalanceDraft] = useState('');
   const [exportSummary, setExportSummary] = useState<ExportSummary | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -47,8 +47,12 @@ export default function SettingsPage() {
   async function fetchNotifSettings() {
     try {
       const res = await fetch('/api/settings/notifications');
-      if (res.ok) { const d = await res.json(); setNotifSettings(d.responseDetails); }
-    } catch { /* ignore */ }
+      if (res.ok) {
+        const d = await res.json();
+        setNotifSettings(d.responseDetails);
+        setLowBalanceDraft(String(d.responseDetails?.low_balance_threshold ?? ''));
+      }
+    } catch { /* A persistent loading placeholder remains visible. */ }
   }
   async function fetchExportSummary() {
     try {
@@ -60,46 +64,75 @@ export default function SettingsPage() {
     setIsExporting(true);
     try {
       const res = await fetch(`/api/export?format=${format}`);
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = format === 'csv' ? `transactions_${new Date().toISOString().split('T')[0]}.csv` : `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-        setSuccess('Export complete!'); setTimeout(() => setSuccess(''), 3000);
+      if (!res.ok) {
+        let message = 'Your data could not be exported. Please try again.';
+        try {
+          const body = await res.json();
+          message = body.responseMessage || message;
+        } catch { /* The export endpoint may return a non-JSON error. */ }
+        void showFeedback({ tone: 'error', title: 'Export failed', message });
+        return;
       }
-    } catch { setError('Export failed'); } finally { setIsExporting(false); }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = format === 'csv' ? `transactions_${new Date().toISOString().split('T')[0]}.csv` : `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      void showFeedback({ tone: 'success', title: 'Export complete', message: `Your ${format.toUpperCase()} file has been downloaded.` });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Export failed', message: 'Your data could not be exported. Check your connection and try again.' });
+    } finally { setIsExporting(false); }
   }
   async function toggleAI() {
     if (!settings) return;
-    setError(''); setSuccess(''); setIsSaving(true);
+    setIsSaving(true);
     try {
       const res = await fetch('/api/settings/ai-recommendation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: !settings.ai_recommendation_enabled }) });
       const d = await res.json();
-      if (!res.ok) { setError(d.responseMessage || 'Failed'); return; }
-      setSettings(d.responseDetails); setSuccess('Updated'); setTimeout(() => setSuccess(''), 3000);
-    } catch { setError('Error'); } finally { setIsSaving(false); }
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Setting not updated', message: d.responseMessage || 'AI recommendation preferences could not be updated.' });
+        return;
+      }
+      setSettings(d.responseDetails);
+      void showFeedback({
+        tone: 'success',
+        title: 'AI recommendation updated',
+        message: d.responseDetails?.ai_recommendation_enabled ? 'AI recommendations are now enabled.' : 'AI recommendations are now disabled.',
+      });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Setting not updated', message: 'AI recommendation preferences could not be updated. Please try again.' });
+    } finally { setIsSaving(false); }
   }
-  async function updateNotifSetting(key: string, value: unknown) {
-    if (!notifSettings) return;
-    setNotifError(''); setNotifSuccess(''); setIsSavingNotif(true);
+  async function updateNotifSetting(key: string, value: unknown): Promise<boolean> {
+    if (!notifSettings) return false;
+    setIsSavingNotif(true);
     try {
       const res = await fetch('/api/settings/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [key]: value }) });
       const d = await res.json();
-      if (!res.ok) { setNotifError(d.responseMessage || 'Failed'); return; }
-      setNotifSettings(d.responseDetails); setNotifSuccess('Saved'); setTimeout(() => setNotifSuccess(''), 3000);
-    } catch { setNotifError('Error'); } finally { setIsSavingNotif(false); }
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Notification setting not saved', message: d.responseMessage || 'The notification preference could not be saved.' });
+        return false;
+      }
+      setNotifSettings(d.responseDetails);
+      setLowBalanceDraft(String(d.responseDetails?.low_balance_threshold ?? ''));
+      void showFeedback({ tone: 'success', title: 'Notification setting saved', message: 'Your notification preferences have been updated.' });
+      return true;
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Notification setting not saved', message: 'The notification preference could not be saved. Please try again.' });
+      return false;
+    } finally { setIsSavingNotif(false); }
   }
   async function addCustomAlert() {
     if (!notifSettings || !newAlertName || !newAlertThreshold) return;
     const threshold = parseFloat(newAlertThreshold.replace(/[^\d]/g, ''));
     if (!threshold) return;
     const newAlert: CustomAlert = { id: Date.now().toString(), name: newAlertName, type: newAlertType, threshold, enabled: true };
-    await updateNotifSetting('custom_alerts', [...notifSettings.custom_alerts, newAlert]);
+    const saved = await updateNotifSetting('custom_alerts', [...notifSettings.custom_alerts, newAlert]);
+    if (!saved) return;
     setNewAlertName(''); setNewAlertThreshold(''); setShowCustomAlertForm(false);
   }
   async function toggleCustomAlert(id: string) {
@@ -107,8 +140,25 @@ export default function SettingsPage() {
     await updateNotifSetting('custom_alerts', notifSettings.custom_alerts.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
   }
   async function deleteCustomAlert(id: string) {
-    if (!notifSettings || !confirm('Delete this alert?')) return;
+    if (!notifSettings) return;
+    const confirmed = await confirmAction({
+      title: 'Delete custom alert?',
+      message: 'This alert will be removed permanently. This action cannot be undone.',
+      confirmLabel: 'Delete alert',
+      cancelLabel: 'Keep alert',
+    });
+    if (!confirmed) return;
     await updateNotifSetting('custom_alerts', notifSettings.custom_alerts.filter(a => a.id !== id));
+  }
+
+  async function handleSignOut() {
+    const confirmed = await confirmAction({
+      title: 'Sign out?',
+      message: 'You will need to sign in again to access your financial data.',
+      confirmLabel: 'Sign out',
+      cancelLabel: 'Stay signed in',
+    });
+    if (confirmed) await signOut({ callbackUrl: '/login' });
   }
   const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
   const alertTypeLabel = (t: string) => t === 'expense_limit' ? 'Expense limit' : t === 'income_target' ? 'Income target' : 'Savings target';
@@ -119,7 +169,6 @@ export default function SettingsPage() {
       <main className="app-page settings-page lg:ml-64 p-3 sm:p-4 lg:p-8">
         <div className="mb-4"><h2 className="text-xl font-bold text-[#16332f]">Settings</h2><p className="text-xs text-zinc-600">Manage your preferences</p></div>
         {error && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-red-400">{error}</div>}
-        {success && <div className="mb-3 p-2 bg-green-500/20 border border-green-500/30 rounded-xl text-xs text-green-400">{success}</div>}
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -140,8 +189,6 @@ export default function SettingsPage() {
 
             <div className="card rounded-xl p-4">
               <h3 className="font-semibold text-[#16332f] text-sm mb-3">Notification settings</h3>
-              {notifError && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-xs text-red-400">{notifError}</div>}
-              {notifSuccess && <div className="mb-3 p-2 bg-green-500/20 border border-green-500/30 rounded-lg text-xs text-green-400">{notifSuccess}</div>}
               {!notifSettings ? <p className="text-xs text-zinc-500 text-center py-4">Loading...</p> : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
@@ -158,7 +205,11 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
                     <div className="flex-1 mr-3"><p className="text-xs font-medium text-[#16332f]">Low balance alert</p><p className="text-[10px] text-zinc-600">Notification when cash flow is low</p>
-                      <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-600">Min:</span><CurrencyInput value={notifSettings.low_balance_threshold.toString()} onChange={(v) => { const num = parseFloat(v.replace(/[^\d]/g, '')) || 0; updateNotifSetting('low_balance_threshold', num); }} placeholder="0" className="w-28 py-0.5 text-[10px] border border-[#dcece8] rounded disabled:opacity-50" disabled={isSavingNotif || !notifSettings.low_balance_alert} /></div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-zinc-600">Min:</span>
+                        <CurrencyInput value={lowBalanceDraft} onChange={setLowBalanceDraft} placeholder="0" className="w-28 py-0.5 text-[10px] border border-[#dcece8] rounded disabled:opacity-50" disabled={isSavingNotif || !notifSettings.low_balance_alert} />
+                        <button type="button" onClick={() => { void updateNotifSetting('low_balance_threshold', Number(lowBalanceDraft) || 0); }} disabled={isSavingNotif || !notifSettings.low_balance_alert || Number(lowBalanceDraft) === notifSettings.low_balance_threshold} className="rounded border border-[#00a88a] px-2 py-1 text-[9px] font-semibold text-[#008f78] disabled:opacity-40">Save</button>
+                      </div>
                     </div>
                     <ToggleSwitch checked={notifSettings.low_balance_alert} onChange={(checked) => { void updateNotifSetting('low_balance_alert', checked); }} label="Enable low balance alert" disabled={isSavingNotif} />
                   </div>
@@ -194,7 +245,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="card rounded-xl p-4 border border-red-500/30">
-              <div className="flex items-center justify-between"><div><h3 className="font-semibold text-[#16332f] text-sm mb-1">Session</h3><p className="text-xs text-zinc-600">Sign out from your account.</p></div><button onClick={() => signOut({ callbackUrl: '/login' })} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-xs">Sign Out</button></div>
+              <div className="flex items-center justify-between"><div><h3 className="font-semibold text-[#16332f] text-sm mb-1">Session</h3><p className="text-xs text-zinc-600">Sign out from your account.</p></div><button onClick={() => { void handleSignOut(); }} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-xs">Sign Out</button></div>
             </div>
           </div>
         )}

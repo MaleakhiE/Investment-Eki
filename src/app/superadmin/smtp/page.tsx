@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface SmtpSettings {
   configured: boolean;
@@ -29,6 +30,7 @@ const emptySettings: SmtpSettings = {
 export default function SuperadminSmtpPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { showFeedback } = useFeedback();
   const [settings, setSettings] = useState<SmtpSettings>(emptySettings);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +38,6 @@ export default function SuperadminSmtpPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeAction, setActiveAction] = useState<'save' | 'verify' | 'test' | null>(null);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -111,8 +112,6 @@ export default function SuperadminSmtpPage() {
 
   async function runAction(action: 'save' | 'verify', event?: FormEvent) {
     event?.preventDefault();
-    setError('');
-    setSuccess('');
     setActiveAction(action);
     try {
       const response = action === 'save'
@@ -125,7 +124,11 @@ export default function SuperadminSmtpPage() {
       if (handleForbidden(response)) return;
       const body = await parseResponse<SmtpSettings>(response);
       if (!response.ok) {
-        setError(body.responseMessage || `SMTP ${action === 'save' ? 'configuration' : 'connection'} failed.`);
+        void showFeedback({
+          tone: 'error',
+          title: action === 'save' ? 'SMTP configuration not saved' : 'SMTP verification failed',
+          message: body.responseMessage || `SMTP ${action === 'save' ? 'configuration' : 'connection'} failed.`,
+        });
         return;
       }
       if (action === 'save') {
@@ -134,9 +137,17 @@ export default function SuperadminSmtpPage() {
         setPassword('');
         setUsername('');
       }
-      setSuccess(body.responseMessage || (action === 'save' ? 'SMTP configuration saved.' : 'SMTP connection verified.'));
+      void showFeedback({
+        tone: 'success',
+        title: action === 'save' ? 'SMTP configuration saved' : 'SMTP connection verified',
+        message: body.responseMessage || (action === 'save' ? 'The global SMTP configuration is ready to use.' : 'The mail server accepted the connection.'),
+      });
     } catch {
-      setError(`SMTP ${action === 'save' ? 'configuration' : 'connection'} failed.`);
+      void showFeedback({
+        tone: 'error',
+        title: action === 'save' ? 'SMTP configuration not saved' : 'SMTP verification failed',
+        message: `SMTP ${action === 'save' ? 'configuration' : 'connection'} failed. Check the server details and try again.`,
+      });
     } finally {
       setActiveAction(null);
     }
@@ -144,8 +155,6 @@ export default function SuperadminSmtpPage() {
 
   async function sendTestEmail(event: FormEvent) {
     event.preventDefault();
-    setError('');
-    setSuccess('');
     setActiveAction('test');
     try {
       const response = await fetch('/api/superadmin/smtp/send-test', {
@@ -156,12 +165,12 @@ export default function SuperadminSmtpPage() {
       if (handleForbidden(response)) return;
       const body = await parseResponse<null>(response);
       if (!response.ok) {
-        setError(body.responseMessage || 'Test email could not be sent.');
+        void showFeedback({ tone: 'error', title: 'Test email not sent', message: body.responseMessage || 'Test email could not be sent.' });
         return;
       }
-      setSuccess(body.responseMessage || 'Test email sent.');
+      void showFeedback({ tone: 'success', title: 'Test email sent', message: body.responseMessage || `A test message was sent to ${recipient.trim()}.` });
     } catch {
-      setError('Test email could not be sent.');
+      void showFeedback({ tone: 'error', title: 'Test email not sent', message: 'Test email could not be sent. Check the connection and try again.' });
     } finally {
       setActiveAction(null);
     }
@@ -183,7 +192,6 @@ export default function SuperadminSmtpPage() {
           </header>
 
           {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-          {success && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{success}</div>}
 
           <section className="card rounded-2xl p-5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dcece8] pb-4">

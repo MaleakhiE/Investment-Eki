@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { AccountCard, type AccountSummary } from '@/components/accounts/AccountCard';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 type AccountForm = { name: string; type: AccountSummary['type']; opening_balance: string; color: string };
 const emptyForm: AccountForm = { name: '', type: 'BANK', opening_balance: '', color: '#00a88a' };
@@ -14,6 +15,7 @@ function apiError(payload: unknown, fallback: string) {
 }
 
 export default function AccountsPage() {
+  const { showFeedback, confirmAction } = useFeedback();
   const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [form, setForm] = useState<AccountForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -23,7 +25,6 @@ export default function AccountsPage() {
   const [transferDescription, setTransferDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const loadAccounts = useCallback(async () => {
@@ -48,7 +49,7 @@ export default function AccountsPage() {
   const parseAmount = (value: string) => Number(value.replace(/[^\d]/g, '')) || 0;
 
   const saveAccount = async (event: React.FormEvent) => {
-    event.preventDefault(); setSaving(true); setError(''); setMessage('');
+    event.preventDefault(); setSaving(true);
     try {
       const response = await fetch(editingId ? `/api/accounts/${editingId}` : '/api/accounts', {
         method: editingId ? 'PUT' : 'POST',
@@ -57,9 +58,22 @@ export default function AccountsPage() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(apiError(payload, 'Unable to save account'));
-      setMessage(editingId ? 'Account updated.' : 'Account created.');
+      const wasEditing = Boolean(editingId);
       setForm(emptyForm); setEditingId(null); await loadAccounts();
-    } catch (saveError) { setError(saveError instanceof Error ? saveError.message : 'Unable to save account'); }
+      void showFeedback({
+        tone: 'success',
+        title: wasEditing ? 'Account updated' : 'Account created',
+        message: wasEditing
+          ? 'The account details have been updated.'
+          : 'The account is ready to use for transactions and transfers.',
+      });
+    } catch (saveError) {
+      void showFeedback({
+        tone: 'error',
+        title: editingId ? 'Unable to update account' : 'Unable to create account',
+        message: saveError instanceof Error ? saveError.message : 'Unable to save account',
+      });
+    }
     finally { setSaving(false); }
   };
 
@@ -70,15 +84,35 @@ export default function AccountsPage() {
   };
 
   const archive = async (account: AccountSummary) => {
-    if (!window.confirm(`Archive ${account.name}? Existing transaction history will be preserved.`)) return;
-    const response = await fetch(`/api/accounts/${account.id}`, { method: 'DELETE' });
-    const payload = await response.json();
-    if (!response.ok) { setError(apiError(payload, 'Unable to archive account')); return; }
-    setMessage('Account archived.'); await loadAccounts();
+    const confirmed = await confirmAction({
+      title: `Archive ${account.name}?`,
+      message: 'The account will no longer be available for new transactions, but its existing transaction history will be preserved.',
+      tone: 'error',
+      confirmLabel: 'Archive account',
+    });
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/accounts/${account.id}`, { method: 'DELETE' });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(apiError(payload, 'Unable to archive account'));
+      await loadAccounts();
+      void showFeedback({
+        tone: 'success',
+        title: 'Account archived',
+        message: `${account.name} was archived. Its existing transaction history remains available.`,
+      });
+    } catch (archiveError) {
+      void showFeedback({
+        tone: 'error',
+        title: 'Unable to archive account',
+        message: archiveError instanceof Error ? archiveError.message : 'Please try again.',
+      });
+    }
   };
 
   const transfer = async (event: React.FormEvent) => {
-    event.preventDefault(); setSaving(true); setError(''); setMessage('');
+    event.preventDefault(); setSaving(true);
     try {
       const response = await fetch('/api/accounts/transfer', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -90,9 +124,19 @@ export default function AccountsPage() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(apiError(payload, 'Unable to transfer funds'));
-      setMessage('Transfer recorded without changing income or expenses.');
       setTransferAmount(''); setTransferDescription(''); await loadAccounts();
-    } catch (transferError) { setError(transferError instanceof Error ? transferError.message : 'Unable to transfer funds'); }
+      void showFeedback({
+        tone: 'success',
+        title: 'Transfer completed',
+        message: 'The balances were updated without changing your income or expense totals.',
+      });
+    } catch (transferError) {
+      void showFeedback({
+        tone: 'error',
+        title: 'Unable to transfer funds',
+        message: transferError instanceof Error ? transferError.message : 'Unable to transfer funds',
+      });
+    }
     finally { setSaving(false); }
   };
 
@@ -100,7 +144,7 @@ export default function AccountsPage() {
     <Sidebar />
     <main className="app-page lg:ml-64 p-4 lg:p-6">
       <header className="mb-5 min-w-0"><p className="app-eyebrow">Money storage</p><h1 className="break-words text-2xl font-bold text-[#16332f]">Accounts and wallets</h1><p className="text-sm text-zinc-500">Manage balances across banks, wallets, and cash.</p></header>
-      {(error || message) && <div role="status" className={`mb-4 rounded-2xl border px-4 py-3 text-sm ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-[#bce9de] bg-[#eaf8f4] text-[#087f6b]'}`}>{error || message}</div>}
+      {error && <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]">
         <section className="min-w-0 space-y-4">

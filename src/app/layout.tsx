@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
+import FeedbackProvider from "@/components/providers/FeedbackProvider";
 
 export const metadata: Metadata = {
   title: "Personal Finance Tracker",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased">
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <FeedbackProvider>{children}</FeedbackProvider>
+        </SessionProvider>
       </body>
     </html>
   );

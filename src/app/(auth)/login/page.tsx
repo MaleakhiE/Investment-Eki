@@ -5,20 +5,23 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthShell from '@/components/auth/AuthShell';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 function LoginForm() {
   const router = useRouter();
+  const { showFeedback } = useFeedback();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const requestedCallbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = requestedCallbackUrl?.startsWith('/') && !requestedCallbackUrl.startsWith('//')
+    ? requestedCallbackUrl
+    : '/dashboard';
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
@@ -29,13 +32,29 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError('Incorrect email or password');
+        void showFeedback({
+          tone: 'error',
+          title: 'Unable to sign in',
+          message: 'The email or password is incorrect. Check your details and try again.',
+          primaryLabel: 'Try again',
+        });
       } else {
+        await showFeedback({
+          tone: 'success',
+          title: 'Login successful',
+          message: 'Your account is ready. Continue to review your financial dashboard.',
+          primaryLabel: 'Open dashboard',
+        });
         router.push(callbackUrl);
         router.refresh();
       }
     } catch {
-      setError('Something went wrong');
+      void showFeedback({
+        tone: 'error',
+        title: 'Connection problem',
+        message: 'FinTrack could not complete the login. Check your connection and try again.',
+        primaryLabel: 'Try again',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -43,13 +62,6 @@ function LoginForm() {
 
   return (
     <>
-
-      {/* Error */}
-      {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-          <p className="text-sm text-red-400 text-center">{error}</p>
-        </div>
-      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">

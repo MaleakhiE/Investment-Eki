@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
+  const { showFeedback } = useFeedback();
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
@@ -24,13 +25,29 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.responseMessage || 'Your request could not be processed. Try again later.');
+        void showFeedback({
+          tone: 'error',
+          title: 'Request not completed',
+          message: data.responseMessage || 'Your request could not be processed. Try again later.',
+          primaryLabel: 'Try again',
+        });
         return;
       }
 
-      setIsSubmitted(true);
+      await showFeedback({
+        tone: 'success',
+        title: 'Check your email',
+        message: 'If an account exists for that email, a secure password reset link will be sent shortly.',
+        primaryLabel: 'Back to sign in',
+      });
+      router.push('/login');
     } catch {
-      setError('Something went wrong. Check your connection and try again.');
+      void showFeedback({
+        tone: 'error',
+        title: 'Connection problem',
+        message: 'Something went wrong. Check your connection and try again.',
+        primaryLabel: 'Try again',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -38,24 +55,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell title="Forgot your password?" description="We will send a secure link to create a new password.">
-
-        {isSubmitted ? (
-          <div className="rounded-2xl border border-[#00d4aa]/30 bg-white/70 p-6 text-center shadow-sm">
-            <h2 className="font-semibold text-[#16332f]">Check your email</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-500">
-              If an account exists for that email, a password reset link will be sent shortly.
-            </p>
-            <Link href="/login" className="mt-6 inline-block font-medium text-[#00a88a] hover:underline">
-              Back to sign in
-            </Link>
-          </div>
-        ) : (
-          <>
-            {error && (
-              <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-                <p className="text-sm text-red-500 text-center">{error}</p>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -87,8 +86,6 @@ export default function ForgotPasswordPage() {
                 Back to sign in
               </Link>
             </div>
-          </>
-        )}
     </AuthShell>
   );
 }

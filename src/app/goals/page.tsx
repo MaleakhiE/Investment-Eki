@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface FinancialGoal {
   id: string;
@@ -43,16 +44,17 @@ const CATEGORIES = [
 
 export default function GoalsPage() {
   useSession();
+  const { showFeedback, confirmAction } = useFeedback();
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [summary, setSummary] = useState<GoalsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addAmountId, setAddAmountId] = useState<string | null>(null);
   const [addAmount, setAddAmount] = useState('');
+  const [addAmountError, setAddAmountError] = useState('');
 
   // Form state
   const [name, setName] = useState('');
@@ -87,7 +89,8 @@ export default function GoalsPage() {
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setError(''); setSuccess(''); setIsSaving(true);
+    e.preventDefault(); setError(''); setIsSaving(true);
+    const isEditing = editingId !== null;
     try {
       const url = editingId ? `/api/goals/${editingId}` : '/api/goals';
       const method = editingId ? 'PATCH' : 'POST';
@@ -101,41 +104,89 @@ export default function GoalsPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.responseMessage || 'Failed'); return; }
-      setSuccess(editingId ? 'Updated!' : 'Created!'); resetForm(); fetchData();
-    } catch { setError('Error'); } finally { setIsSaving(false); }
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: isEditing ? 'Goal tidak diperbarui' : 'Goal tidak dibuat', message: data.responseMessage || 'Periksa data goal lalu coba kembali.' });
+        return;
+      }
+      resetForm();
+      await fetchData();
+      void showFeedback({ tone: 'success', title: isEditing ? 'Goal berhasil diperbarui' : 'Goal berhasil dibuat', message: `${name} telah disimpan dalam daftar financial goals.` });
+    } catch {
+      void showFeedback({ tone: 'error', title: isEditing ? 'Goal tidak diperbarui' : 'Goal tidak dibuat', message: 'Terjadi gangguan saat menyimpan goal. Silakan coba kembali.' });
+    } finally { setIsSaving(false); }
   }
 
   async function handleAddAmount(goalId: string) {
-    if (!addAmount) return;
+    const parsedAmount = parseFloat(addAmount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setAddAmountError('Masukkan nominal lebih dari Rp 0.');
+      return;
+    }
+    setAddAmountError('');
     setIsSaving(true);
     try {
       const res = await fetch(`/api/goals/${goalId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ add_amount: parseFloat(addAmount) || 0 }),
+        body: JSON.stringify({ add_amount: parsedAmount }),
       });
-      if (res.ok) { setSuccess('Amount added!'); setAddAmountId(null); setAddAmount(''); fetchData(); }
-    } catch { setError('Error'); } finally { setIsSaving(false); }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Dana tidak ditambahkan', message: data?.responseMessage || 'Nominal dana tidak dapat ditambahkan. Silakan coba kembali.' });
+        return;
+      }
+      setAddAmountId(null);
+      setAddAmount('');
+      setAddAmountError('');
+      await fetchData();
+      void showFeedback({ tone: 'success', title: 'Dana berhasil ditambahkan', message: 'Progress financial goal telah diperbarui.' });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Dana tidak ditambahkan', message: 'Terjadi gangguan saat memperbarui dana goal. Silakan coba kembali.' });
+    } finally { setIsSaving(false); }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this goal?')) return;
+    const confirmed = await confirmAction({
+      title: 'Hapus financial goal?',
+      message: 'Goal beserta progress yang tersimpan akan dihapus secara permanen.',
+      confirmLabel: 'Hapus goal',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/goals/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchData();
-    } catch { setError('Error'); }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Goal tidak terhapus', message: data?.responseMessage || 'Financial goal tidak dapat dihapus.' });
+        return;
+      }
+      await fetchData();
+      void showFeedback({ tone: 'success', title: 'Goal berhasil dihapus', message: 'Financial goal telah dihapus dari daftar.' });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Goal tidak terhapus', message: 'Terjadi gangguan saat menghapus goal. Silakan coba kembali.' });
+    }
   }
 
   async function toggleComplete(goal: FinancialGoal) {
     try {
-      await fetch(`/api/goals/${goal.id}`, {
+      const res = await fetch(`/api/goals/${goal.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_completed: !goal.is_completed }),
       });
-      fetchData();
-    } catch { setError('Error'); }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        void showFeedback({ tone: 'error', title: 'Status goal tidak diperbarui', message: data?.responseMessage || 'Status financial goal tidak dapat diubah.' });
+        return;
+      }
+      await fetchData();
+      void showFeedback({
+        tone: 'success',
+        title: goal.is_completed ? 'Goal diaktifkan kembali' : 'Goal berhasil diselesaikan',
+        message: goal.is_completed ? `${goal.name} kembali masuk ke daftar goal aktif.` : `Selamat, ${goal.name} telah ditandai selesai.`,
+      });
+    } catch {
+      void showFeedback({ tone: 'error', title: 'Status goal tidak diperbarui', message: 'Terjadi gangguan saat mengubah status goal.' });
+    }
   }
 
   const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
@@ -160,7 +211,6 @@ export default function GoalsPage() {
         </div>
 
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
-        {success && <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-sm text-green-400">{success}</div>}
 
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
@@ -289,13 +339,16 @@ export default function GoalsPage() {
                         <div className="flex gap-2 mt-3">
                           {addAmountId === goal.id ? (
                             <div className="flex gap-2 flex-1">
-                              <CurrencyInput value={addAmount} onChange={setAddAmount} placeholder="Amount" className="flex-1 py-1.5 text-xs border border-[#dcece8] rounded-lg bg-[#f3faf8] text-[#16332f]" />
+                              <div className="flex-1">
+                                <CurrencyInput value={addAmount} onChange={(value) => { setAddAmount(value); setAddAmountError(''); }} placeholder="Amount" className="w-full py-1.5 text-xs border border-[#dcece8] rounded-lg bg-[#f3faf8] text-[#16332f]" />
+                                {addAmountError && <p className="mt-1 text-xs text-red-500">{addAmountError}</p>}
+                              </div>
                               <button onClick={() => handleAddAmount(goal.id)} disabled={isSaving} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg">Add</button>
-                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg">Cancel</button>
+                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); setAddAmountError(''); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg">Cancel</button>
                             </div>
                           ) : (
                             <>
-                              <button onClick={() => setAddAmountId(goal.id)} className="flex-1 py-2 bg-green-500/20 text-green-400 text-xs rounded-lg font-medium hover:bg-green-500/30">Add Amount</button>
+                              <button onClick={() => { setAddAmountId(goal.id); setAddAmountError(''); }} className="flex-1 py-2 bg-green-500/20 text-green-400 text-xs rounded-lg font-medium hover:bg-green-500/30">Add Amount</button>
                               <button onClick={() => toggleComplete(goal)} className="px-3 py-2 bg-blue-500/20 text-blue-400 text-xs rounded-lg font-medium hover:bg-blue-500/30">Tandai Selesai</button>
                             </>
                           )}
