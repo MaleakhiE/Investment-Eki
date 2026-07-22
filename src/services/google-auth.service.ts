@@ -5,9 +5,9 @@ import { validateEmail } from '@/lib/validation';
 const GOOGLE_PROVIDER = 'google';
 
 export interface GoogleIdentityProfile {
-  sub?: string;
-  email?: string;
-  email_verified?: boolean;
+  sub?: string | null;
+  email?: string | null;
+  email_verified?: boolean | null;
   name?: string | null;
   picture?: string | null;
 }
@@ -27,6 +27,12 @@ interface GoogleSessionUser {
   ai_recommendation_enabled: boolean;
   role: 'USER' | 'SUPERADMIN';
   session_version: number;
+}
+
+interface ProviderSessionUserInput {
+  user: { id: string; email?: string | null };
+  account?: { provider?: string } | null;
+  profile?: GoogleIdentityProfile;
 }
 
 function toSessionUser(
@@ -113,4 +119,18 @@ export async function provisionGoogleUser(profile: GoogleIdentityProfile): Promi
     });
     return toSessionUser(newUser, email, profile);
   });
+}
+
+/**
+ * Auth.js intentionally replaces OAuth profile IDs with temporary UUIDs when no
+ * adapter is configured. Resolve Google logins back to FinTrack's numeric user
+ * before the JWT callback persists the session.
+ */
+export async function resolveSessionUserForProvider({
+  user,
+  account,
+  profile,
+}: ProviderSessionUserInput): Promise<ProviderSessionUserInput['user'] | GoogleSessionUser> {
+  if (account?.provider !== GOOGLE_PROVIDER || !profile) return user;
+  return provisionGoogleUser(profile);
 }

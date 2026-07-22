@@ -3,9 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import FeedbackModal, { type FeedbackNotice, type FeedbackTone } from '@/components/ui/FeedbackModal';
 
-interface FeedbackRequest extends Omit<FeedbackNotice, 'primaryLabel'> {
-  primaryLabel?: string;
-}
+type FeedbackRequest = FeedbackNotice;
 
 interface ConfirmationRequest {
   title: string;
@@ -42,7 +40,7 @@ export default function FeedbackProvider({ children }: { children: React.ReactNo
       activeResolver.current = () => resolve();
       setActiveFeedback({
         ...request,
-        primaryLabel: request.primaryLabel ?? 'Close',
+        primaryLabel: request.autoCloseMs ? undefined : request.primaryLabel ?? 'Close',
       });
     });
   }, []);
@@ -73,6 +71,7 @@ export default function FeedbackProvider({ children }: { children: React.ReactNo
         message={activeFeedback?.message ?? ''}
         primaryLabel={activeFeedback?.primaryLabel}
         secondaryLabel={activeFeedback?.secondaryLabel}
+        autoCloseMs={activeFeedback?.autoCloseMs}
         onClose={() => settleFeedback(false)}
         onPrimaryAction={() => settleFeedback(true)}
         onSecondaryAction={() => settleFeedback(false)}

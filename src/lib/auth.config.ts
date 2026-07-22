@@ -49,13 +49,23 @@ export const authConfig: NextAuthConfig = {
       
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.ai_recommendation_enabled = user.ai_recommendation_enabled;
-        token.role = user.role;
-        token.session_version = user.session_version;
+    async jwt({ token, user, account, profile }) {
+      let sessionUser = user;
+      if (user && account?.provider === 'google' && profile) {
+        const { resolveSessionUserForProvider } = await import('@/services/google-auth.service');
+        sessionUser = await resolveSessionUserForProvider({
+          user,
+          account,
+          profile,
+        }) as typeof user;
+      }
+
+      if (sessionUser) {
+        token.id = sessionUser.id;
+        token.email = sessionUser.email;
+        token.ai_recommendation_enabled = sessionUser.ai_recommendation_enabled;
+        token.role = sessionUser.role;
+        token.session_version = sessionUser.session_version;
         token.session_invalidated = false;
       } else if (token.id) {
         token.session_invalidated = !(await isSessionVersionCurrent(

@@ -1,9 +1,16 @@
 jest.mock('./auth-session', () => ({ isSessionVersionCurrent: jest.fn() }));
+jest.mock('@/services/google-auth.service', () => ({ resolveSessionUserForProvider: jest.fn() }));
 
 import { isSessionVersionCurrent } from './auth-session';
+import { resolveSessionUserForProvider } from '@/services/google-auth.service';
 import { authConfig } from './auth.config';
 
-type JwtCallback = (input: { token: Record<string, unknown>; user?: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+type JwtCallback = (input: {
+  token: Record<string, unknown>;
+  user?: Record<string, unknown>;
+  account?: Record<string, unknown>;
+  profile?: Record<string, unknown>;
+}) => Promise<Record<string, unknown>>;
 type AuthorizedCallback = (input: { auth: { user: Record<string, unknown> } | null; request: { nextUrl: URL } }) => boolean | Response;
 type SessionCallback = (input: { session: { user: Record<string, unknown> }; token: Record<string, unknown> }) => Promise<{ user: Record<string, unknown> }>;
 
@@ -25,6 +32,29 @@ describe('JWT session revocation', () => {
 
     expect(token).toEqual(expect.objectContaining({
       id: '7', session_version: 4, session_invalidated: false,
+    }));
+  });
+
+  it('stores the FinTrack user rather than the temporary Auth.js UUID for Google login', async () => {
+    jest.mocked(resolveSessionUserForProvider).mockResolvedValue({
+      id: '7',
+      email: 'person@example.com',
+      ai_recommendation_enabled: true,
+      role: 'USER',
+      session_version: 2,
+    });
+
+    const token = await jwt({
+      token: {},
+      user: { id: 'temporary-authjs-uuid', email: 'person@example.com' },
+      account: { provider: 'google' },
+      profile: { sub: 'google-subject', email: 'person@example.com', email_verified: true },
+    });
+
+    expect(token).toEqual(expect.objectContaining({
+      id: '7',
+      session_version: 2,
+      session_invalidated: false,
     }));
   });
 

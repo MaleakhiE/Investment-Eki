@@ -56,8 +56,8 @@ function LoginForm() {
         await showFeedback({
           tone: 'success',
           title: 'Login successful',
-          message: 'Your account is ready. Continue to review your financial dashboard.',
-          primaryLabel: 'Open dashboard',
+          message: 'Redirecting to your financial dashboard.',
+          autoCloseMs: 1000,
         });
         router.push(callbackUrl);
         router.refresh();

@@ -16,7 +16,7 @@ jest.mock('@/lib/encryption', () => ({
   encryptDeterministic: (value: string) => `encrypted:${value}`,
 }));
 
-import { provisionGoogleUser } from './google-auth.service';
+import { provisionGoogleUser, resolveSessionUserForProvider } from './google-auth.service';
 
 const existingUser = {
   id: BigInt(7),
@@ -66,6 +66,24 @@ describe('Google OAuth user provisioning', () => {
       include: { user: true },
     });
     expect(userRepository.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('replaces Auth.js temporary OAuth UUID with the authoritative FinTrack user', async () => {
+    oauthAccountRepository.findUnique.mockResolvedValue({ user: existingUser });
+
+    await expect(resolveSessionUserForProvider({
+      user: { id: 'temporary-authjs-uuid', email: 'person@example.com' },
+      account: { provider: 'google' },
+      profile: {
+        sub: 'google-user-7',
+        email: 'person@example.com',
+        email_verified: true,
+      },
+    })).resolves.toEqual(expect.objectContaining({
+      id: '7',
+      session_version: 3,
+      role: 'USER',
+    }));
   });
 
   it('links a verified Google identity to an existing encrypted-email user without changing its role', async () => {

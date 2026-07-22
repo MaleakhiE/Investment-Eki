@@ -49,4 +49,21 @@ describe('FeedbackModal', () => {
     expect(html).toContain('>Delete</button>');
     expect(html).toContain('>Cancel</button>');
   });
+
+  it('renders auto-dismiss success feedback without an action button', () => {
+    const html = renderToStaticMarkup(React.createElement(FeedbackModal, {
+      open: true,
+      tone: 'success',
+      title: 'Login successful',
+      message: 'Redirecting to your dashboard.',
+      autoCloseMs: 1000,
+      onClose: () => undefined,
+    }));
+
+    expect(html).toContain('role="status"');
+    expect(html).toContain('aria-live="polite"');
+    expect(html).toContain('Redirecting to your dashboard.');
+    expect(html).not.toContain('<button');
+    expect(html).not.toContain('Open dashboard');
+  });
 });

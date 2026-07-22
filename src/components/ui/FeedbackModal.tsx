@@ -8,7 +8,8 @@ export interface FeedbackNotice {
   tone: FeedbackTone;
   title: string;
   message: string;
-  primaryLabel: string;
+  primaryLabel?: string;
+  autoCloseMs?: number;
 }
 
 interface FeedbackModalProps {
@@ -18,6 +19,7 @@ interface FeedbackModalProps {
   tone?: FeedbackTone;
   primaryLabel?: string;
   secondaryLabel?: string;
+  autoCloseMs?: number;
   onClose: () => void;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
@@ -36,6 +38,7 @@ export default function FeedbackModal({
   tone = 'info',
   primaryLabel = 'Close',
   secondaryLabel,
+  autoCloseMs,
   onClose,
   onPrimaryAction,
   onSecondaryAction,
@@ -45,9 +48,15 @@ export default function FeedbackModal({
   const dialogRef = useRef<HTMLElement>(null);
   const primaryButtonRef = useRef<HTMLButtonElement>(null);
   const secondaryButtonRef = useRef<HTMLButtonElement>(null);
+  const isPassive = typeof autoCloseMs === 'number' && autoCloseMs > 0;
 
   useEffect(() => {
     if (!open) return;
+
+    if (isPassive) {
+      const timer = window.setTimeout(onClose, autoCloseMs);
+      return () => window.clearTimeout(timer);
+    }
 
     const previousFocus = document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -79,7 +88,7 @@ export default function FeedbackModal({
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, [open, onClose]);
+  }, [autoCloseMs, isPassive, open, onClose]);
 
   if (!open) return null;
 
@@ -93,16 +102,17 @@ export default function FeedbackModal({
       <section
         ref={dialogRef}
         className={`feedback-modal feedback-modal-${tone}`}
-        role="dialog"
-        aria-modal="true"
+        role={isPassive ? 'status' : 'dialog'}
+        aria-modal={isPassive ? undefined : 'true'}
+        aria-live={isPassive ? 'polite' : undefined}
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        tabIndex={-1}
+        tabIndex={isPassive ? undefined : -1}
       >
         <p className="feedback-modal-status">{toneLabels[tone]}</p>
         <h2 id={titleId}>{title}</h2>
         <p id={descriptionId} className="feedback-modal-message">{message}</p>
-        <div className="feedback-modal-actions">
+        {!isPassive && <div className="feedback-modal-actions">
           {secondaryLabel && (
             <button
               ref={secondaryButtonRef}
@@ -121,7 +131,7 @@ export default function FeedbackModal({
           >
             {primaryLabel}
           </button>
-        </div>
+        </div>}
       </section>
     </div>
   );
