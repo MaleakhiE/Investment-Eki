@@ -25,6 +25,14 @@ describe('Prisma migration replay chain', () => {
     expect(hardening).toContain('session_version');
   });
 
+  it('supports OAuth-only users and binds each provider subject once', () => {
+    const oauth = migration('20260722000000_allow_oauth_users');
+    expect(oauth).toContain('MODIFY `password_hash` VARCHAR(255) NULL');
+    expect(oauth).toContain('CREATE TABLE `oauth_accounts`');
+    expect(oauth).toContain('oauth_accounts_provider_account_key');
+    expect(oauth).toContain('oauth_accounts_user_provider_key');
+  });
+
   it('keeps every explicit MySQL identifier within the 64-character limit', () => {
     const migrationsDirectory = path.join(process.cwd(), 'prisma/migrations');
     const migrationFiles = fs.readdirSync(migrationsDirectory, { withFileTypes: true })

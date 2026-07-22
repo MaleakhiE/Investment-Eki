@@ -9,6 +9,7 @@
 
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import Google, { type GoogleProfile } from 'next-auth/providers/google';
 import { authConfig } from './auth.config';
 
 declare module 'next-auth' {
@@ -63,6 +64,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           role: result.user.role,
           session_version: result.user.session_version,
         };
+      },
+    }),
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      async profile(profile: GoogleProfile) {
+        const { provisionGoogleUser } = await import('@/services/google-auth.service');
+        return provisionGoogleUser(profile);
       },
     }),
   ],

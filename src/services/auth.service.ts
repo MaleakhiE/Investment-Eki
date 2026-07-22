@@ -118,6 +118,11 @@ export async function validateCredentials(
     return { user: null };
   }
 
+  // OAuth-only accounts cannot use credentials until they explicitly set a password.
+  if (!user.password_hash) {
+    return { user: null };
+  }
+
   // Verify password
   const isValidPassword = await verifyPassword(password, user.password_hash);
 

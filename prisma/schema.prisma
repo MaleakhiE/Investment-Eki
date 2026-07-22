@@ -10,7 +10,7 @@ datasource db {
 model User {
   id                        BigInt   @id @default(autoincrement())
   email                     String   @unique @db.VarChar(512)
-  password_hash             String   @db.VarChar(255)
+  password_hash             String?  @db.VarChar(255)
   ai_recommendation_enabled Boolean  @default(true)
   created_at                DateTime @default(now())
   updated_at                DateTime @updatedAt
@@ -28,8 +28,23 @@ model User {
   financialGoals        FinancialGoal[]
   passwordResetTokens   PasswordResetToken[]
   financialAccounts     FinancialAccount[]
+  oauthAccounts         OauthAccount[]
 
   @@map("users")
+}
+
+model OauthAccount {
+  id                  BigInt   @id @default(autoincrement())
+  user_id             BigInt
+  provider            String   @db.VarChar(50)
+  provider_account_id String   @db.VarChar(255)
+  created_at          DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_account_id])
+  @@unique([user_id, provider])
+  @@map("oauth_accounts")
 }
 
 enum UserRole {
