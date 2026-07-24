@@ -171,6 +171,47 @@ describe('linked account transactions', () => {
       account: 'Mandiri',
     }) });
   });
+
+  it('uses an explicit transaction client for account lookup and transaction creation', async () => {
+    const scopedFinancialAccountRepository = { findFirst: jest.fn() };
+    const scopedTransactionRepository = { create: jest.fn() };
+    const scopedClient = {
+      financialAccount: scopedFinancialAccountRepository,
+      transaction: scopedTransactionRepository,
+    } as unknown as Parameters<typeof createTransaction>[2];
+
+    scopedFinancialAccountRepository.findFirst.mockResolvedValue({
+      id: BigInt(2),
+      name: 'Mandiri',
+    });
+    scopedTransactionRepository.create.mockResolvedValue({
+      ...persisted,
+      account: 'Mandiri',
+      account_id: BigInt(2),
+      destination_account_id: null,
+    });
+
+    const result = await createTransaction(
+      BigInt(20),
+      { ...baseInput, account_id: '2' },
+      scopedClient,
+    );
+
+    expect(scopedFinancialAccountRepository.findFirst).toHaveBeenCalledWith({
+      where: { id: BigInt(2), user_id: BigInt(20), is_archived: false },
+      select: { id: true, name: true },
+    });
+    expect(scopedTransactionRepository.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        user_id: BigInt(20),
+        account_id: BigInt(2),
+        account: 'Mandiri',
+      }),
+    });
+    expect(financialAccountRepository.findFirst).not.toHaveBeenCalled();
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+    expect(result).toEqual(expect.objectContaining({ success: true }));
+  });
 });
 
 describe('account transfers', () => {
