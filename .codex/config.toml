@@ -1,0 +1,43 @@
+[features]
+multi_agent = true
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 6
+interrupt_message = true
+
+[agents.repository_explorer]
+description = "Map repository behavior and gather exact evidence without edits."
+config_file = "./agents/repository-explorer.toml"
+
+[agents.product_analyst]
+description = "Identify evidence-backed product opportunities without edits."
+config_file = "./agents/product-analyst.toml"
+
+[agents.ux_auditor]
+description = "Audit responsive UX and accessibility without edits."
+config_file = "./agents/ux-auditor.toml"
+
+[agents.finance_domain_reviewer]
+description = "Review financial definitions and invariants without edits."
+config_file = "./agents/finance-domain-reviewer.toml"
+
+[agents.backend_architect]
+description = "Implement assigned API, Prisma, and data-integrity changes."
+config_file = "./agents/backend-architect.toml"
+
+[agents.frontend_engineer]
+description = "Implement assigned accessible, responsive UI changes."
+config_file = "./agents/frontend-engineer.toml"
+
+[agents.security_reviewer]
+description = "Review final diffs for confirmed security and privacy risks."
+config_file = "./agents/security-reviewer.toml"
+
+[agents.qa_engineer]
+description = "Build and execute a risk-based test strategy."
+config_file = "./agents/qa-engineer.toml"
+
+[agents.release_reviewer]
+description = "Issue an independent release decision against main."
+config_file = "./agents/release-reviewer.toml"
