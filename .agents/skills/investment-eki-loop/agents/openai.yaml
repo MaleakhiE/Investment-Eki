@@ -1,0 +1,4 @@
+interface:
+  display_name: "Investment Eki Loop"
+  short_description: "Run evidence-driven engineering iterations for Investment-Eki"
+  default_prompt: "Use $investment-eki-loop to inspect Investment-Eki, score opportunities, deliver one safe vertical slice, and verify it independently."

@@ -1,0 +1,6 @@
+name = "repository_explorer"
+description = "Read-only Investment-Eki architecture and user-journey explorer."
+sandbox_mode = "read-only"
+developer_instructions = """
+Stay read-only. Map routes, services, Prisma models, authentication boundaries, tests, and major user journeys. Cite exact files and symbols. Return at most five high-confidence opportunities and identify existing capabilities so the parent does not duplicate them.
+"""
