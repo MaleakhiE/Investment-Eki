@@ -7,6 +7,7 @@
  * - Calculate monthly summary from transactions
  */
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
 import { isSupportedReceiptDataUrl } from '@/lib/receipt-image';
@@ -110,8 +111,14 @@ function parseAccountId(value: string | bigint | null | undefined): bigint | nul
   }
 }
 
-async function findOwnedAccount(userId: bigint, accountId: bigint) {
-  return prisma.financialAccount.findFirst({
+type TransactionDatabaseClient = Pick<Prisma.TransactionClient, 'financialAccount' | 'transaction'>;
+
+async function findOwnedAccount(
+  userId: bigint,
+  accountId: bigint,
+  databaseClient: TransactionDatabaseClient = prisma,
+) {
+  return databaseClient.financialAccount.findFirst({
     where: { id: accountId, user_id: userId, is_archived: false },
     select: { id: true, name: true },
   });
@@ -160,7 +167,8 @@ export function validateTransactionInput(input: TransactionInput): { valid: bool
  */
 export async function createTransaction(
   userId: bigint,
-  input: TransactionInput
+  input: TransactionInput,
+  databaseClient: TransactionDatabaseClient = prisma,
 ): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string }> {
   const validation = validateTransactionInput(input);
   if (!validation.valid) {
@@ -172,10 +180,12 @@ export async function createTransaction(
   if (input.account_id !== undefined && !requestedAccountId) {
     return { success: false, error: 'Account not found' };
   }
-  const linkedAccount = requestedAccountId ? await findOwnedAccount(userId, requestedAccountId) : null;
+  const linkedAccount = requestedAccountId
+    ? await findOwnedAccount(userId, requestedAccountId, databaseClient)
+    : null;
   if (requestedAccountId && !linkedAccount) return { success: false, error: 'Account not found' };
 
-  const record = await prisma.transaction.create({
+  const record = await databaseClient.transaction.create({
     data: {
       user_id: userId,
       date: new Date(input.date),

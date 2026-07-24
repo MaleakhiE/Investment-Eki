@@ -8,6 +8,7 @@
  * - Auto-create expense transaction when adding new investment
  */
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
 import { validateSnapshotInput, InvestmentSnapshotInput, InvestmentType } from '@/lib/validation';
@@ -48,6 +49,17 @@ export interface SaveSnapshotResult {
   transactionCreated?: boolean;
 }
 
+const SNAPSHOT_TRANSACTION_MAX_ATTEMPTS = 3;
+
+function isWriteConflict(error: unknown): error is { code: 'P2034' } {
+  return (
+    typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && error.code === 'P2034'
+  );
+}
+
 /**
  * Save or update investment snapshot for a user, type, and month
  * Uses upsert logic - creates new record or updates existing
@@ -73,121 +85,126 @@ export async function saveSnapshot(
     return { success: false, error: validation.errors.join(', ') };
   }
 
-  // Get or create investment record
-  let investment = await prisma.investment.findUnique({
-    where: {
-      user_id_type: {
-        user_id: userId,
-        type: input.type as InvestmentType,
-      },
-    },
-  });
+  for (let attempt = 1; attempt <= SNAPSHOT_TRANSACTION_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await prisma.$transaction(async (transactionClient) => {
+        // Get or create the investment inside the same serializable transaction
+        // that owns the snapshot and generated cashflow write.
+        let investment = await transactionClient.investment.findUnique({
+          where: {
+            user_id_type: {
+              user_id: userId,
+              type: input.type as InvestmentType,
+            },
+          },
+        });
 
-  if (!investment) {
-    investment = await prisma.investment.create({
-      data: {
-        user_id: userId,
-        type: input.type as InvestmentType,
-      },
-    });
-  }
+        if (!investment) {
+          investment = await transactionClient.investment.create({
+            data: {
+              user_id: userId,
+              type: input.type as InvestmentType,
+            },
+          });
+        }
 
-  // Check if this is a new snapshot or update
-  const existingSnapshot = await prisma.investmentSnapshot.findUnique({
-    where: {
-      investment_id_month: {
-        investment_id: investment.id,
-        month: input.month,
-      },
-    },
-  });
+        const existingSnapshot = await transactionClient.investmentSnapshot.findUnique({
+          where: {
+            investment_id_month: {
+              investment_id: investment.id,
+              month: input.month,
+            },
+          },
+        });
+        const isNewSnapshot = !existingSnapshot;
+        const previousInvestedAmount = existingSnapshot
+          ? decryptNumber(existingSnapshot.invested_amount)
+          : 0;
 
-  const isNewSnapshot = !existingSnapshot;
-  let previousInvestedAmount = 0;
-  
-  if (existingSnapshot) {
-    previousInvestedAmount = decryptNumber(existingSnapshot.invested_amount);
-  }
+        // Encrypt within each attempt so every retried transaction constructs
+        // the complete persisted state independently.
+        const encryptedInvestedAmount = encryptNumber(input.invested_amount);
+        const encryptedCurrentValue = encryptNumber(input.current_value);
+        const record = await transactionClient.investmentSnapshot.upsert({
+          where: {
+            investment_id_month: {
+              investment_id: investment.id,
+              month: input.month,
+            },
+          },
+          update: {
+            invested_amount: encryptedInvestedAmount,
+            current_value: encryptedCurrentValue,
+            platform: input.platform || null,
+            product_name: input.product_name || null,
+            units: input.units || null,
+            nav_per_unit: input.nav_per_unit || null,
+          },
+          create: {
+            investment_id: investment.id,
+            month: input.month,
+            invested_amount: encryptedInvestedAmount,
+            current_value: encryptedCurrentValue,
+            platform: input.platform || null,
+            product_name: input.product_name || null,
+            units: input.units || null,
+            nav_per_unit: input.nav_per_unit || null,
+          },
+        });
 
-  // Encrypt monetary values
-  const encryptedInvestedAmount = encryptNumber(input.invested_amount);
-  const encryptedCurrentValue = encryptNumber(input.current_value);
+        const investmentDifference = input.invested_amount - previousInvestedAmount;
+        const shouldCreateTransaction =
+          input.createTransaction !== false && investmentDifference > 0;
 
-  // Upsert snapshot record
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const record = await (prisma.investmentSnapshot as any).upsert({
-    where: {
-      investment_id_month: {
-        investment_id: investment.id,
-        month: input.month,
-      },
-    },
-    update: {
-      invested_amount: encryptedInvestedAmount,
-      current_value: encryptedCurrentValue,
-      platform: input.platform || null,
-      product_name: input.product_name || null,
-      units: input.units || null,
-      nav_per_unit: input.nav_per_unit || null,
-    },
-    create: {
-      investment_id: investment.id,
-      month: input.month,
-      invested_amount: encryptedInvestedAmount,
-      current_value: encryptedCurrentValue,
-      platform: input.platform || null,
-      product_name: input.product_name || null,
-      units: input.units || null,
-      nav_per_unit: input.nav_per_unit || null,
-    },
-  });
+        if (shouldCreateTransaction) {
+          const [year, monthNum] = input.month.split('-');
+          const transactionResult = await createTransaction(userId, {
+            date: `${year}-${monthNum}-01`,
+            type: 'EXPENSE',
+            category: 'Investment',
+            description: input.type === 'GOLD'
+              ? 'Gold Investment'
+              : `${input.platform || 'Mutual Fund'} - ${input.product_name || 'Reksa Dana'}`,
+            amount: investmentDifference,
+          }, transactionClient);
 
-  // Create expense transaction if requested and there's a difference in invested amount
-  if (input.createTransaction !== false) {
-    const investmentDifference = input.invested_amount - previousInvestedAmount;
-    
-    if (investmentDifference > 0) {
-      // Create expense transaction for the new investment amount
-      const [year, monthNum] = input.month.split('-');
-      const transactionDate = `${year}-${monthNum}-01`;
-      const category = input.type === 'GOLD' ? 'Investment' : 'Investment';
-      const description = input.type === 'GOLD' 
-        ? 'Gold Investment' 
-        : `${input.platform || 'Mutual Fund'} - ${input.product_name || 'Reksa Dana'}`;
+          if (!transactionResult.success) {
+            throw new Error(
+              transactionResult.error || 'Generated investment expense could not be saved',
+            );
+          }
+        }
 
-      await createTransaction(userId, {
-        date: transactionDate,
-        type: 'EXPENSE',
-        category,
-        description,
-        amount: investmentDifference,
+        const snapshotRecord = record as Record<string, unknown>;
+        return {
+          success: true,
+          snapshot: {
+            id: record.id,
+            investment_id: record.investment_id,
+            month: record.month,
+            invested_amount: input.invested_amount,
+            current_value: input.current_value,
+            gain_loss: calculateGainLoss(input.invested_amount, input.current_value),
+            platform: (snapshotRecord.platform as string) || undefined,
+            product_name: (snapshotRecord.product_name as string) || undefined,
+            units: (snapshotRecord.units as string) || undefined,
+            nav_per_unit: (snapshotRecord.nav_per_unit as string) || undefined,
+            created_at: record.created_at,
+          },
+          isNewSnapshot,
+          transactionCreated: shouldCreateTransaction,
+        };
+      }, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });
+    } catch (error) {
+      if (!isWriteConflict(error) || attempt === SNAPSHOT_TRANSACTION_MAX_ATTEMPTS) {
+        throw error;
+      }
     }
   }
 
-  // Calculate gain/loss
-  const gainLoss = calculateGainLoss(input.invested_amount, input.current_value);
-
-  // Return decrypted record
-  const snapshotRecord = record as Record<string, unknown>;
-  return {
-    success: true,
-    snapshot: {
-      id: record.id,
-      investment_id: record.investment_id,
-      month: record.month,
-      invested_amount: input.invested_amount,
-      current_value: input.current_value,
-      gain_loss: gainLoss,
-      platform: (snapshotRecord.platform as string) || undefined,
-      product_name: (snapshotRecord.product_name as string) || undefined,
-      units: (snapshotRecord.units as string) || undefined,
-      nav_per_unit: (snapshotRecord.nav_per_unit as string) || undefined,
-      created_at: record.created_at,
-    },
-    isNewSnapshot,
-    transactionCreated: input.createTransaction !== false && (input.invested_amount - previousInvestedAmount) > 0,
-  };
+  throw new Error('Investment snapshot transaction attempts exhausted');
 }
 
 
