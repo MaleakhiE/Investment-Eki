@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-27
-Baseline commit: `cf90407`
-Iteration branch: `feat/loop-engineering-4-notification-response-privacy`
+Baseline commit: `98b4d71`
+Iteration branch: `feat/loop-engineering-5-notification-opt-outs`
 
 ## Product and architecture
 
@@ -26,7 +26,7 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 44 suites, 284 tests |
+| Tests | `npm test -- --runInBand` | Pass: 44 suites, 290 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
 | Dependency audit | `npm audit --omit=dev --audit-level=high` | Pre-existing failure: 2 high advisories in Next.js and transitive sharp |
@@ -44,7 +44,9 @@ Authenticated visual, responsive, focus-order, keyboard, and live accessibility 
 - Several money boundaries accept non-finite or insufficiently defined IDR values; goals have a concurrent lost-update path.
 - Next.js 16.2.10 and transitive sharp currently produce two high audit findings.
 - Login/registration throttling and registration account-enumeration behavior need a separate auth-hardening slice.
-- Notification delivery still does not enforce stored reminder, summary, low-balance, or custom-alert preferences; timing and opt-out semantics require a product contract.
+- Notification delivery honors explicit reminder and summary opt-outs for the
+  derived monthly type. Reminder-day, end-of-month, low-balance, and
+  custom-alert delivery semantics still require a product contract.
 
 ## Operational gaps
 

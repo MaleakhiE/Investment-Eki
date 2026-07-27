@@ -383,7 +383,13 @@ export async function sendMonthlyNotifications(): Promise<{
   const currentMonth = getCurrentMonth();
   
   const users = await prisma.user.findMany({
-    select: { id: true, email: true },
+    select: {
+      id: true,
+      email: true,
+      notificationSettings: {
+        select: { monthly_reminder: true, monthly_summary: true },
+      },
+    },
   });
   
   let sent = 0;
@@ -394,9 +400,24 @@ export async function sendMonthlyNotifications(): Promise<{
     let notificationType: NotificationType = 'REMINDER';
     let claim: NotificationLogRecord | null = null;
     try {
+      if (
+        user.notificationSettings?.monthly_reminder === false
+        && user.notificationSettings.monthly_summary === false
+      ) {
+        skipped++;
+        continue;
+      }
+
       // Check if cashflow exists for current month
       const cashflowExists = await checkCashflowExists(user.id, currentMonth);
       notificationType = determineNotificationType(cashflowExists);
+      const typeEnabled = notificationType === 'REMINDER'
+        ? user.notificationSettings?.monthly_reminder ?? true
+        : user.notificationSettings?.monthly_summary ?? true;
+      if (!typeEnabled) {
+        skipped++;
+        continue;
+      }
 
       try {
         claim = await claimNotification(user.id, currentMonth, notificationType);

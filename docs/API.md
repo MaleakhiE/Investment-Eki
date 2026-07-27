@@ -928,7 +928,8 @@ curl -X PATCH http://localhost:3000/api/settings/ai-recommendation \
 
 #### Trigger Monthly Notifications
 
-Triggers monthly email notifications for all users. This endpoint is designed to be called by a cron job scheduler.
+Triggers the enabled monthly reminder or summary type for each user. This
+endpoint is designed to be called by a cron job scheduler.
 
 ```
 POST /api/notifications/send-monthly
@@ -965,10 +966,15 @@ curl -X POST http://localhost:3000/api/notifications/send-monthly \
 ```
 
 The response is aggregate-only and intentionally contains no per-user
-identifiers or delivery metadata. `skipped` currently means the
-month/type delivery was already claimed or processed for idempotency; it does
-not mean a stored notification preference was enforced. Per-user
+identifiers or delivery metadata. `skipped` combines an explicitly disabled
+derived reminder/summary type with a month/type delivery that was already
+claimed or processed for idempotency. Missing settings rows retain the enabled
+defaults. Disabled skips create no notification-log row, so re-enabling before
+a later same-month run can allow delivery. Per-user attempted-delivery
 reconciliation remains in server-side notification logs.
+
+Reminder-day scheduling, low-balance alerts, and custom alerts are not
+processed by this scheduler yet.
 
 ---
 
