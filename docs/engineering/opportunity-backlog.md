@@ -8,20 +8,20 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 
 | Priority | Opportunity | Score | Effort | Recommended iteration |
 | ---: | --- | ---: | --- | --- |
-| 1 | Make investment snapshot and generated expense atomic and retry-safe | 83 | Small–medium | 001 |
-| 2 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | 002 |
-| 3 | Patch reviewed Next.js/sharp production advisories | 80 | Small–medium | Security maintenance |
-| 4 | Protect all navigable authenticated pages consistently | 78 | Small | Quick security/UX slice |
-| 5 | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | Product slice |
-| 6 | Enforce notification preferences and remove internal IDs from cron results | 77 | Medium | Correctness/privacy slice |
-| 7 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
-| 8 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
-| 9 | Add accessible dialog primitives and migrate hand-built overlays | 70 | Medium | Accessibility slice |
-| 10 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
+| Done | Make investment snapshot and generated expense atomic and retry-safe | 83 | Small–medium | 001 |
+| 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
+| 2 | Patch reviewed Next.js/sharp production advisories | 80 | Small–medium | Security maintenance |
+| Done | Protect all navigable authenticated pages consistently | 78 | Small | 002 |
+| 3 | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | Product slice |
+| 4 | Enforce notification preferences and remove internal IDs from cron results | 77 | Medium | Correctness/privacy slice |
+| 5 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
+| 6 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
+| 7 | Add accessible dialog primitives and migrate hand-built overlays | 70 | Medium | Accessibility slice |
+| 8 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
-## 1. Atomic investment snapshot accounting
+## 1. Atomic investment snapshot accounting (completed in 001)
 
-- Problem: `src/services/investment.service.ts` commits an investment/snapshot and then calls `createTransaction()` separately. A failure leaves the portfolio ahead of the ledger; retry calculates no difference and cannot repair the expense. Concurrent requests can derive the same delta.
+- Historical problem: `src/services/investment.service.ts` committed an investment/snapshot and then called `createTransaction()` separately. Iteration 001 moved both writes into one retry-safe serializable transaction.
 - Affected users: anyone creating or updating monthly gold or mutual-fund snapshots.
 - Outcome: one serializable Prisma transaction contains snapshot state and any generated expense, with bounded write-conflict retry.
 - Score inputs: `5,5,3,2,5,5,5,5,5` → 83.
@@ -52,8 +52,8 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Affected users: signed-out visitors and users with expired sessions.
 - Outcome: redirect before private shell/API failure rendering.
 - Score inputs: `4,3,3,4,5,5,5,5,5` → 78.
-- Risks/dependencies: low; ensure auth pages and direct navigation remain correct.
-- Validation: proxy callback cases and unauthenticated navigation smoke.
+- Risks/dependencies: low; APIs already fail closed, so this is boundary consistency rather than a data-access bypass.
+- Validation: callback cases for anonymous, valid, and invalidated sessions plus unauthenticated navigation smoke.
 
 ## 5. Account-aware scoped export
 
