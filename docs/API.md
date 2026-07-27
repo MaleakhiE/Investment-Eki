@@ -934,17 +934,16 @@ Triggers monthly email notifications for all users. This endpoint is designed to
 POST /api/notifications/send-monthly
 ```
 
-**Authentication:** Bearer token (CRON_SECRET) if configured
+**Authentication:** Required `Authorization: Bearer <CRON_SECRET>`.
 
-**Note:** If `CRON_SECRET` environment variable is set, the request must include it in the Authorization header.
+The endpoint fails closed when `CRON_SECRET` is missing or blank. Configure a
+high-entropy value in the deployment secret store and use the same value in
+the scheduler. Success, authorization-error, and server-error responses use
+`Cache-Control: private, no-store, max-age=0`.
 
 **Example Request:**
 
 ```bash
-# Without CRON_SECRET
-curl -X POST http://localhost:3000/api/notifications/send-monthly
-
-# With CRON_SECRET
 curl -X POST http://localhost:3000/api/notifications/send-monthly \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
@@ -955,18 +954,21 @@ curl -X POST http://localhost:3000/api/notifications/send-monthly \
 {
   "responseCode": 200,
   "responseStatus": "SUCCESS",
-  "responseMessage": "Monthly notifications processed: 5 sent, 0 failed",
+  "responseMessage": "Monthly notifications processed: 5 sent, 1 failed, 2 skipped",
   "responseDetails": {
     "sent": 5,
-    "failed": 0,
-    "total": 5,
-    "details": [
-      { "userId": "1", "type": "SUMMARY", "success": true },
-      { "userId": "2", "type": "REMINDER", "success": true }
-    ]
+    "failed": 1,
+    "skipped": 2,
+    "total": 8
   }
 }
 ```
+
+The response is aggregate-only and intentionally contains no per-user
+identifiers or delivery metadata. `skipped` currently means the
+month/type delivery was already claimed or processed for idempotency; it does
+not mean a stored notification preference was enforced. Per-user
+reconciliation remains in server-side notification logs.
 
 ---
 
