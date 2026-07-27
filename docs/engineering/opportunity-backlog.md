@@ -12,7 +12,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | 2 | Patch reviewed Next.js/sharp production advisories | 80 | Small–medium | Security maintenance |
 | Done | Protect all navigable authenticated pages consistently | 78 | Small | 002 |
-| 3 | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | Product slice |
+| Done | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | 003 |
 | 4 | Enforce notification preferences and remove internal IDs from cron results | 77 | Medium | Correctness/privacy slice |
 | 5 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
 | 6 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
@@ -55,14 +55,14 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Risks/dependencies: low; APIs already fail closed, so this is boundary consistency rather than a data-access bypass.
 - Validation: callback cases for anonymous, valid, and invalidated sessions plus unauthenticated navigation smoke.
 
-## 5. Account-aware scoped export
+## 5. Account-aware scoped export (completed in 003)
 
-- Problem: “finance backup” omits accounts, recurring rules, settings, and transfer context; it has no date/account filters.
+- Historical problem: “finance backup” omitted accounts, recurring rules, settings, and transfer context; it had no date/account filters.
 - Affected users: users reconciling, auditing, or moving data.
-- Outcome: explicit data-export semantics, account/date filters, and transfer-aware rows.
+- Outcome: a versioned non-restorable JSON data export, owned account/inclusive date CSV filters, and transfer-aware rows with account-relative deltas.
 - Product agent score: 78.
-- Risks/dependencies: avoid excess sensitive data and preserve no-store/formula defenses.
-- Validation: ownership, archived accounts, empty/large exports, transfer representation, CSV injection, date boundaries.
+- Residual risk: exports remain buffered; add quotas/streaming only after measuring production dataset and heap limits.
+- Validation: ownership, archived accounts, empty exports, transfer representation, CSV injection, strict date/BIGINT boundaries, no-store responses, and explicit safe selects.
 
 ## 6. Notification preference enforcement
 

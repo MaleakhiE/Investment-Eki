@@ -17,7 +17,15 @@ interface NotificationSettings {
   low_balance_threshold: number;
   custom_alerts: CustomAlert[];
 }
-interface ExportSummary { transactions: number; investment_snapshots: number; budgets: number; goals: number; total_records: number; }
+interface ExportSummary {
+  transactions: number;
+  investment_snapshots: number;
+  budgets: number;
+  goals: number;
+  accounts: number;
+  total_records: number;
+  account_options: { id: string; name: string; is_archived: boolean }[];
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -34,7 +42,12 @@ export default function SettingsPage() {
   const [newAlertThreshold, setNewAlertThreshold] = useState('');
   const [lowBalanceDraft, setLowBalanceDraft] = useState('');
   const [exportSummary, setExportSummary] = useState<ExportSummary | null>(null);
+  const [exportSummaryError, setExportSummaryError] = useState(false);
+  const [isExportSummaryLoading, setIsExportSummaryLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportFrom, setExportFrom] = useState('');
+  const [exportTo, setExportTo] = useState('');
+  const [exportAccountId, setExportAccountId] = useState('');
 
   useEffect(() => { fetchSettings(); fetchNotifSettings(); fetchExportSummary(); }, []);
 
@@ -55,20 +68,37 @@ export default function SettingsPage() {
     } catch { /* A persistent loading placeholder remains visible. */ }
   }
   async function fetchExportSummary() {
+    setIsExportSummaryLoading(true);
+    setExportSummaryError(false);
     try {
       const res = await fetch('/api/export?summary=true');
-      if (res.ok) { const d = await res.json(); setExportSummary(d.responseDetails); }
-    } catch { /* ignore */ }
+      if (!res.ok) throw new Error('Summary unavailable');
+      const d = await res.json();
+      setExportSummary(d.responseDetails);
+    } catch {
+      setExportSummary(null);
+      setExportSummaryError(true);
+    } finally {
+      setIsExportSummaryLoading(false);
+    }
   }
   async function handleExport(format: 'json' | 'csv') {
     setIsExporting(true);
     try {
-      const res = await fetch(`/api/export?format=${format}`);
+      const params = new URLSearchParams({ format });
+      if (format === 'csv') {
+        if (exportFrom) params.set('from', exportFrom);
+        if (exportTo) params.set('to', exportTo);
+        if (exportAccountId) params.set('accountId', exportAccountId);
+      }
+      const res = await fetch(`/api/export?${params}`);
       if (!res.ok) {
         let message = 'Your data could not be exported. Please try again.';
         try {
           const body = await res.json();
-          message = body.responseMessage || message;
+          message = Array.isArray(body.responseDetails?.errors)
+            ? body.responseDetails.errors.join(' ')
+            : body.responseMessage || message;
         } catch { /* The export endpoint may return a non-JSON error. */ }
         void showFeedback({ tone: 'error', title: 'Export failed', message });
         return;
@@ -77,7 +107,7 @@ export default function SettingsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = format === 'csv' ? `transactions_${new Date().toISOString().split('T')[0]}.csv` : `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = format === 'csv' ? `transactions_${new Date().toISOString().split('T')[0]}.csv` : `fintrack_data_export_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -225,20 +255,49 @@ export default function SettingsPage() {
             {/* Export Data */}
             <div className="card rounded-xl p-4">
               <h3 className="font-semibold text-[#16332f] text-sm mb-3">Export Data</h3>
-              <p className="text-xs text-zinc-600 mb-3">Download your financial data for backup or analysis.</p>
+              <p className="text-xs text-zinc-600 mb-3">Download a portable JSON data export or a filtered transaction CSV. JSON files are plaintext, contain decrypted financial data, and should be stored securely. They are not restorable backups; notable exclusions include receipts, credentials, recurring rules, and notification settings.</p>
               {exportSummary && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
                   <div className="bg-[#f5fbf9] rounded-lg p-2 text-center"><p className="text-lg font-bold text-[#16332f]">{exportSummary.transactions}</p><p className="text-[10px] text-zinc-600">Transactions</p></div>
+                  <div className="bg-[#f5fbf9] rounded-lg p-2 text-center"><p className="text-lg font-bold text-[#16332f]">{exportSummary.accounts}</p><p className="text-[10px] text-zinc-600">Accounts</p></div>
                   <div className="bg-[#f5fbf9] rounded-lg p-2 text-center"><p className="text-lg font-bold text-[#16332f]">{exportSummary.investment_snapshots}</p><p className="text-[10px] text-zinc-600">Investments</p></div>
                   <div className="bg-[#f5fbf9] rounded-lg p-2 text-center"><p className="text-lg font-bold text-[#16332f]">{exportSummary.budgets}</p><p className="text-[10px] text-zinc-600">Budgets</p></div>
                   <div className="bg-[#f5fbf9] rounded-lg p-2 text-center"><p className="text-lg font-bold text-[#16332f]">{exportSummary.goals}</p><p className="text-[10px] text-zinc-600">Goals</p></div>
                 </div>
               )}
+              {exportSummaryError && (
+                <p role="status" className="mb-3 text-xs text-amber-700">
+                  Account filters are unavailable.{' '}
+                  <button type="button" onClick={() => { void fetchExportSummary(); }} className="min-h-11 font-semibold underline focus-visible:outline-2 focus-visible:outline-offset-2">Retry</button>
+                </p>
+              )}
+              <fieldset className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <legend className="mb-2 text-xs font-medium text-[#16332f]">CSV filters (optional)</legend>
+                <label className="text-[10px] text-zinc-600">
+                  From
+                  <input type="date" value={exportFrom} onChange={(event) => setExportFrom(event.target.value)} max={exportTo || undefined} className="mt-1 block min-h-11 w-full rounded border border-[#dcece8] bg-white px-2 py-1.5 text-xs text-[#16332f] focus-visible:outline-2 focus-visible:outline-offset-2" />
+                </label>
+                <label className="text-[10px] text-zinc-600">
+                  To
+                  <input type="date" value={exportTo} onChange={(event) => setExportTo(event.target.value)} min={exportFrom || undefined} className="mt-1 block min-h-11 w-full rounded border border-[#dcece8] bg-white px-2 py-1.5 text-xs text-[#16332f] focus-visible:outline-2 focus-visible:outline-offset-2" />
+                </label>
+                <label className="text-[10px] text-zinc-600">
+                  Account
+                  <select value={exportAccountId} onChange={(event) => setExportAccountId(event.target.value)} disabled={isExportSummaryLoading || exportSummaryError} className="mt-1 block min-h-11 w-full rounded border border-[#dcece8] bg-white px-2 py-1.5 text-xs text-[#16332f] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2">
+                    <option value="">All accounts</option>
+                    {exportSummary?.account_options.map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}{account.is_archived ? ' (archived)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </fieldset>
               <div className="flex gap-2">
-                <button onClick={() => handleExport('json')} disabled={isExporting} className="flex-1 py-2 px-3 bg-[#00d4aa] hover:bg-[#00a88a] disabled:bg-blue-400 text-[#16332f] font-medium rounded-lg text-xs flex items-center justify-center gap-1">
-                  {isExporting ? '...' : 'JSON Backup'}
+                <button onClick={() => handleExport('json')} disabled={isExporting} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-[#00d4aa] px-3 py-2 text-xs font-medium text-[#16332f] hover:bg-[#00a88a] disabled:bg-blue-400 focus-visible:outline-2 focus-visible:outline-offset-2">
+                  {isExporting ? '...' : 'JSON Data Export'}
                 </button>
-                <button onClick={() => handleExport('csv')} disabled={isExporting} className="flex-1 py-2 px-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg text-xs flex items-center justify-center gap-1">
+                <button onClick={() => handleExport('csv')} disabled={isExporting} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:bg-green-400 focus-visible:outline-2 focus-visible:outline-offset-2">
                   {isExporting ? '...' : 'CSV Transactions'}
                 </button>
               </div>

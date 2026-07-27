@@ -115,6 +115,37 @@ All API responses follow a consistent format:
 
 ## Endpoints
 
+### Data export
+
+`GET /api/export` returns a versioned JSON data export. It includes account
+source records, transfer-aware transactions, investment snapshots, budgets,
+and goals. The plaintext file contains decrypted financial data, must be
+stored securely, and is intended for portability and analysis; it is not a
+restorable database backup. Notable exclusions include receipt images,
+credentials, recurring rules, notification settings, monthly cashflows, and
+notification history.
+
+`GET /api/export?format=csv` returns transactions as CSV. The following
+optional filters apply only to CSV:
+
+| Query parameter | Format | Meaning |
+|-----------------|--------|---------|
+| `from` | `YYYY-MM-DD` | Inclusive transaction start date |
+| `to` | `YYYY-MM-DD` | Inclusive transaction end date |
+| `accountId` | Positive integer | Owned active or archived source/destination account |
+
+An account-filtered CSV includes `Account Delta`: income and incoming
+transfers are positive; expenses and outgoing transfers are negative.
+The CSV schema has eight positional columns: `Date`, `Type`, `Category`,
+`Description`, `Amount`, `Source Account`, `Destination Account`, and
+`Account Delta`.
+Foreign and missing account IDs both return `404`. Invalid filters return the
+standard `400` validation envelope. All export responses are private and
+non-cacheable.
+
+`GET /api/export?summary=true` returns record counts and owned account filter
+options for the settings page.
+
 ### Transactions and receipt scanning
 
 `POST /api/transactions` and `PUT /api/transactions/{id}` accept the existing transaction fields plus:
