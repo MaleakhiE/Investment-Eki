@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { AccountTransferLabel, type AccountSummary } from '@/components/accounts/AccountCard';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import {
@@ -67,6 +68,7 @@ export default function CashflowPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterType, setFilterType] = useState<'all' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('all');
+  const closeAllTransactions = useCallback(() => setShowAllModal(false), []);
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -426,12 +428,15 @@ export default function CashflowPage() {
           </div>
         )}
 
-        {showAllModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAllModal(false)}>
-            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <AccessibleDialog
+          open={showAllModal}
+          labelledBy="all-transactions-title"
+          onClose={closeAllTransactions}
+        >
+            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
               <div className="flex items-center justify-between p-4 border-b border-[#dcece8]">
-                <h3 className="font-semibold text-[#16332f]">All transactions</h3>
-                <button onClick={() => setShowAllModal(false)} className="px-2 py-1 text-sm font-medium text-zinc-500 hover:text-zinc-700">Tutup</button>
+                <h3 id="all-transactions-title" className="font-semibold text-[#16332f]">All transactions</h3>
+                <button type="button" data-dialog-initial-focus onClick={closeAllTransactions} className="min-h-11 px-2 py-1 text-sm font-medium text-zinc-500 hover:text-zinc-700">Tutup</button>
               </div>
               <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
                 {transactions.map((tx) => (
@@ -454,8 +459,7 @@ export default function CashflowPage() {
                 <span className={`font-semibold ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>Net: {fmt(net)}</span>
               </div>
             </div>
-          </div>
-        )}
+        </AccessibleDialog>
       </main>
     </div>
   );
