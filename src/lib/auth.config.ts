@@ -24,8 +24,11 @@ export const authConfig: NextAuthConfig = {
       // Protected routes
       const protectedRoutes = [
         '/dashboard',
+        '/accounts',
         '/cashflow',
         '/investments',
+        '/budget',
+        '/goals',
         '/settings',
         '/analytics',
         '/superadmin',

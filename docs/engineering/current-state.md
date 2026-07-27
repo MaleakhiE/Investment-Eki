@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-07-24
-Baseline commit: `bae25c1`
-Iteration branch: `featengineering-harness/2026-07-24-iteration-001`
+Date: 2026-07-27
+Baseline commit: `d843742`
+Iteration branch: `feat/loop-engineering-2-protected-page-boundary`
 
 ## Product and architecture
 
@@ -14,12 +14,8 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 
 ## Tool inventory used
 
-- Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, Prisma CLI, and Codex CLI 0.139.0.
-- Codex multi-agent collaboration with six read-only discovery agents.
-- GitHub connector for commits, historical PRs, open issues, and commit status.
-- Current Codex manual for project config and custom-agent schemas.
-- Context7 Prisma 6.19 documentation for interactive transaction, `TransactionClient`, serializable isolation, and P2034 retry behavior.
-- Browser tooling was callable but no browser instance was available to the UX agent.
+- Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
+- Codex multi-agent collaboration with five read-only discovery agents.
 
 ## Baseline validation
 
@@ -30,28 +26,24 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 43 suites, 212 tests |
+| Tests | `npm test -- --runInBand` | Pass: 44 suites, 253 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
-| Migration status | `npm run db:status` | Pass: remote `Test-Eki` reports 8 migrations and current schema |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
-| Dependency audit | `npm audit --omit=dev --audit-level=high` | Pre-existing failure: Next.js and transitive sharp advisories |
-| Skill validation | `quick_validate.py .agents/skills/investment-eki-loop` | Pass |
-| Codex config parsing | `codex --strict-config exec --help` | Pass |
+| Dependency audit | `npm audit --omit=dev --audit-level=high` | Pre-existing failure: 2 high advisories in Next.js and transitive sharp |
 
 ## Runtime and UI evidence
 
-The UX agent started Next.js 16.2.10, received 200 from `/login` and `/register`, and confirmed `/dashboard` redirects unauthenticated users. Five focused UI suites passed (9 tests). No browser instance was available, so authenticated visual, responsive, focus-order, keyboard, and live accessibility claims remain unverified.
+Source inspection confirmed `/accounts`, `/budget`, and `/goals` are authenticated navigation destinations whose pages immediately call protected APIs, but they were omitted from the centralized protected-page list. The APIs already fail closed, so this is page-boundary consistency and error-state prevention rather than a data-access bypass. Local HTTP smoke reproduced anonymous `200` responses before the fix and `307` login redirects afterward.
 
-Source inspection found silent API-failure-to-empty-state behavior, inaccessible hand-built dialogs, labels not associated with inputs, insufficient light-card text contrast, and inconsistent Indonesian/English copy.
+Authenticated visual, responsive, focus-order, keyboard, and live accessibility checks remain unverified.
 
 ## Main integrity and security risks
 
-- `saveSnapshot()` upserts a portfolio snapshot before separately posting its expense. Failure creates an unreconciled portfolio/ledger state; retry may not repair it.
+- Investment snapshot and generated-expense writes are atomic for new writes; historical decreases, deletes, and prior divergence remain separate design/reconciliation work.
 - Transaction-derived cashflow and independently writable `MonthlyCashflow` can disagree.
 - Several money boundaries accept non-finite or insufficiently defined IDR values; goals have a concurrent lost-update path.
 - Next.js 16.2.10 and transitive sharp currently produce two high audit findings.
-- Bcrypt accepts passwords beyond its 72-byte effective boundary without warning.
-- Login/registration throttling, OCR fairness/dimension limits, and outbound quote-request coalescing need hardening.
+- Login/registration throttling and registration account-enumeration behavior need a separate auth-hardening slice.
 
 ## Operational gaps
 
