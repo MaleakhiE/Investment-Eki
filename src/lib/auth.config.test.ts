@@ -18,6 +18,58 @@ const jwt = authConfig.callbacks?.jwt as unknown as JwtCallback;
 const authorized = authConfig.callbacks?.authorized as unknown as AuthorizedCallback;
 const session = authConfig.callbacks?.session as unknown as SessionCallback;
 const publicUserId = '3d594650-3436-4aa2-bb39-9fc9f5bc521d';
+const privatePaths = [
+  '/dashboard',
+  '/accounts',
+  '/cashflow',
+  '/investments',
+  '/analytics',
+  '/budget',
+  '/goals',
+  '/settings',
+  '/superadmin/smtp',
+];
+const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/privacy'];
+
+describe('protected page authorization', () => {
+  it.each(privatePaths)('rejects an anonymous request to %s', (pathname) => {
+    expect(authorized({
+      auth: null,
+      request: { nextUrl: new URL(pathname, 'https://fintrack.example') },
+    })).toBe(false);
+  });
+
+  it.each(privatePaths)('rejects an invalidated session on %s', (pathname) => {
+    expect(authorized({
+      auth: { user: { id: publicUserId, session_invalidated: true } },
+      request: { nextUrl: new URL(pathname, 'https://fintrack.example') },
+    })).toBe(false);
+  });
+
+  it.each(privatePaths)('allows a valid session on %s', (pathname) => {
+    expect(authorized({
+      auth: { user: { id: publicUserId, session_invalidated: false } },
+      request: { nextUrl: new URL(pathname, 'https://fintrack.example') },
+    })).toBe(true);
+  });
+
+  it.each(publicPaths)('keeps the public page %s available anonymously', (pathname) => {
+    expect(authorized({
+      auth: null,
+      request: { nextUrl: new URL(pathname, 'https://fintrack.example') },
+    })).toBe(true);
+  });
+
+  it('redirects an authenticated user away from the login page', () => {
+    const response = authorized({
+      auth: { user: { id: publicUserId, session_invalidated: false } },
+      request: { nextUrl: new URL('https://fintrack.example/login') },
+    });
+
+    expect(response).toBeInstanceOf(Response);
+    expect((response as Response).headers.get('location')).toBe('https://fintrack.example/dashboard');
+  });
+});
 
 describe('JWT session revocation', () => {
   beforeEach(() => jest.clearAllMocks());
