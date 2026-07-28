@@ -142,6 +142,30 @@ describe('processDueRecurrings', () => {
       .resolves.toEqual({ created: [], skipped: [], failed: [] });
     expect(transaction).not.toHaveBeenCalled();
   });
+
+  it('posts a valid weekly rule only on its configured Jakarta weekday', async () => {
+    recurringTransaction.findMany.mockResolvedValue([{
+      ...monthlyRule, frequency: 'WEEKLY', day_of_month: null, day_of_week: 1,
+    }]);
+
+    await expect(processDueRecurrings(BigInt(7), new Date('2026-06-01T12:00:00+07:00')))
+      .resolves.toEqual({ created: ['Housing'], skipped: [], failed: [] });
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { type: 'TRANSFER', frequency: 'DAILY', day_of_month: null, day_of_week: null, month_of_year: null },
+    { type: 'EXPENSE', frequency: 'WEEKLY', day_of_month: null, day_of_week: null, month_of_year: null },
+    { type: 'EXPENSE', frequency: 'MONTHLY', day_of_month: null, day_of_week: null, month_of_year: null },
+    { type: 'EXPENSE', frequency: 'YEARLY', day_of_month: 21, day_of_week: null, month_of_year: null },
+    { type: 'EXPENSE', frequency: 'FORTNIGHTLY', day_of_month: null, day_of_week: null, month_of_year: null },
+  ])('does not materialize a malformed legacy rule %p', async (invalid) => {
+    recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, ...invalid }]);
+
+    await expect(processDueRecurrings(BigInt(7), new Date('2026-06-01T12:00:00+07:00')))
+      .resolves.toEqual({ created: [], skipped: [], failed: [] });
+    expect(transaction).not.toHaveBeenCalled();
+  });
 });
 
 describe('createRecurring account ownership', () => {
@@ -164,6 +188,24 @@ describe('createRecurring account ownership', () => {
     { start_date: 20260701 as unknown as string },
     { end_date: '2026-04-31' },
     { end_date: 0 as unknown as string },
+    { type: 'TRANSFER' as unknown as 'EXPENSE' },
+    { type: 'expense' as unknown as 'EXPENSE' },
+    { type: null as unknown as 'EXPENSE' },
+    { frequency: 'FORTNIGHTLY' as unknown as 'MONTHLY' },
+    { frequency: null as unknown as 'MONTHLY' },
+    { frequency: 'WEEKLY' as const, day_of_week: null as unknown as number },
+    { frequency: 'WEEKLY' as const, day_of_week: '2' as unknown as number },
+    { frequency: 'WEEKLY' as const, day_of_week: 2.5 },
+    { frequency: 'WEEKLY' as const, day_of_week: -1 },
+    { frequency: 'WEEKLY' as const, day_of_week: 7 },
+    { frequency: 'MONTHLY' as const, day_of_month: null as unknown as number },
+    { frequency: 'MONTHLY' as const, day_of_month: 1.5 },
+    { frequency: 'MONTHLY' as const, day_of_month: 0 },
+    { frequency: 'MONTHLY' as const, day_of_month: 32 },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: null as unknown as number },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: 12.5 },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: 0 },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: 13 },
   ])('rejects invalid financial input before encryption, account lookup, or create', async (invalid) => {
     await expect(createRecurring(BigInt(7), { ...input, ...invalid }))
       .rejects.toBeInstanceOf(Error);
@@ -198,6 +240,26 @@ describe('createRecurring account ownership', () => {
     });
   });
 
+  it.each([
+    { type: 'INCOME' as const, frequency: 'DAILY' as const, day_of_month: undefined },
+    { frequency: 'WEEKLY' as const, day_of_week: 0 },
+    { frequency: 'WEEKLY' as const, day_of_week: 6 },
+    { frequency: 'MONTHLY' as const, day_of_month: 1 },
+    { frequency: 'MONTHLY' as const, day_of_month: 31 },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: 1 },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: 12 },
+  ])('accepts established cadence boundary %p', async (cadence) => {
+    recurringTransaction.create.mockResolvedValue(monthlyRule);
+
+    await expect(createRecurring(BigInt(7), {
+      ...input,
+      ...cadence,
+      account_id: undefined,
+    })).resolves.toBeDefined();
+
+    expect(recurringTransaction.create).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects an account that is not an active account owned by the user', async () => {
     financialAccount.findFirst.mockResolvedValue(null);
     await expect(createRecurring(BigInt(7), input)).rejects.toThrow('Account not found');
@@ -225,6 +287,32 @@ describe('recurring rule read/update semantics', () => {
     }));
   });
 
+  it.each([
+    { type: 'TRANSFER', frequency: 'DAILY' },
+    { type: 'EXPENSE', frequency: 'WEEKLY', day_of_week: null },
+    { type: 'EXPENSE', frequency: 'MONTHLY', day_of_month: null },
+    { type: 'EXPENSE', frequency: 'YEARLY', day_of_month: 21, month_of_year: null },
+    { type: 'EXPENSE', frequency: 'FORTNIGHTLY' },
+  ])('reports no next run for malformed legacy rule %p', async (invalid) => {
+    recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, ...invalid }]);
+
+    const [rule] = await getRecurrings(BigInt(7));
+
+    expect(rule.next_run).toBeNull();
+  });
+
+  it.each([
+    { frequency: 'DAILY', day_of_month: null, day_of_week: null, expected: '2026-06-02' },
+    { frequency: 'WEEKLY', day_of_month: null, day_of_week: 1, expected: '2026-06-08' },
+    { frequency: 'MONTHLY', day_of_month: 31, day_of_week: null, expected: '2026-06-30' },
+  ])('preserves the valid $frequency next run', async ({ expected, ...cadence }) => {
+    recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, ...cadence }]);
+
+    const [rule] = await getRecurrings(BigInt(7));
+
+    expect(rule.next_run).toBe(expected);
+  });
+
   it('rejects an update that would leave a yearly rule without a month', async () => {
     recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
     await expect(updateRecurring(BigInt(7), BigInt(5), { frequency: 'YEARLY' }))
@@ -240,6 +328,17 @@ describe('recurring rule read/update semantics', () => {
     { start_date: '' },
     { start_date: 20260701 as unknown as string },
     { end_date: '0999-12-31' },
+    { type: 'TRANSFER' as unknown as 'EXPENSE' },
+    { type: null as unknown as 'EXPENSE' },
+    { frequency: 'FORTNIGHTLY' as unknown as 'MONTHLY' },
+    { frequency: null as unknown as 'MONTHLY' },
+    { day_of_month: null as unknown as number },
+    { day_of_month: '25' as unknown as number },
+    { day_of_month: 25.5 },
+    { frequency: 'WEEKLY' as const, day_of_week: null as unknown as number },
+    { frequency: 'YEARLY' as const, month_of_year: null as unknown as number },
+    { is_active: null as unknown as boolean },
+    { is_active: 'false' as unknown as boolean },
   ])('rejects invalid explicit update %p before linked-account lookup, encryption, or update', async (invalid) => {
     recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
 
@@ -253,14 +352,14 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
   });
 
-  it('updates a finite amount and leap date while preserving end-date clearing', async () => {
+  it.each(['', null])('updates a finite amount and leap date while clearing end date %p', async (endDate) => {
     recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
     recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
 
     await expect(updateRecurring(BigInt(7), BigInt(5), {
       amount: 0.25,
       start_date: '2028-02-29',
-      end_date: '',
+      end_date: endDate as unknown as string,
     })).resolves.toBe(true);
 
     expect(mockEncryptNumber).toHaveBeenCalledWith(0.25);
@@ -270,6 +369,41 @@ describe('recurring rule read/update semantics', () => {
         amount: 'enc:0.25',
         start_date: new Date('2028-02-29T00:00:00.000Z'),
         end_date: null,
+      }),
+    });
+  });
+
+  it.each([
+    { frequency: 'WEEKLY' as const, day_of_week: 6 },
+    { frequency: 'MONTHLY' as const, day_of_month: 31 },
+    { frequency: 'YEARLY' as const, day_of_month: 31, month_of_year: 12 },
+  ])('accepts a valid transition to $frequency', async (cadence) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), cadence)).resolves.toBe(true);
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: expect.objectContaining(cadence),
+    });
+  });
+
+  it('preserves omitted cadence and allows clearing irrelevant cadence on a daily transition', async () => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      frequency: 'DAILY',
+      day_of_month: null as unknown as number,
+      is_active: false,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: expect.objectContaining({
+        frequency: 'DAILY',
+        day_of_month: null,
+        is_active: false,
       }),
     });
   });

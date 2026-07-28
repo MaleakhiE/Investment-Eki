@@ -14,6 +14,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Reject non-finite amounts and normalized dates at direct transaction sources | 82 | Small | 010 |
 | Done | Make recurring deployment-scheduler responses and logs private | 78 | Small | 011 |
 | Done | Make session recurring API responses and logs private | 77 | Small | 012 |
+| Done | Prevent invalid recurring cadence and one-sided transfer materialization | 87 | Small | 013 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -118,6 +119,22 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   statements, full 53-suite/426-test regression, build/OCR trace, and five
   independent approvals.
 
+## Recurring cadence integrity (completed in 013)
+
+- Historical problem: runtime `TRANSFER` rules could later create one-sided
+  transfers, while null/coerced cadence values could make weekly rules post
+  daily, monthly rules default to day 1, or yearly rules never fire.
+- Outcome: the shared service enforces exact type/frequency and integer cadence
+  contracts, PATCH distinguishes omission from explicit null, and scheduler
+  execution plus `next_run` fail closed for malformed legacy rows.
+- Score inputs: `5,5,5,2,5,5,4,5,5` → 87.
+- Residuals: the mandatory target aggregate audit is open because MySQL
+  returned `P1001`; production deployment stops until it returns zero. Any hit
+  requires owner-approved remediation. No automatic data rewrite is included.
+- Validation: focused 4-suite/118-test RED/GREEN, 95% of 40 changed production
+  statements, full 53-suite/481-test regression, build/OCR trace, and five
+  independent approvals.
+
 ## Canonical IDR input boundary
 
 - Problem: budget, goal, and other money paths do not share canonical sign,
@@ -194,5 +211,5 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy over-limit credential remediation, auth throttling, quote coalescing,
   CI/MySQL concurrency, and full browser accessibility remain valuable
   follow-ups.
-- Recurring API runtime structure and identifier validation is the next
-  candidate only if its status/message compatibility can remain explicit.
+- After the Loop 13 target audit gate is resolved, recurring API runtime
+  structure and identifier validation is the next bounded candidate.
