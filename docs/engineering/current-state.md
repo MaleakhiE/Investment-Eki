@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `87e4d96`
-Iteration branch: `feat/loop-engineering-14-recurring-route-inputs`
+Baseline commit: `7e1506b`
+Iteration branch: `feat/loop-engineering-15-recurring-account-id`
 
 ## Product and architecture
 
@@ -59,6 +59,11 @@ input access, item ID validation precedes PATCH body parsing, and expected
 structural faults return private, unlogged standard 400 validation envelopes.
 Valid objects and IDs still reach the same owner-scoped services unchanged.
 
+Optional recurring linked-account IDs now accept only canonical positive
+signed-BIGINT strings at the shared service boundary. Create omission/null/
+empty means no account; PATCH omission is unchanged and null/empty clears.
+Owned-active lookup and persistence reuse the same parsed bigint.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -73,7 +78,7 @@ Valid objects and IDs still reach the same owner-scoped services unchanged.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 54 suites, 532 tests |
+| Tests | `npm test -- --runInBand` | Pass: 54 suites, 588 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -128,10 +133,11 @@ staging release gate.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
   custom-alert delivery semantics still require a product contract.
-- Recurring JSON structure and item IDs are now validated before services.
-  Field-level category/description/account-ID constraints and normalization
-  still need bounded compatibility contracts; unknown keys and empty PATCH
-  remain intentionally supported.
+- Recurring JSON structure, item IDs, and linked-account IDs are now validated
+  before persistence. Category/description constraints still need a bounded
+  compatibility contract; unknown keys and empty PATCH remain intentionally
+  supported. Descriptions of 506 through 512 characters can still overflow a
+  generated transaction after the `[Auto] ` prefix.
 
 ## Operational gaps
 

@@ -16,6 +16,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Make session recurring API responses and logs private | 77 | Small | 012 |
 | Done | Prevent invalid recurring cadence and one-sided transfer materialization | 87 | Small | 013 |
 | Done | Validate recurring JSON structure and canonical item IDs | 73 | Small | 014 |
+| Done | Enforce canonical optional recurring linked-account IDs | 76 | Small | 015 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -144,11 +145,27 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   return private, unlogged standard 400 validation envelopes for client faults,
   while valid objects/IDs and owner-scoped service contracts remain unchanged.
 - Score inputs: `3,4,4,2,4,5,4,5,5` → 73.
-- Residuals: field-level text/account-ID compatibility remains separate.
-  Cumulative production deployment is still blocked until Loop 13's mandatory
+- Residuals: field-level text compatibility remains separate. Linked-account
+  validation was completed separately in 015. Cumulative
+  production deployment is still blocked until Loop 13's mandatory
   target aggregate audit returns zero; `P1001`/Docker do not satisfy it.
 - Validation: focused 5-suite/169-test regression, 100% changed production
   coverage, full 54-suite/532-test regression, build/OCR trace, and five
+  independent approvals.
+
+## Recurring linked-account identity (completed in 015)
+
+- Historical problem: service-level `BigInt` coercion accepted account aliases
+  and unsafe runtime values, while false/zero could silently clear a link.
+- Outcome: one bounded parser accepts only canonical positive signed-BIGINT
+  strings, preserves optional/clear semantics, and reuses the exact bigint for
+  owned-active lookup and persistence.
+- Score inputs: `4,5,4,2,4,5,5,5,5` → 76.
+- Residuals: category/description policy remains separate. Descriptions of 506
+  through 512 characters can exceed transaction capacity after `[Auto] `.
+  Production remains blocked by Loop 13's mandatory zero-result target audit.
+- Validation: focused 5-suite/225-test regression, 18/18 changed production
+  statements, full 54-suite/588-test regression, build/OCR trace, and five
   independent approvals.
 
 ## Canonical IDR input boundary
@@ -227,5 +244,6 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy over-limit credential remediation, auth throttling, quote coalescing,
   CI/MySQL concurrency, and full browser accessibility remain valuable
   follow-ups.
-- After the Loop 13 target audit gate is resolved, assess recurring field-level
-  text and linked-account ID validation as separate compatibility slices.
+- Assess recurring category/description validation separately, beginning with
+  the 506..512-character `[Auto] ` posting-capacity hazard and a read-only
+  historical audit.

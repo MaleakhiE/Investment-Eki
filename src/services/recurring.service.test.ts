@@ -177,6 +177,21 @@ describe('createRecurring account ownership', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it.each([
+    0, 2, Number.MAX_SAFE_INTEGER + 1, BigInt(2), false, true, [], {}, '0', '00',
+    '01', '+1', '-1', ' 1', '1 ', '1.0', '1e3', '0x1', '１２',
+    '9223372036854775808', '12345678901234567890', 'private-account',
+  ])('rejects invalid account ID %p before lookup, encryption, or create', async (accountId) => {
+    await expect(createRecurring(BigInt(7), {
+      ...input,
+      account_id: accountId as unknown as string,
+    })).rejects.toThrow('Invalid account ID');
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
     { amount: Infinity },
     { amount: -Infinity },
     { amount: NaN },
@@ -239,6 +254,39 @@ describe('createRecurring account ownership', () => {
       }),
     });
   });
+
+  it.each([undefined, null, ''])('preserves no-account create input %p', async (accountId) => {
+    recurringTransaction.create.mockResolvedValue({ ...monthlyRule, account_id: null });
+
+    await createRecurring(BigInt(7), {
+      ...input,
+      account_id: accountId as unknown as string,
+    });
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(recurringTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ account_id: null }),
+    });
+  });
+
+  it.each(['1', '9223372036854775807'])(
+    'looks up and persists canonical account ID %s once',
+    async (accountId) => {
+      const parsed = BigInt(accountId);
+      financialAccount.findFirst.mockResolvedValue({ id: parsed });
+      recurringTransaction.create.mockResolvedValue({ ...monthlyRule, account_id: parsed });
+
+      await createRecurring(BigInt(7), { ...input, account_id: accountId });
+
+      expect(financialAccount.findFirst).toHaveBeenCalledWith({
+        where: { id: parsed, user_id: BigInt(7), is_archived: false },
+        select: { id: true },
+      });
+      expect(recurringTransaction.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ account_id: parsed }),
+      });
+    },
+  );
 
   it.each([
     { type: 'INCOME' as const, frequency: 'DAILY' as const, day_of_month: undefined },
@@ -352,6 +400,36 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
   });
 
+  it.each([
+    0, 2, Number.MAX_SAFE_INTEGER + 1, BigInt(2), false, true, [], {}, '0', '00',
+    '01', '+1', '-1', ' 1', '1 ', '1.0', '1e3', '0x1', '１２',
+    '9223372036854775808', '12345678901234567890', 'private-account',
+  ])('rejects invalid update account ID %p after owner lookup and before side effects', async (accountId) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      account_id: accountId as unknown as string,
+    })).rejects.toThrow('Invalid account ID');
+
+    expect(recurringTransaction.findFirst).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+    });
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('returns missing before validating an invalid update account ID', async () => {
+    recurringTransaction.findFirst.mockResolvedValue(null);
+
+    await expect(updateRecurring(BigInt(7), BigInt(99), {
+      account_id: true as unknown as string,
+    })).resolves.toBe(false);
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
   it.each(['', null])('updates a finite amount and leap date while clearing end date %p', async (endDate) => {
     recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
     recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
@@ -385,6 +463,73 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
       where: { id: BigInt(5), user_id: BigInt(7) },
       data: expect.objectContaining(cadence),
+    });
+  });
+
+  it.each([null, ''])('clears an explicit update account ID %p', async (accountId) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      account_id: accountId as unknown as string,
+    })).resolves.toBe(true);
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { account_id: null },
+    });
+  });
+
+  it.each(['1', '9223372036854775807'])(
+    'links canonical update account ID %s',
+    async (accountId) => {
+      const parsed = BigInt(accountId);
+      recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+      financialAccount.findFirst.mockResolvedValue({ id: parsed });
+      recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(updateRecurring(BigInt(7), BigInt(5), {
+        account_id: accountId,
+      })).resolves.toBe(true);
+
+      expect(financialAccount.findFirst).toHaveBeenCalledWith({
+        where: { id: parsed, user_id: BigInt(7), is_archived: false },
+        select: { id: true },
+      });
+      expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+        where: { id: BigInt(5), user_id: BigInt(7) },
+        data: { account_id: parsed },
+      });
+    },
+  );
+
+  it('rejects an update account that is not active and owned by the user', async () => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    financialAccount.findFirst.mockResolvedValue(null);
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      account_id: '9',
+    })).rejects.toThrow('Account not found');
+
+    expect(financialAccount.findFirst).toHaveBeenCalledWith({
+      where: { id: BigInt(9), user_id: BigInt(7), is_archived: false },
+      select: { id: true },
+    });
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('omits an unchanged account ID from update data', async () => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      is_active: false,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { is_active: false },
     });
   });
 

@@ -5,6 +5,7 @@ import { isFinitePositiveAmount, parseCalendarDate } from '@/lib/financial-input
 export class RecurringInputError extends Error {}
 
 const SAFE_RECURRING_ERROR_CODES = new Set(['P1001', 'P2002', 'P2025', 'P2034']);
+const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
 
 export function getSafeRecurringErrorCode(error: unknown): string {
   if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED';
@@ -47,9 +48,10 @@ export interface RecurringTransaction {
 
 export async function createRecurring(userId: bigint, input: RecurringInput) {
   validateRecurringSchedule(input);
-  if (input.account_id) {
+  const accountId = parseRecurringAccountId(input.account_id);
+  if (accountId) {
     const account = await prisma.financialAccount.findFirst({
-      where: { id: BigInt(input.account_id), user_id: userId, is_archived: false },
+      where: { id: accountId, user_id: userId, is_archived: false },
       select: { id: true },
     });
     if (!account) throw new RecurringInputError('Account not found');
@@ -65,7 +67,7 @@ export async function createRecurring(userId: bigint, input: RecurringInput) {
       day_of_month: input.day_of_month,
       day_of_week: input.day_of_week,
       month_of_year: input.month_of_year,
-      account_id: input.account_id ? BigInt(input.account_id) : null,
+      account_id: accountId,
       start_date: parseCalendarDate(input.start_date)!,
       end_date: input.end_date ? parseCalendarDate(input.end_date) : null,
     },
@@ -146,6 +148,18 @@ function isIntegerInRange(value: unknown, minimum: number, maximum: number): boo
     && value <= maximum;
 }
 
+function parseRecurringAccountId(value: unknown): bigint | null {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string' || !/^[1-9]\d{0,18}$/.test(value)) {
+    throw new RecurringInputError('Invalid account ID');
+  }
+  const parsed = BigInt(value);
+  if (parsed > MAX_SIGNED_BIGINT) {
+    throw new RecurringInputError('Invalid account ID');
+  }
+  return parsed;
+}
+
 export async function getRecurrings(userId: bigint): Promise<RecurringTransaction[]> {
   const recurrings = await prisma.recurringTransaction.findMany({
     where: { user_id: userId },
@@ -187,12 +201,15 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
     start_date: startDate?.toISOString().slice(0, 10) ?? existing.start_date.toISOString().slice(0, 10),
     end_date: input.end_date ?? existing.end_date?.toISOString().slice(0, 10),
   });
-  if (input.account_id !== undefined) {
-    const account = input.account_id ? await prisma.financialAccount.findFirst({
-      where: { id: BigInt(input.account_id), user_id: userId, is_archived: false },
+  const accountId = input.account_id === undefined
+    ? undefined
+    : parseRecurringAccountId(input.account_id);
+  if (accountId) {
+    const account = await prisma.financialAccount.findFirst({
+      where: { id: accountId, user_id: userId, is_archived: false },
       select: { id: true },
-    }) : null;
-    if (input.account_id && !account) throw new RecurringInputError('Account not found');
+    });
+    if (!account) throw new RecurringInputError('Account not found');
   }
   const data: Record<string, unknown> = {};
   if (input.type) data.type = input.type;
@@ -203,7 +220,7 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
   if (input.day_of_month !== undefined) data.day_of_month = input.day_of_month;
   if (input.day_of_week !== undefined) data.day_of_week = input.day_of_week;
   if (input.month_of_year !== undefined) data.month_of_year = input.month_of_year;
-  if (input.account_id !== undefined) data.account_id = input.account_id ? BigInt(input.account_id) : null;
+  if (accountId !== undefined) data.account_id = accountId;
   if (startDate) data.start_date = startDate;
   if (input.end_date !== undefined) {
     data.end_date = input.end_date ? parseCalendarDate(input.end_date) : null;
