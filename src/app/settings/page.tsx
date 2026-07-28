@@ -224,13 +224,14 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
                     <div className="flex-1 mr-3"><p className="text-xs font-medium text-[#16332f]">Monthly reminder</p><p className="text-[10px] text-zinc-600">Reminder to update your finances</p>
                       <div className="flex items-center gap-2 mt-1"><span className="text-[10px] text-zinc-600">Day:</span>
-                        <select value={notifSettings.monthly_reminder_day} onChange={(e) => updateNotifSetting('monthly_reminder_day', parseInt(e.target.value))} disabled={isSavingNotif || !notifSettings.monthly_reminder} className="px-1.5 py-0.5 text-[10px] border border-[#dcece8] rounded bg-[#f3faf8] text-[#16332f] disabled:opacity-50">{Array.from({ length: 28 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}</select>
+                        <select aria-describedby="monthly-reminder-day-note" value={notifSettings.monthly_reminder_day} disabled className="px-1.5 py-0.5 text-[10px] border border-[#dcece8] rounded bg-[#f3faf8] text-[#16332f] disabled:opacity-50">{Array.from({ length: 28 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}</select>
                       </div>
+                      <p id="monthly-reminder-day-note" className="mt-1 text-[9px] text-amber-700">Delivery-day scheduling is not active yet.</p>
                     </div>
                     <ToggleSwitch checked={notifSettings.monthly_reminder} onChange={(checked) => { void updateNotifSetting('monthly_reminder', checked); }} label="Enable monthly reminder" disabled={isSavingNotif} />
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
-                    <div className="mr-3"><p className="text-xs font-medium text-[#16332f]">Monthly summary</p><p className="text-[10px] text-zinc-600">End-of-month financial summary</p></div>
+                    <div className="mr-3"><p className="text-xs font-medium text-[#16332f]">Monthly summary</p><p className="text-[10px] text-zinc-600">Financial summary when current-month data exists</p></div>
                     <ToggleSwitch checked={notifSettings.monthly_summary} onChange={(checked) => { void updateNotifSetting('monthly_summary', checked); }} label="Enable monthly summary" disabled={isSavingNotif} />
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">

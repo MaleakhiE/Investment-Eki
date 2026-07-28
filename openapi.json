@@ -1022,7 +1022,7 @@
       "post": {
         "tags": ["Notifications"],
         "summary": "Trigger monthly notifications",
-        "description": "Triggers monthly email notifications for all users. Requires the fail-closed CRON_SECRET bearer credential and returns aggregate delivery counts only.",
+        "description": "Triggers the enabled derived monthly reminder or summary type. Missing settings use enabled defaults. Reminder-day, low-balance, and custom-alert behavior is not processed. Requires the fail-closed CRON_SECRET bearer credential and returns aggregate delivery counts only.",
         "operationId": "sendMonthlyNotifications",
         "security": [{ "cronBearerAuth": [] }],
         "responses": {
@@ -1590,7 +1590,7 @@
         "properties": {
           "sent": { "type": "integer", "description": "Number of notifications sent successfully" },
           "failed": { "type": "integer", "description": "Number of notifications that failed" },
-          "skipped": { "type": "integer", "description": "Number of idempotently claimed or already processed notifications" },
+          "skipped": { "type": "integer", "description": "Number disabled by the derived type preference or idempotently claimed/already processed" },
           "total": { "type": "integer", "description": "Sum of sent, failed, and skipped notifications" }
         }
       },

@@ -14,7 +14,8 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Protect all navigable authenticated pages consistently | 78 | Small | 002 |
 | Done | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | 003 |
 | Done | Remove per-user metadata from monthly cron responses | 77 | Small | 004 |
-| 4 | Enforce notification preference delivery semantics | 77 | Medium | Needs product policy decision |
+| Done | Honor explicit monthly reminder/summary opt-outs | 77 | Small | 005 |
+| 4 | Define and enforce notification timing and alert semantics | 77 | Medium | Needs product policy decision |
 | 5 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
 | 6 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
 | 7 | Add accessible dialog primitives and migrate hand-built overlays | 70 | Medium | Accessibility slice |
@@ -65,17 +66,19 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Residual risk: exports remain buffered; add quotas/streaming only after measuring production dataset and heap limits.
 - Validation: ownership, archived accounts, empty exports, transfer representation, CSV injection, strict date/BIGINT boundaries, no-store responses, and explicit safe selects.
 
-## 6. Notification response privacy (completed in 004) and preference enforcement
+## 6. Notification response privacy and explicit opt-outs (completed in 004–005)
 
 - Historical privacy problem: cron results serialized internal numeric user IDs and per-user activity/delivery metadata.
 - Privacy outcome: the service and API return aggregate counts only, scheduler responses are private/no-store, raw failure logs are sanitized, and the user batch selects only required columns.
-- Remaining correctness problem: settings persist reminder/summary/low-balance preferences, but monthly delivery does not read them.
+- Consent outcome: the scheduler honors explicit false reminder/summary flags before any delivery side effect; missing settings retain enabled defaults.
+- Remaining correctness problem: reminder-day, end-of-month, low-balance, and custom-alert semantics are not defined or enforced.
 - Affected users: notification users and operators.
-- Remaining outcome: an agreed schedule/preference policy determines delivery.
+- Remaining outcome: an agreed timing/alert policy determines the delivery cadence and non-monthly alert behavior.
 - Score inputs: `4,4,4,4,4,4,4,4,5` → 77.
 - Risks/dependencies: reminder and summary timing plus custom-alert/low-balance semantics need product definition.
 - Validation completed in 004: aggregate-only contract, fail-closed auth, no-store responses, sanitized logs, and retry claim regressions.
-- Future validation: Jakarta scheduling, opt-out, summary/reminder selection, low-balance/custom-alert semantics, and retry claims.
+- Validation completed in 005: both explicit opt-outs, missing-settings defaults, type-specific gating, pre-claim short-circuiting, and retry regressions.
+- Future validation: Jakarta timing/cadence and low-balance/custom-alert semantics.
 
 ## Deferred opportunities
 
