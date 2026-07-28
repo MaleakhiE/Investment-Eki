@@ -25,7 +25,13 @@ jest.mock('@/lib/encryption', () => ({
   decryptNumber: (value: string) => Number(value.replace('enc:', '')),
 }));
 
-import { createRecurring, getRecurrings, processDueRecurrings, updateRecurring } from './recurring.service';
+import {
+  createRecurring,
+  getRecurrings,
+  getSafeRecurringErrorCode,
+  processDueRecurrings,
+  updateRecurring,
+} from './recurring.service';
 
 const monthlyRule = {
   id: BigInt(5), user_id: BigInt(7), type: 'EXPENSE', category: 'Housing',
@@ -35,6 +41,25 @@ const monthlyRule = {
   is_active: true, last_run: null,
   account_id: BigInt(2), account: { id: BigInt(2), name: 'BCA' },
 };
+
+describe('recurring error taxonomy', () => {
+  it.each(['P1001', 'P2002', 'P2025', 'P2034'])('keeps allowlisted code %s', (code) => {
+    expect(getSafeRecurringErrorCode({ code })).toBe(code);
+  });
+
+  it.each([
+    new Error('private database details'),
+    { code: 'ARBITRARY_PRIVATE_CODE' },
+    'P2002',
+    null,
+  ])('classifies unsafe error %p without returning its details', (error) => {
+    expect(getSafeRecurringErrorCode(error)).toBe('UNCLASSIFIED');
+  });
+
+  it('classifies type errors without exposing their message', () => {
+    expect(getSafeRecurringErrorCode(new TypeError('private payload'))).toBe('TYPE_ERROR');
+  });
+});
 
 describe('processDueRecurrings', () => {
   beforeEach(() => {
@@ -67,6 +92,45 @@ describe('processDueRecurrings', () => {
     await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
       .resolves.toEqual({ created: [], skipped: ['Housing'], failed: [] });
     expect(transactionCreate.create).not.toHaveBeenCalled();
+  });
+
+  it('creates once and skips an idempotent same-day retry without logging an error', async () => {
+    recurringTransaction.findMany.mockResolvedValue([monthlyRule]);
+    recurringOccurrence.create
+      .mockResolvedValueOnce({ id: BigInt(13) })
+      .mockRejectedValueOnce(Object.assign(new Error('duplicate'), { code: 'P2002' }));
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const asOf = new Date('2026-02-28T12:00:00+07:00');
+
+    await expect(processDueRecurrings(BigInt(7), asOf))
+      .resolves.toEqual({ created: ['Housing'], skipped: [], failed: [] });
+    await expect(processDueRecurrings(BigInt(7), asOf))
+      .resolves.toEqual({ created: [], skipped: ['Housing'], failed: [] });
+
+    expect(transactionCreate.create).toHaveBeenCalledTimes(1);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('counts a posting failure and logs only an allowlisted code', async () => {
+    const rawError = Object.assign(
+      new Error('Rule 5 Housing enc:2500000 failed for user 7 at mysql://private-host'),
+      { code: 'P2034', meta: { accountId: BigInt(2) } },
+    );
+    recurringTransaction.findMany.mockResolvedValue([monthlyRule]);
+    transaction.mockRejectedValueOnce(rawError);
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
+      .resolves.toEqual({ created: [], skipped: [], failed: ['Housing'] });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'Recurring transaction posting failed',
+      { code: 'P2034' },
+    );
+    expect(JSON.stringify(consoleError.mock.calls))
+      .not.toMatch(/Rule 5|Housing|2500000|user 7|private-host|accountId/);
+    consoleError.mockRestore();
   });
 
   it('does not post a yearly rule in the wrong month', async () => {

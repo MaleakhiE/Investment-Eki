@@ -12,6 +12,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Prevent concurrent encrypted goal additions from overwriting each other | 81 | Small | 008 |
 | Done | Enforce bcrypt's 72-byte UTF-8 boundary for every new password hash | 84 | Small | 009 |
 | Done | Reject non-finite amounts and normalized dates at direct transaction sources | 82 | Small | 010 |
+| Done | Make recurring deployment-scheduler responses and logs private | 78 | Small | 011 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -84,6 +85,22 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   materialized by the scheduler and needs separate reconciliation.
 - Validation: focused 3-suite/75-test RED/GREEN, 100% of 29 changed production
   statements, full 51-suite/391-test regression, build/OCR trace, and five
+  independent approvals.
+
+## Recurring deployment-scheduler privacy (completed in 011)
+
+- Historical problem: the deployment cron response lacked an explicit
+  private/no-store policy, passed its service result object through directly,
+  and logged raw top-level/per-rule errors plus an internal recurring ID.
+- Outcome: every cron outcome is private/no-store, only the existing three
+  aggregate counts cross the response boundary, and logs contain fixed events
+  plus closed-taxonomy codes. Same-date `P2002` retry remains a silent skip.
+- Score inputs: `4,4,5,2,4,5,5,5,5` → 78.
+- Residuals: session-authenticated recurring routes still need the same cache
+  and raw-error treatment; external log/ingress retention is a deployment
+  control.
+- Validation: focused 3-suite/52-test RED/GREEN, 100% of 15 changed production
+  statements, full 51-suite/409-test regression, build/OCR trace, and five
   independent approvals.
 
 ## Canonical IDR input boundary
@@ -162,3 +179,5 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy over-limit credential remediation, auth throttling, quote coalescing,
   CI/MySQL concurrency, and full browser accessibility remain valuable
   follow-ups.
+- Session-authenticated recurring API private/no-store headers and sanitized
+  route errors are the next policy-neutral privacy follow-up.

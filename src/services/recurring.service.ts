@@ -4,6 +4,15 @@ import { isFinitePositiveAmount, parseCalendarDate } from '@/lib/financial-input
 
 export class RecurringInputError extends Error {}
 
+const SAFE_RECURRING_ERROR_CODES = new Set(['P1001', 'P2002', 'P2025', 'P2034']);
+
+export function getSafeRecurringErrorCode(error: unknown): string {
+  if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED';
+  const code = 'code' in error ? error.code : undefined;
+  if (typeof code === 'string' && SAFE_RECURRING_ERROR_CODES.has(code)) return code;
+  return error instanceof TypeError ? 'TYPE_ERROR' : 'UNCLASSIFIED';
+}
+
 export interface RecurringInput {
   type: 'INCOME' | 'EXPENSE';
   category: string;
@@ -220,7 +229,9 @@ export async function processDueRecurrings(
     } catch (error) {
       if (isUniqueConstraintError(error)) skipped.push(rec.category);
       else {
-        console.error(`Failed to post recurring transaction ${rec.id}:`, error);
+        console.error('Recurring transaction posting failed', {
+          code: getSafeRecurringErrorCode(error),
+        });
         failed.push(rec.category);
       }
     }
