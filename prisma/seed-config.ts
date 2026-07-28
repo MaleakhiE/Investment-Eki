@@ -1,3 +1,5 @@
+import { isWithinBcryptPasswordLimit } from '../src/lib/validation';
+
 export interface SeedAdminConfig {
   email: string;
   password: string;
@@ -20,6 +22,9 @@ export function resolveSeedAdminConfig(
   }
   if (password.length < 12) {
     throw new Error('SUPERADMIN_PASSWORD must contain at least 12 characters');
+  }
+  if (!isWithinBcryptPasswordLimit(password)) {
+    throw new Error('SUPERADMIN_PASSWORD must be 72 UTF-8 bytes or fewer');
   }
 
   return { email, password };

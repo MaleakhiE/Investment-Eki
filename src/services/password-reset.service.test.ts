@@ -60,6 +60,17 @@ describe('password reset', () => {
     expect(passwordResetToken.findUnique).not.toHaveBeenCalled();
   });
 
+  it('rejects an over-limit password before consuming a reset token or hashing', async () => {
+    await expect(resetPassword('token', 'a'.repeat(73))).resolves.toEqual({
+      success: false,
+      error: 'Password must be 72 UTF-8 bytes or fewer',
+    });
+    expect(transaction).not.toHaveBeenCalled();
+    expect(passwordResetToken.findUnique).not.toHaveBeenCalled();
+    expect(user.update).not.toHaveBeenCalled();
+    expect(jest.requireMock('bcrypt').default.hash).not.toHaveBeenCalled();
+  });
+
   it('consumes a valid token once and updates the password atomically', async () => {
     passwordResetToken.findUnique.mockResolvedValue({ id: BigInt(9), user_id: BigInt(7), used_at: null, expires_at: new Date(Date.now() + 60_000) });
     user.update.mockResolvedValue({});

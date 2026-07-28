@@ -10,6 +10,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | ---: | --- | ---: | --- | --- |
 | Done | Make investment snapshot and generated expense atomic and retry-safe | 83 | Small–medium | 001 |
 | Done | Prevent concurrent encrypted goal additions from overwriting each other | 81 | Small | 008 |
+| Done | Enforce bcrypt's 72-byte UTF-8 boundary for every new password hash | 84 | Small | 009 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -49,6 +50,23 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Validation: focused 30-test RED/GREEN suite, 96.2% changed-statement
   coverage, full 48-suite/327-test regression, build/OCR trace, and five
   independent approvals.
+
+## Bcrypt new-password byte boundary (completed in 009)
+
+- Historical problem: registration, reset, and superadmin bootstrap accepted
+  passwords beyond bcrypt's effective 72 UTF-8 bytes, so distinct visible
+  suffixes could authenticate as the same credential.
+- Outcome: one shared inclusive byte boundary protects every reachable new
+  local-password hash; client pages use the same rule, while login remains
+  compatible with historical hashes.
+- Score inputs: `4,5,5,2,4,5,5,5,5` → 84.
+- Residuals: legacy over-limit hashes need an explicit remediation policy;
+  registration enumeration, credential timing, and distributed throttling are
+  separate contracts.
+- Validation: official bcrypt documentation plus local collision proof,
+  focused 7-suite/30-test RED/GREEN, 100% changed executable boundary
+  statements, seed import smoke, full 51-suite/343-test regression,
+  build/OCR trace, and five independent approvals.
 
 ## 2. Canonical IDR input boundary
 
@@ -120,4 +138,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   slice in 006 using the native top layer without changing financial content.
   Budget/Goal form dialogs and the mobile More sheet remain follow-ups after a
   staging keyboard/mobile smoke proves the primitive.
-- Ledger-backed goals, account reconciliation, recurring UI, OCR quotas, bcrypt byte limits, auth throttling, quote coalescing, CI/MySQL concurrency, and full browser accessibility remain valuable follow-ups.
+- Ledger-backed goals, account reconciliation, recurring UI, OCR quotas,
+  legacy over-limit credential remediation, auth throttling, quote coalescing,
+  CI/MySQL concurrency, and full browser accessibility remain valuable
+  follow-ups.

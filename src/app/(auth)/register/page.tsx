@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthShell from '@/components/auth/AuthShell';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
+import { validatePassword } from '@/lib/validation';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,8 +25,9 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.errors[0]);
       return;
     }
 

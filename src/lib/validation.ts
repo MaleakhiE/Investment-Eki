@@ -31,6 +31,12 @@ export interface InvestmentSnapshotInput {
   current_value: number;
 }
 
+export const BCRYPT_PASSWORD_MAX_BYTES = 72;
+
+export function isWithinBcryptPasswordLimit(password: string): boolean {
+  return new TextEncoder().encode(password).length <= BCRYPT_PASSWORD_MAX_BYTES;
+}
+
 /**
  * Validates month format (YYYY-MM)
  * Valid months are 01-12, valid years are 4 digits
@@ -127,6 +133,8 @@ export function validatePassword(password: string): ValidationResult {
     errors.push('Password is required');
   } else if (password.length < 8) {
     errors.push('Password must be at least 8 characters long');
+  } else if (!isWithinBcryptPasswordLimit(password)) {
+    errors.push('Password must be 72 UTF-8 bytes or fewer');
   }
 
   return { valid: errors.length === 0, errors };

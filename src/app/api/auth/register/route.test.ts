@@ -7,6 +7,8 @@ import { POST } from './route';
 const PUBLIC_USER_ID = '3d594650-3436-4aa2-bb39-9fc9f5bc521d';
 
 describe('POST /api/auth/register', () => {
+  beforeEach(() => register.mockReset());
+
   it('returns the public UUID for a newly registered user', async () => {
     register.mockResolvedValue({
       success: true,
@@ -33,5 +35,25 @@ describe('POST /api/auth/register', () => {
       email: 'owner@example.com',
     }));
     expect(body.responseDetails.id).not.toMatch(/^\d+$/);
+  });
+
+  it('rejects an over-limit password without invoking registration', async () => {
+    const response = await POST(new Request('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'owner@example.com',
+        password: 'a'.repeat(73),
+      }),
+    }) as never);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      responseCode: 400,
+      responseStatus: 'ERROR',
+      responseMessage: 'Validation failed',
+      responseDetails: { errors: ['Password must be 72 UTF-8 bytes or fewer'] },
+    });
+    expect(register).not.toHaveBeenCalled();
   });
 });
