@@ -15,10 +15,11 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | 003 |
 | Done | Remove per-user metadata from monthly cron responses | 77 | Small | 004 |
 | Done | Honor explicit monthly reminder/summary opt-outs | 77 | Small | 005 |
+| Done | Migrate the read-only Cashflow history to a native accessible dialog | 70 | Small | 006 |
 | 4 | Define and enforce notification timing and alert semantics | 77 | Medium | Needs product policy decision |
 | 5 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
 | 6 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
-| 7 | Add accessible dialog primitives and migrate hand-built overlays | 70 | Medium | Accessibility slice |
+| 7 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 8 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
 ## 1. Atomic investment snapshot accounting (completed in 001)
@@ -84,5 +85,8 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 
 - Explainable non-prescriptive insights scored 82, but changing its API/copy requires explicit product compatibility acceptance.
 - Duplicate transaction review scored 76; false-positive and idempotency semantics need design.
-- Accessible dialogs scored 70 and should reuse `FeedbackModal` focus behavior.
+- Cashflow’s read-only history dialog completed the first accessible-dialog
+  slice in 006 using the native top layer without changing financial content.
+  Budget/Goal form dialogs and the mobile More sheet remain follow-ups after a
+  staging keyboard/mobile smoke proves the primitive.
 - Ledger-backed goals, account reconciliation, recurring UI, OCR quotas, bcrypt byte limits, auth throttling, quote coalescing, CI/MySQL concurrency, and full browser accessibility remain valuable follow-ups.

@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-27
-Baseline commit: `98b4d71`
-Iteration branch: `feat/loop-engineering-5-notification-opt-outs`
+Baseline commit: `fc0bf00`
+Iteration branch: `feat/loop-engineering-6-cashflow-dialog`
 
 ## Product and architecture
 
@@ -11,6 +11,10 @@ Investment-Eki is a Next.js 16/React 19 personal-finance application backed by P
 Routes live in `src/app`, domain services in `src/services`, cross-cutting server helpers in `src/lib`, and forward-only schema changes in `prisma/migrations`. API handlers use the envelope from `src/lib/api-response.ts`.
 
 The identity boundary retains internal BIGINT relational keys while JWT/session/API identity uses `users.public_id`. `src/lib/auth-session.ts` resolves public UUIDs; `session_version` invalidates old JWTs after password reset. Existing accounts/transfers, recurring occurrence idempotency, hardened review-first OCR, fail-closed cron auth, private exports, and CSV formula neutralization must not be duplicated or weakened. JSON export is now explicitly a versioned, non-restorable data export; CSV supports owned-account and inclusive date filters with transfer-aware signed deltas.
+
+The read-only Cashflow history overlay now uses a labelled native modal dialog
+with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the
+mobile More sheet retain their existing hand-built overlay implementations.
 
 ## Tool inventory used
 
@@ -26,7 +30,7 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 44 suites, 290 tests |
+| Tests | `npm test -- --runInBand` | Pass: 45 suites, 294 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
 | Dependency audit | `npm audit --omit=dev --audit-level=high` | Pre-existing failure: 2 high advisories in Next.js and transitive sharp |
@@ -35,14 +39,20 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 
 Local HTTP smoke confirms protected pages redirect anonymous users, `/api/export` returns a private non-cacheable `401`, and the monthly scheduler returns a private non-cacheable `401` for an invalid cron credential without invoking delivery. Authenticated export/UI and valid scheduler smoke remain unavailable; the configured MySQL host is unreachable, and a valid scheduler request can mutate claims and send real email.
 
-Authenticated visual, responsive, focus-order, keyboard, and live accessibility checks remain unverified.
+Authenticated visual, responsive, focus-order, keyboard, and live
+accessibility checks remain unverified. The isolated Cashflow dialog browser
+smoke also could not run because this session exposed no browser backend;
+native top-layer, keyboard, mobile overflow, and focus restoration remain a
+staging release gate.
 
 ## Main integrity and security risks
 
 - Investment snapshot and generated-expense writes are atomic for new writes; historical decreases, deletes, and prior divergence remain separate design/reconciliation work.
 - Transaction-derived cashflow and independently writable `MonthlyCashflow` can disagree.
 - Several money boundaries accept non-finite or insufficiently defined IDR values; goals have a concurrent lost-update path.
-- Next.js 16.2.10 and transitive sharp currently produce two high audit findings.
+- Next.js 16.2.10 and transitive sharp currently produce two high audit
+  findings. The registry now reports a fix path, which needs a compatibility-
+  reviewed dependency slice rather than an automatic lockfile rewrite.
 - Login/registration throttling and registration account-enumeration behavior need a separate auth-hardening slice.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
