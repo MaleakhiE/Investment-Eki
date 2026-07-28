@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `7212e14`
-Iteration branch: `feat/loop-engineering-10-strict-transaction-inputs`
+Baseline commit: `5b07fe5`
+Iteration branch: `feat/loop-engineering-11-recurring-scheduler-privacy`
 
 ## Product and architecture
 
@@ -34,6 +34,12 @@ MySQL's supported date range. Accepted dates persist at UTC midnight; valid
 fractions remain unchanged. Recurring end-date clearing and all scheduler
 cadence/idempotency behavior remain unchanged.
 
+The deployment recurring scheduler now returns only explicitly allowlisted
+aggregate counts with private/no-store headers on every outcome. Its top-level
+and shared per-rule posting failures log fixed events plus closed-taxonomy
+codes, never raw errors or internal rule IDs. `P2002` duplicate occurrence
+claims remain silent idempotent skips.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -48,7 +54,7 @@ cadence/idempotency behavior remain unchanged.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 51 suites, 391 tests |
+| Tests | `npm test -- --runInBand` | Pass: 51 suites, 409 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -98,6 +104,8 @@ staging release gate.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
   custom-alert delivery semantics still require a product contract.
+- Session-authenticated recurring API responses still need explicit
+  private/no-store headers, and their route catches still log raw errors.
 
 ## Operational gaps
 
