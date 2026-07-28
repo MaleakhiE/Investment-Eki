@@ -66,6 +66,38 @@ export interface SummaryEmailData {
   mutual_fund_summary: PortfolioSummary;
 }
 
+const SAFE_NOTIFICATION_ERROR_CODES = new Set([
+  'EAUTH',
+  'ECONNECTION',
+  'EDNS',
+  'EENVELOPE',
+  'EMESSAGE',
+  'ESECURITY',
+  'ESOCKET',
+  'ETIMEDOUT',
+  'P2002',
+  'P2025',
+  'P2034',
+]);
+
+export function getSafeNotificationErrorCode(error: unknown): string {
+  if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED';
+
+  const code = 'code' in error ? error.code : undefined;
+  if (typeof code === 'string' && SAFE_NOTIFICATION_ERROR_CODES.has(code)) return code;
+
+  const responseCode = 'responseCode' in error ? error.responseCode : undefined;
+  if (
+    typeof responseCode === 'number'
+    && Number.isInteger(responseCode)
+    && responseCode >= 400
+    && responseCode <= 599
+  ) {
+    return `PROVIDER_${responseCode}`;
+  }
+  return error instanceof TypeError ? 'TYPE_ERROR' : 'UNCLASSIFIED';
+}
+
 
 /**
  * Format currency value for display in emails
@@ -266,7 +298,9 @@ export async function sendEmail(content: EmailContent): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('Notification email delivery failed', {
+      code: getSafeNotificationErrorCode(error),
+    });
     return false;
   }
 }
@@ -345,14 +379,13 @@ export async function sendMonthlyNotifications(): Promise<{
   sent: number;
   failed: number;
   skipped: number;
-  results: Array<{ userId: bigint; type: NotificationType; success: boolean; skipped?: boolean }>;
 }> {
   const currentMonth = getCurrentMonth();
   
-  // Get all users
-  const users = await prisma.user.findMany();
+  const users = await prisma.user.findMany({
+    select: { id: true, email: true },
+  });
   
-  const results: Array<{ userId: bigint; type: NotificationType; success: boolean; skipped?: boolean }> = [];
   let sent = 0;
   let failed = 0;
   let skipped = 0;
@@ -369,13 +402,11 @@ export async function sendMonthlyNotifications(): Promise<{
         claim = await claimNotification(user.id, currentMonth, notificationType);
         if (!claim) {
           skipped++;
-          results.push({ userId: user.id, type: notificationType, success: true, skipped: true });
           continue;
         }
       } catch (error) {
         if (isUniqueConstraintError(error)) {
           skipped++;
-          results.push({ userId: user.id, type: notificationType, success: true, skipped: true });
           continue;
         }
         throw error;
@@ -401,28 +432,29 @@ export async function sendMonthlyNotifications(): Promise<{
         await markNotificationSent(claim.id);
         claim = null;
         sent++;
-        results.push({ userId: user.id, type: notificationType, success: true });
       } else {
         await markNotificationFailed(claim.id);
         claim = null;
         failed++;
-        results.push({ userId: user.id, type: notificationType, success: false });
       }
     } catch (error) {
       if (claim) {
         try {
           await markNotificationFailed(claim.id);
         } catch (claimError) {
-          console.error(`Failed to release notification claim ${claim.id}:`, claimError);
+          console.error('Notification claim release failed', {
+            code: getSafeNotificationErrorCode(claimError),
+          });
         }
       }
-      console.error(`Failed to process notification for user ${user.id}:`, error);
+      console.error('Notification processing failed', {
+        code: getSafeNotificationErrorCode(error),
+      });
       failed++;
-      results.push({ userId: user.id, type: notificationType, success: false });
     }
   }
   
-  return { sent, failed, skipped, results };
+  return { sent, failed, skipped };
 }
 
 function isUniqueConstraintError(error: unknown): error is { code: string } {

@@ -10,13 +10,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { sendMonthlyNotifications } from '@/services/notification.service';
+import {
+  getSafeNotificationErrorCode,
+  sendMonthlyNotifications,
+} from '@/services/notification.service';
 import {
   successResponse,
   unauthorizedResponse,
   serverErrorResponse,
 } from '@/lib/api-response';
 import { verifyCronBearer } from '@/lib/cron-auth';
+
+const PRIVATE_NO_STORE_HEADERS = {
+  'Cache-Control': 'private, no-store, max-age=0',
+};
 
 /**
  * POST /api/notifications/send-monthly - Trigger monthly notifications
@@ -33,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (!verifyCronBearer(request)) {
       return NextResponse.json(
         unauthorizedResponse('Invalid cron credentials'),
-        { status: 401 }
+        { status: 401, headers: PRIVATE_NO_STORE_HEADERS }
       );
     }
 
@@ -47,17 +54,18 @@ export async function POST(request: NextRequest) {
           failed: result.failed,
           skipped: result.skipped,
           total: result.sent + result.failed + result.skipped,
-          details: result.results.map((r) => ({
-            userId: r.userId.toString(),
-            type: r.type,
-            success: r.success,
-          })),
         },
         `Monthly notifications processed: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`
-      )
+      ),
+      { headers: PRIVATE_NO_STORE_HEADERS },
     );
   } catch (error) {
-    console.error('Error sending monthly notifications:', error);
-    return NextResponse.json(serverErrorResponse(), { status: 500 });
+    console.error('Monthly notification scheduler failed', {
+      code: getSafeNotificationErrorCode(error),
+    });
+    return NextResponse.json(serverErrorResponse(), {
+      status: 500,
+      headers: PRIVATE_NO_STORE_HEADERS,
+    });
   }
 }

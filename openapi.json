@@ -1022,12 +1022,15 @@
       "post": {
         "tags": ["Notifications"],
         "summary": "Trigger monthly notifications",
-        "description": "Triggers monthly email notifications for all users. Sends reminder emails to users without cashflow data for the current month, and summary emails to users with data. This endpoint is designed to be called by a cron job scheduler.",
+        "description": "Triggers monthly email notifications for all users. Requires the fail-closed CRON_SECRET bearer credential and returns aggregate delivery counts only.",
         "operationId": "sendMonthlyNotifications",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "cronBearerAuth": [] }],
         "responses": {
           "200": {
             "description": "Monthly notifications processed",
+            "headers": {
+              "Cache-Control": { "$ref": "#/components/headers/PrivateNoStore" }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1036,15 +1039,12 @@
                 "example": {
                   "responseCode": 200,
                   "responseStatus": "SUCCESS",
-                  "responseMessage": "Monthly notifications processed: 5 sent, 0 failed",
+                  "responseMessage": "Monthly notifications processed: 5 sent, 1 failed, 2 skipped",
                   "responseDetails": {
                     "sent": 5,
-                    "failed": 0,
-                    "total": 5,
-                    "details": [
-                      { "userId": "1", "type": "SUMMARY", "success": true },
-                      { "userId": "2", "type": "REMINDER", "success": true }
-                    ]
+                    "failed": 1,
+                    "skipped": 2,
+                    "total": 8
                   }
                 }
               }
@@ -1052,6 +1052,9 @@
           },
           "401": {
             "description": "Unauthorized (invalid cron secret)",
+            "headers": {
+              "Cache-Control": { "$ref": "#/components/headers/PrivateNoStore" }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1062,6 +1065,9 @@
           },
           "500": {
             "description": "Internal server error",
+            "headers": {
+              "Cache-Control": { "$ref": "#/components/headers/PrivateNoStore" }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1081,6 +1087,20 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "description": "JWT token obtained from NextAuth.js authentication"
+      },
+      "cronBearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Required deployment scheduler secret from CRON_SECRET"
+      }
+    },
+    "headers": {
+      "PrivateNoStore": {
+        "description": "Prevents storage of privileged scheduler responses",
+        "schema": {
+          "type": "string",
+          "example": "private, no-store, max-age=0"
+        }
       }
     },
     "schemas": {
@@ -1566,21 +1586,12 @@
       },
       "NotificationResult": {
         "type": "object",
+        "required": ["sent", "failed", "skipped", "total"],
         "properties": {
           "sent": { "type": "integer", "description": "Number of notifications sent successfully" },
           "failed": { "type": "integer", "description": "Number of notifications that failed" },
-          "total": { "type": "integer", "description": "Total notifications processed" },
-          "details": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "userId": { "type": "string" },
-                "type": { "type": "string", "enum": ["REMINDER", "SUMMARY"] },
-                "success": { "type": "boolean" }
-              }
-            }
-          }
+          "skipped": { "type": "integer", "description": "Number of idempotently claimed or already processed notifications" },
+          "total": { "type": "integer", "description": "Sum of sent, failed, and skipped notifications" }
         }
       },
       "NotificationResultResponse": {

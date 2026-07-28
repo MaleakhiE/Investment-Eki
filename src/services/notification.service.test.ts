@@ -12,7 +12,21 @@ jest.mock('@/lib/encryption', () => ({
 jest.mock('./smtp.service', () => ({ sendSmtpMail: jest.fn() }));
 
 import { sendSmtpMail } from './smtp.service';
-import { getCurrentMonth, sendMonthlyNotifications } from './notification.service';
+import {
+  getCurrentMonth,
+  getSafeNotificationErrorCode,
+  sendMonthlyNotifications,
+} from './notification.service';
+
+describe('notification error taxonomy', () => {
+  it('keeps only allowlisted operational codes', () => {
+    expect(getSafeNotificationErrorCode({ code: 'EAUTH', message: 'secret' })).toBe('EAUTH');
+    expect(getSafeNotificationErrorCode({ responseCode: 550, message: 'recipient rejected' }))
+      .toBe('PROVIDER_550');
+    expect(getSafeNotificationErrorCode({ code: 'SECRET_TOKEN', message: 'secret' }))
+      .toBe('UNCLASSIFIED');
+  });
+});
 
 describe('notification calendar', () => {
   it('uses the Asia/Jakarta month at a UTC month boundary', () => {
@@ -38,9 +52,11 @@ describe('monthly notification idempotency', () => {
       sent: 0,
       failed: 0,
       skipped: 1,
-      results: [{ userId: BigInt(7), type: 'REMINDER', success: true, skipped: true }],
     });
     expect(sendSmtpMail).not.toHaveBeenCalled();
+    expect(user.findMany).toHaveBeenCalledWith({
+      select: { id: true, email: true },
+    });
   });
 
   it('releases a failed claim so a later scheduler retry can deliver', async () => {
@@ -50,13 +66,20 @@ describe('monthly notification idempotency', () => {
     });
     jest.mocked(sendSmtpMail).mockRejectedValue(new Error('SMTP unavailable'));
     notificationLog.update.mockResolvedValue({});
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const result = await sendMonthlyNotifications();
 
-    expect(result.failed).toBe(1);
+    expect(result).toEqual({ sent: 0, failed: 1, skipped: 0 });
     expect(notificationLog.update).toHaveBeenCalledWith({
       where: { id: BigInt(11) }, data: { status: 'FAILED' },
     });
+    expect(consoleError).toHaveBeenCalledWith(
+      'Notification email delivery failed',
+      { code: 'UNCLASSIFIED' },
+    );
+    expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('person@example.com'));
+    consoleError.mockRestore();
   });
 
   it('reclaims an abandoned pending delivery after its lease expires', async () => {
@@ -69,7 +92,7 @@ describe('monthly notification idempotency', () => {
 
     const result = await sendMonthlyNotifications();
 
-    expect(result.sent).toBe(1);
+    expect(result).toEqual({ sent: 1, failed: 0, skipped: 0 });
     expect(sendSmtpMail).toHaveBeenCalledTimes(1);
     expect(notificationLog.update).toHaveBeenCalledWith({
       where: { id: BigInt(12) },
