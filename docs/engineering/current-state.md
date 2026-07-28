@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `5b07fe5`
-Iteration branch: `feat/loop-engineering-11-recurring-scheduler-privacy`
+Baseline commit: `a08c3f1`
+Iteration branch: `feat/loop-engineering-12-recurring-api-privacy`
 
 ## Product and architecture
 
@@ -40,6 +40,12 @@ and shared per-rule posting failures log fixed events plus closed-taxonomy
 codes, never raw errors or internal rule IDs. `P2002` duplicate occurrence
 claims remain silent idempotent skips.
 
+The session-authenticated recurring collection and item APIs now return
+private/no-store headers on every outcome. Their unexpected catches reuse the
+closed recurring error taxonomy and never log raw request, financial, route,
+user, rule, account, session, or database details. Existing owner DTOs, manual
+processing output, statuses, messages, and service scoping are unchanged.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -54,7 +60,7 @@ claims remain silent idempotent skips.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 51 suites, 409 tests |
+| Tests | `npm test -- --runInBand` | Pass: 53 suites, 426 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -104,8 +110,10 @@ staging release gate.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
   custom-alert delivery semantics still require a product contract.
-- Session-authenticated recurring API responses still need explicit
-  private/no-store headers, and their route catches still log raw errors.
+- Recurring API runtime inputs still rely on ad hoc destructuring and BigInt
+  conversion. Malformed JSON/IDs remain generic 500s, while runtime
+  type/frequency, string-length, and account-ID validation need a bounded
+  compatibility contract before tightening.
 
 ## Operational gaps
 

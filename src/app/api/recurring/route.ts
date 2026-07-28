@@ -1,21 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
-import { createRecurring, getRecurrings, processRecurrings, RecurringInputError } from '@/services/recurring.service';
+import {
+  createRecurring,
+  getRecurrings,
+  getSafeRecurringErrorCode,
+  processRecurrings,
+  RecurringInputError,
+} from '@/services/recurring.service';
+
+const PRIVATE_NO_STORE_HEADERS = {
+  'Cache-Control': 'private, no-store, max-age=0',
+};
 
 export async function GET() {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
-      return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
+      return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), {
+        status: 401,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
     }
 
     const recurrings = await getRecurrings(userId);
 
-    return NextResponse.json(responseAPI(200, 'SUCCESS', 'Recurring transactions retrieved', recurrings));
+    return NextResponse.json(
+      responseAPI(200, 'SUCCESS', 'Recurring transactions retrieved', recurrings),
+      { headers: PRIVATE_NO_STORE_HEADERS },
+    );
   } catch (error) {
-    console.error('Get recurring error:', error);
-    return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
+    console.error('Recurring list failed', { code: getSafeRecurringErrorCode(error) });
+    return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), {
+      status: 500,
+      headers: PRIVATE_NO_STORE_HEADERS,
+    });
   }
 }
 
@@ -23,7 +42,10 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
-      return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), { status: 401 });
+      return NextResponse.json(responseAPI(401, 'ERROR', 'Unauthorized', null), {
+        status: 401,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
     }
 
     const body = await request.json();
@@ -31,11 +53,17 @@ export async function POST(request: NextRequest) {
     // Check if this is a process request
     if (body.action === 'process') {
       const created = await processRecurrings(userId);
-      return NextResponse.json(responseAPI(200, 'SUCCESS', `Processed ${created.length} recurring transactions`, { created }));
+      return NextResponse.json(
+        responseAPI(200, 'SUCCESS', `Processed ${created.length} recurring transactions`, { created }),
+        { headers: PRIVATE_NO_STORE_HEADERS },
+      );
     }
 
     if (!body.type || !body.category || !body.amount || !body.frequency || !body.start_date) {
-      return NextResponse.json(responseAPI(400, 'ERROR', 'Missing required fields', null), { status: 400 });
+      return NextResponse.json(responseAPI(400, 'ERROR', 'Missing required fields', null), {
+        status: 400,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
     }
 
     const recurring = await createRecurring(userId, {
@@ -52,12 +80,23 @@ export async function POST(request: NextRequest) {
       end_date: body.end_date,
     });
 
-    return NextResponse.json(responseAPI(201, 'SUCCESS', 'Recurring transaction created', recurring), { status: 201 });
+    return NextResponse.json(responseAPI(201, 'SUCCESS', 'Recurring transaction created', recurring), {
+      status: 201,
+      headers: PRIVATE_NO_STORE_HEADERS,
+    });
   } catch (error) {
     if (error instanceof RecurringInputError) {
-      return NextResponse.json(responseAPI(400, 'ERROR', error.message, null), { status: 400 });
+      return NextResponse.json(responseAPI(400, 'ERROR', error.message, null), {
+        status: 400,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
     }
-    console.error('Create recurring error:', error);
-    return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
+    console.error('Recurring create or process failed', {
+      code: getSafeRecurringErrorCode(error),
+    });
+    return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), {
+      status: 500,
+      headers: PRIVATE_NO_STORE_HEADERS,
+    });
   }
 }
