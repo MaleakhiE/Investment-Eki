@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-27
-Baseline commit: `d843742`
-Iteration branch: `feat/loop-engineering-2-protected-page-boundary`
+Baseline commit: `24ee7d9`
+Iteration branch: `feat/loop-engineering-3-account-aware-export`
 
 ## Product and architecture
 
@@ -10,7 +10,7 @@ Investment-Eki is a Next.js 16/React 19 personal-finance application backed by P
 
 Routes live in `src/app`, domain services in `src/services`, cross-cutting server helpers in `src/lib`, and forward-only schema changes in `prisma/migrations`. API handlers use the envelope from `src/lib/api-response.ts`.
 
-The identity boundary retains internal BIGINT relational keys while JWT/session/API identity uses `users.public_id`. `src/lib/auth-session.ts` resolves public UUIDs; `session_version` invalidates old JWTs after password reset. Existing accounts/transfers, recurring occurrence idempotency, hardened review-first OCR, fail-closed cron auth, private exports, and CSV formula neutralization must not be duplicated or weakened.
+The identity boundary retains internal BIGINT relational keys while JWT/session/API identity uses `users.public_id`. `src/lib/auth-session.ts` resolves public UUIDs; `session_version` invalidates old JWTs after password reset. Existing accounts/transfers, recurring occurrence idempotency, hardened review-first OCR, fail-closed cron auth, private exports, and CSV formula neutralization must not be duplicated or weakened. JSON export is now explicitly a versioned, non-restorable data export; CSV supports owned-account and inclusive date filters with transfer-aware signed deltas.
 
 ## Tool inventory used
 
@@ -26,14 +26,14 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 44 suites, 253 tests |
+| Tests | `npm test -- --runInBand` | Pass: 44 suites, 278 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
 | Dependency audit | `npm audit --omit=dev --audit-level=high` | Pre-existing failure: 2 high advisories in Next.js and transitive sharp |
 
 ## Runtime and UI evidence
 
-Source inspection confirmed `/accounts`, `/budget`, and `/goals` are authenticated navigation destinations whose pages immediately call protected APIs, but they were omitted from the centralized protected-page list. The APIs already fail closed, so this is page-boundary consistency and error-state prevention rather than a data-access bypass. Local HTTP smoke reproduced anonymous `200` responses before the fix and `307` login redirects afterward.
+Local HTTP smoke confirms protected pages redirect anonymous users and `/api/export` returns a private, non-cacheable `401` before any export query. Authenticated export/UI smoke remains unavailable because the configured MySQL host is unreachable from this environment.
 
 Authenticated visual, responsive, focus-order, keyboard, and live accessibility checks remain unverified.
 
