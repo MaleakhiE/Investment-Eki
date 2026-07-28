@@ -10,6 +10,7 @@ const transaction = jest.fn(async (callback: (tx: unknown) => unknown) => callba
   transaction: transactionCreate,
   recurringTransaction: txRecurringTransaction,
 }));
+const mockEncryptNumber = jest.fn((value: number) => `enc:${value}`);
 
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
@@ -20,7 +21,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 jest.mock('@/lib/encryption', () => ({
-  encryptNumber: (value: number) => `enc:${value}`,
+  encryptNumber: mockEncryptNumber,
   decryptNumber: (value: string) => Number(value.replace('enc:', '')),
 }));
 
@@ -87,6 +88,52 @@ describe('createRecurring account ownership', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
+  it.each([
+    { amount: Infinity },
+    { amount: -Infinity },
+    { amount: NaN },
+    { amount: 0 },
+    { amount: null as unknown as number },
+    { amount: '1000' as unknown as number },
+    { start_date: '2026-02-29' },
+    { start_date: '0000-01-01' },
+    { start_date: 20260701 as unknown as string },
+    { end_date: '2026-04-31' },
+    { end_date: 0 as unknown as string },
+  ])('rejects invalid financial input before encryption, account lookup, or create', async (invalid) => {
+    await expect(createRecurring(BigInt(7), { ...input, ...invalid }))
+      .rejects.toBeInstanceOf(Error);
+
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(recurringTransaction.create).not.toHaveBeenCalled();
+  });
+
+  it('persists a finite fraction and leap date unchanged at UTC midnight', async () => {
+    recurringTransaction.create.mockResolvedValue({
+      ...monthlyRule,
+      amount: 'enc:0.25',
+      start_date: new Date('2028-02-29T00:00:00.000Z'),
+    });
+
+    await createRecurring(BigInt(7), {
+      ...input,
+      amount: 0.25,
+      start_date: '2028-02-29',
+      end_date: '9999-12-31',
+      account_id: undefined,
+    });
+
+    expect(mockEncryptNumber).toHaveBeenCalledWith(0.25);
+    expect(recurringTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        amount: 'enc:0.25',
+        start_date: new Date('2028-02-29T00:00:00.000Z'),
+        end_date: new Date('9999-12-31T00:00:00.000Z'),
+      }),
+    });
+  });
+
   it('rejects an account that is not an active account owned by the user', async () => {
     financialAccount.findFirst.mockResolvedValue(null);
     await expect(createRecurring(BigInt(7), input)).rejects.toThrow('Account not found');
@@ -119,5 +166,47 @@ describe('recurring rule read/update semantics', () => {
     await expect(updateRecurring(BigInt(7), BigInt(5), { frequency: 'YEARLY' }))
       .rejects.toThrow('month_of_year');
     expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { amount: null as unknown as number },
+    { amount: Infinity },
+    { start_date: '2026-02-29' },
+    { start_date: null as unknown as string },
+    { start_date: '' },
+    { start_date: 20260701 as unknown as string },
+    { end_date: '0999-12-31' },
+  ])('rejects invalid explicit update %p before linked-account lookup, encryption, or update', async (invalid) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      ...invalid,
+      account_id: '3',
+    })).rejects.toBeInstanceOf(Error);
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('updates a finite amount and leap date while preserving end-date clearing', async () => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      amount: 0.25,
+      start_date: '2028-02-29',
+      end_date: '',
+    })).resolves.toBe(true);
+
+    expect(mockEncryptNumber).toHaveBeenCalledWith(0.25);
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: expect.objectContaining({
+        amount: 'enc:0.25',
+        start_date: new Date('2028-02-29T00:00:00.000Z'),
+        end_date: null,
+      }),
+    });
   });
 });

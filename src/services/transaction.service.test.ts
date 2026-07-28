@@ -10,6 +10,7 @@ const databaseTransaction = jest.fn(async (callback: (client: unknown) => unknow
   transaction: transactionRepository,
   financialAccount: financialAccountRepository,
 }));
+const mockEncryptNumber = jest.fn((value: number) => `encrypted:${value}`);
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -20,7 +21,7 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 jest.mock('@/lib/encryption', () => ({
-  encryptNumber: (value: number) => `encrypted:${value}`,
+  encryptNumber: mockEncryptNumber,
   decryptNumber: (value: string) => Number(value.replace('encrypted:', '')),
 }));
 
@@ -57,6 +58,105 @@ const persisted = {
 };
 
 beforeEach(() => jest.clearAllMocks());
+
+describe('strict financial write validation', () => {
+  it.each([
+    '2026-02-29',
+    '2026-04-31',
+    '2026-13-01',
+    '2026-00-10',
+    '0000-01-01',
+    '0999-12-31',
+    '2026-2-01',
+    ' 2026-07-11',
+  ])('rejects non-calendar or noncanonical date %s', (date) => {
+    expect(validateTransactionInput({ ...baseInput, date })).toEqual({
+      valid: false,
+      errors: ['Invalid date format. Use YYYY-MM-DD'],
+    });
+  });
+
+  it.each(['1000-01-01', '2028-02-29', '2026-04-30', '9999-12-31'])(
+    'accepts real calendar date %s',
+    (date) => {
+      expect(validateTransactionInput({ ...baseInput, date })).toEqual({ valid: true, errors: [] });
+    },
+  );
+
+  it.each([NaN, Infinity, -Infinity, 0, -1, null, '50000'])(
+    'rejects invalid amount %p',
+    (amount) => {
+      expect(validateTransactionInput({
+        ...baseInput,
+        amount: amount as number,
+      })).toEqual({ valid: false, errors: ['Amount must be a positive number'] });
+    },
+  );
+
+  it('accepts a finite positive fraction without changing it', () => {
+    expect(validateTransactionInput({ ...baseInput, amount: 0.25 }))
+      .toEqual({ valid: true, errors: [] });
+  });
+
+  it.each([
+    { date: '2026-02-29', amount: 50_000 },
+    { date: '2026-07-11', amount: Infinity },
+  ])('rejects create input before encryption, account lookup, or persistence', async (invalid) => {
+    await expect(createTransaction(BigInt(20), {
+      ...baseInput,
+      ...invalid,
+      account_id: '2',
+    })).resolves.toEqual(expect.objectContaining({ success: false }));
+
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(financialAccountRepository.findFirst).not.toHaveBeenCalled();
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { date: '2026-04-31', amount: 50_000 },
+    { date: '2026-07-11', amount: NaN },
+  ])('rejects update input before ownership lookup, encryption, or persistence', async (invalid) => {
+    await expect(updateTransaction(BigInt(20), BigInt(10), {
+      ...baseInput,
+      ...invalid,
+      account_id: '2',
+    })).resolves.toEqual(expect.objectContaining({ success: false }));
+
+    expect(transactionRepository.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(transactionRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects an impossible transfer date before opening a database transaction', async () => {
+    await expect(createTransfer(BigInt(20), {
+      date: '2026-02-29',
+      source_account_id: '1',
+      destination_account_id: '2',
+      amount: 50_000,
+      description: 'Move funds',
+    })).resolves.toEqual({ success: false, error: 'Invalid date format. Use YYYY-MM-DD' });
+
+    expect(databaseTransaction).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+  });
+
+  it.each([NaN, Infinity, -Infinity])(
+    'rejects non-finite transfer amount %p before opening a database transaction',
+    async (amount) => {
+      await expect(createTransfer(BigInt(20), {
+        date: '2026-07-11',
+        source_account_id: '1',
+        destination_account_id: '2',
+        amount,
+        description: 'Move funds',
+      })).resolves.toEqual({ success: false, error: 'Amount must be a positive number' });
+
+      expect(databaseTransaction).not.toHaveBeenCalled();
+      expect(mockEncryptNumber).not.toHaveBeenCalled();
+    },
+  );
+});
 
 describe('transaction account validation', () => {
   it('exposes the supported account presets in product order', () => {
@@ -99,16 +199,24 @@ describe('transaction account validation', () => {
 
 describe('transaction optional field round trips', () => {
   it('normalizes account and persists account and receipt image on create', async () => {
-    transactionRepository.create.mockResolvedValue(persisted);
+    transactionRepository.create.mockResolvedValue({
+      ...persisted,
+      date: new Date('2028-02-29T00:00:00.000Z'),
+    });
 
     const result = await createTransaction(BigInt(20), {
       ...baseInput,
+      date: '2028-02-29',
       account: '  BCA  ',
       receipt_image: persisted.receipt_image,
     });
 
     expect(transactionRepository.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ account: 'BCA', receipt_image: persisted.receipt_image }),
+      data: expect.objectContaining({
+        date: new Date('2028-02-29T00:00:00.000Z'),
+        account: 'BCA',
+        receipt_image: persisted.receipt_image,
+      }),
     });
     expect(result.transaction).toEqual(expect.objectContaining({
       account: 'BCA',

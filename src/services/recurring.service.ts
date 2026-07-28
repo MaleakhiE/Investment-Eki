@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
+import { isFinitePositiveAmount, parseCalendarDate } from '@/lib/financial-input';
 
 export class RecurringInputError extends Error {}
 
@@ -56,8 +57,8 @@ export async function createRecurring(userId: bigint, input: RecurringInput) {
       day_of_week: input.day_of_week,
       month_of_year: input.month_of_year,
       account_id: input.account_id ? BigInt(input.account_id) : null,
-      start_date: new Date(input.start_date),
-      end_date: input.end_date ? new Date(input.end_date) : null,
+      start_date: parseCalendarDate(input.start_date)!,
+      end_date: input.end_date ? parseCalendarDate(input.end_date) : null,
     },
   });
 
@@ -65,6 +66,20 @@ export async function createRecurring(userId: bigint, input: RecurringInput) {
 }
 
 function validateRecurringSchedule(input: RecurringInput): void {
+  if (!isFinitePositiveAmount(input.amount)) {
+    throw new RecurringInputError('Amount must be a positive number');
+  }
+  if (!parseCalendarDate(input.start_date)) {
+    throw new RecurringInputError('Invalid start date. Use YYYY-MM-DD');
+  }
+  if (
+    input.end_date !== undefined
+    && input.end_date !== null
+    && input.end_date !== ''
+    && !parseCalendarDate(input.end_date)
+  ) {
+    throw new RecurringInputError('Invalid end date. Use YYYY-MM-DD');
+  }
   if (input.frequency === 'WEEKLY' && (input.day_of_week === undefined || input.day_of_week < 0 || input.day_of_week > 6)) {
     throw new RecurringInputError('Weekly recurring transactions require day_of_week from 0 to 6');
   }
@@ -90,6 +105,13 @@ export async function getRecurrings(userId: bigint): Promise<RecurringTransactio
 export async function updateRecurring(userId: bigint, id: bigint, input: Partial<RecurringInput> & { is_active?: boolean }) {
   const existing = await prisma.recurringTransaction.findFirst({ where: { id, user_id: userId } });
   if (!existing) return false;
+  if (input.amount !== undefined && !isFinitePositiveAmount(input.amount)) {
+    throw new RecurringInputError('Amount must be a positive number');
+  }
+  const startDate = input.start_date === undefined ? undefined : parseCalendarDate(input.start_date);
+  if (input.start_date !== undefined && !startDate) {
+    throw new RecurringInputError('Invalid start date. Use YYYY-MM-DD');
+  }
   validateRecurringSchedule({
     type: (input.type ?? existing.type) as 'INCOME' | 'EXPENSE',
     category: input.category ?? existing.category,
@@ -100,7 +122,7 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
     day_of_week: input.day_of_week ?? existing.day_of_week ?? undefined,
     month_of_year: input.month_of_year ?? existing.month_of_year ?? undefined,
     account_id: input.account_id ?? existing.account_id?.toString(),
-    start_date: input.start_date ?? existing.start_date.toISOString().slice(0, 10),
+    start_date: startDate?.toISOString().slice(0, 10) ?? existing.start_date.toISOString().slice(0, 10),
     end_date: input.end_date ?? existing.end_date?.toISOString().slice(0, 10),
   });
   if (input.account_id !== undefined) {
@@ -120,8 +142,10 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
   if (input.day_of_week !== undefined) data.day_of_week = input.day_of_week;
   if (input.month_of_year !== undefined) data.month_of_year = input.month_of_year;
   if (input.account_id !== undefined) data.account_id = input.account_id ? BigInt(input.account_id) : null;
-  if (input.start_date) data.start_date = new Date(input.start_date);
-  if (input.end_date !== undefined) data.end_date = input.end_date ? new Date(input.end_date) : null;
+  if (startDate) data.start_date = startDate;
+  if (input.end_date !== undefined) {
+    data.end_date = input.end_date ? parseCalendarDate(input.end_date) : null;
+  }
   if (input.is_active !== undefined) data.is_active = input.is_active;
 
   const recurring = await prisma.recurringTransaction.updateMany({

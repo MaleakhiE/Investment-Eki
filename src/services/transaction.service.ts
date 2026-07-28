@@ -10,6 +10,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
+import { isFinitePositiveAmount, parseCalendarDate } from '@/lib/financial-input';
 import { isSupportedReceiptDataUrl } from '@/lib/receipt-image';
 
 export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
@@ -131,7 +132,7 @@ export function validateTransactionInput(input: TransactionInput): { valid: bool
   const errors: string[] = [];
   const account = normalizeAccount(input.account);
 
-  if (!input.date || !/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
+  if (!parseCalendarDate(input.date)) {
     errors.push('Invalid date format. Use YYYY-MM-DD');
   }
 
@@ -147,7 +148,7 @@ export function validateTransactionInput(input: TransactionInput): { valid: bool
     errors.push('Description is required');
   }
 
-  if (typeof input.amount !== 'number' || input.amount <= 0) {
+  if (!isFinitePositiveAmount(input.amount)) {
     errors.push('Amount must be a positive number');
   }
 
@@ -188,7 +189,7 @@ export async function createTransaction(
   const record = await databaseClient.transaction.create({
     data: {
       user_id: userId,
-      date: new Date(input.date),
+      date: parseCalendarDate(input.date)!,
       type: input.type,
       category: input.category.trim(),
       description: input.description.trim(),
@@ -252,7 +253,7 @@ export async function updateTransaction(
   const record = await prisma.transaction.update({
     where: { id: transactionId },
     data: {
-      date: new Date(input.date),
+      date: parseCalendarDate(input.date)!,
       type: input.type,
       category: input.category.trim(),
       description: input.description.trim(),
@@ -401,10 +402,11 @@ export async function createTransfer(
   userId: bigint,
   input: TransferInput
 ): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string }> {
-  if (!input.date || !/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
+  const transactionDate = parseCalendarDate(input.date);
+  if (!transactionDate) {
     return { success: false, error: 'Invalid date format. Use YYYY-MM-DD' };
   }
-  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+  if (!isFinitePositiveAmount(input.amount)) {
     return { success: false, error: 'Amount must be a positive number' };
   }
 
@@ -429,7 +431,7 @@ export async function createTransfer(
     const record = await client.transaction.create({
       data: {
         user_id: userId,
-        date: new Date(input.date),
+        date: transactionDate,
         type: 'TRANSFER',
         category: 'Transfer',
         description: typeof input.description === 'string' && input.description.trim()
