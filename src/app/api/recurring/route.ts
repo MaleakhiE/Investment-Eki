@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const recurring = await createRecurring(userId, {
       type: body.type,
       category: body.category,
-      description: body.description || '',
+      description: body.description ?? '',
       amount: body.amount,
       frequency: body.frequency,
       day_of_month: body.day_of_month,

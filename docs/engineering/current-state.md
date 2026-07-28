@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `7e1506b`
-Iteration branch: `feat/loop-engineering-15-recurring-account-id`
+Baseline commit: `0f265cf`
+Iteration branch: `feat/loop-engineering-16-recurring-description-capacity`
 
 ## Product and architecture
 
@@ -64,6 +64,11 @@ signed-BIGINT strings at the shared service boundary. Create omission/null/
 empty means no account; PATCH omission is unchanged and null/empty clears.
 Owned-active lookup and persistence reuse the same parsed bigint.
 
+Recurring descriptions now preserve exact text through 505 Unicode code points,
+the lossless capacity remaining after the shared `[Auto] ` prefix. Oversized
+legacy rows fail before posting transactions, count as failed, and expose no
+`next_run`; they remain readable, correctable, and deactivatable.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -78,7 +83,7 @@ Owned-active lookup and persistence reuse the same parsed bigint.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 54 suites, 588 tests |
+| Tests | `npm test -- --runInBand` | Pass: 54 suites, 621 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -120,6 +125,11 @@ staging release gate.
   presentation. The required target aggregate audit could not run because
   MySQL is unreachable; deployment must stop until it returns zero, with any
   hit requiring owner-approved remediation.
+- New recurring descriptions cannot exceed the materializable 505-code-point
+  capacity. A second target audit must verify both description columns and
+  return zero total/active/inactive rows above 505 characters. Production
+  remains stopped until both Loop 13 and Loop 16 audits pass; `P1001` and
+  unavailable Docker satisfy neither.
 - Next.js is patched to 16.2.12, clearing the direct reviewed framework
   advisories. Audit still reports two High package entries because Next's
   supported optional `sharp ^0.34.5` resolves vulnerable sharp 0.34.5. The
@@ -133,11 +143,10 @@ staging release gate.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
   custom-alert delivery semantics still require a product contract.
-- Recurring JSON structure, item IDs, and linked-account IDs are now validated
-  before persistence. Category/description constraints still need a bounded
-  compatibility contract; unknown keys and empty PATCH remain intentionally
-  supported. Descriptions of 506 through 512 characters can still overflow a
-  generated transaction after the `[Auto] ` prefix.
+- Recurring JSON structure, item IDs, linked-account IDs, and description
+  materialization capacity are now validated before persistence. Category
+  constraints still need a bounded compatibility contract; unknown keys and
+  empty PATCH remain intentionally supported.
 
 ## Operational gaps
 

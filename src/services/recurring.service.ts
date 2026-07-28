@@ -6,6 +6,8 @@ export class RecurringInputError extends Error {}
 
 const SAFE_RECURRING_ERROR_CODES = new Set(['P1001', 'P2002', 'P2025', 'P2034']);
 const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
+const AUTO_DESCRIPTION_PREFIX = '[Auto] ';
+const RECURRING_DESCRIPTION_MAX_CHARACTERS = 512 - Array.from(AUTO_DESCRIPTION_PREFIX).length;
 
 export function getSafeRecurringErrorCode(error: unknown): string {
   if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED';
@@ -47,6 +49,7 @@ export interface RecurringTransaction {
 }
 
 export async function createRecurring(userId: bigint, input: RecurringInput) {
+  const description = validateRecurringDescription(input.description ?? '');
   validateRecurringSchedule(input);
   const accountId = parseRecurringAccountId(input.account_id);
   if (accountId) {
@@ -61,7 +64,7 @@ export async function createRecurring(userId: bigint, input: RecurringInput) {
       user_id: userId,
       type: input.type,
       category: input.category,
-      description: input.description,
+      description,
       amount: encryptNumber(input.amount),
       frequency: input.frequency,
       day_of_month: input.day_of_month,
@@ -160,6 +163,25 @@ function parseRecurringAccountId(value: unknown): bigint | null {
   return parsed;
 }
 
+function hasMaterializableDescription(value: string): boolean {
+  let characters = 0;
+  for (const character of value) {
+    void character;
+    if (++characters > RECURRING_DESCRIPTION_MAX_CHARACTERS) return false;
+  }
+  return true;
+}
+
+function validateRecurringDescription(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new RecurringInputError('Description must be a string');
+  }
+  if (!hasMaterializableDescription(value)) {
+    throw new RecurringInputError('Description must be at most 505 characters');
+  }
+  return value;
+}
+
 export async function getRecurrings(userId: bigint): Promise<RecurringTransaction[]> {
   const recurrings = await prisma.recurringTransaction.findMany({
     where: { user_id: userId },
@@ -186,6 +208,12 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
   }
   if (input.amount !== undefined && !isFinitePositiveAmount(input.amount)) {
     throw new RecurringInputError('Amount must be a positive number');
+  }
+  const description = input.description === undefined
+    ? undefined
+    : validateRecurringDescription(input.description ?? '');
+  if (input.is_active === true && description === undefined) {
+    validateRecurringDescription(existing.description);
   }
   const startDate = input.start_date === undefined ? undefined : parseCalendarDate(input.start_date);
   if (input.start_date !== undefined && !startDate) {
@@ -214,7 +242,7 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
   const data: Record<string, unknown> = {};
   if (input.type) data.type = input.type;
   if (input.category) data.category = input.category;
-  if (input.description !== undefined) data.description = input.description;
+  if (description !== undefined) data.description = description;
   if (input.amount !== undefined) data.amount = encryptNumber(input.amount);
   if (input.frequency) data.frequency = input.frequency;
   if (input.day_of_month !== undefined) data.day_of_month = input.day_of_month;
@@ -268,6 +296,10 @@ export async function processDueRecurrings(
 
   for (const rec of recurrings) {
     if (!isDueOn(rec, scheduledDate)) continue;
+    if (!hasMaterializableDescription(rec.description)) {
+      failed.push(rec.category);
+      continue;
+    }
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -280,7 +312,7 @@ export async function processDueRecurrings(
             date: scheduledDate,
             type: rec.type,
             category: rec.category,
-            description: `[Auto] ${rec.description}`,
+            description: `${AUTO_DESCRIPTION_PREFIX}${rec.description}`,
             amount: rec.amount,
             account_id: rec.account_id,
             account: rec.account?.name ?? null,
@@ -430,8 +462,8 @@ function formatRecurring(rec: {
   };
 }
 
-function calculateNextRun(rec: { type: string; frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null; start_date: Date; end_date: Date | null; is_active: boolean }): string | null {
-  if (!rec.is_active || !hasValidRecurringCadence(rec)) return null;
+function calculateNextRun(rec: { type: string; frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null; description: string; start_date: Date; end_date: Date | null; is_active: boolean }): string | null {
+  if (!rec.is_active || !hasValidRecurringCadence(rec) || !hasMaterializableDescription(rec.description)) return null;
 
   const today = getJakartaCalendarDate(new Date());
   let next = new Date(today);
