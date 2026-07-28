@@ -10,7 +10,8 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | ---: | --- | ---: | --- | --- |
 | Done | Make investment snapshot and generated expense atomic and retry-safe | 83 | Small–medium | 001 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
-| 2 | Patch reviewed Next.js/sharp production advisories | 80 | Small–medium | Security maintenance |
+| Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
+| Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
 | Done | Protect all navigable authenticated pages consistently | 78 | Small | 002 |
 | Done | Add account-aware scoped export with explicit backup semantics | 78 | Small–medium | 003 |
 | Done | Remove per-user metadata from monthly cron responses | 77 | Small | 004 |
@@ -40,14 +41,26 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Risks/dependencies: existing decimal data and product semantics require an explicit compatibility decision.
 - Validation: zero, negative, fractional, maximum-safe, non-finite, encryption round-trip, and route-envelope tests.
 
-## 3. Production dependency patch
+## 3. Production dependency patch (direct Next completed in 007)
 
-- Problem: audit reports high findings in Next.js 16.2.10 and sharp 0.34.5.
+- Historical direct problem: Next.js 16.2.10 was below the reviewed 16.2.11
+  patched floor for proxy and other App Router vulnerabilities.
+- Completed outcome: Next and eslint-config-next are pinned to 16.2.12 with
+  coherent @next packages, reproducible `npm ci`, passing build/runtime gates,
+  and the unused image optimizer disabled.
+- Residual problem: stable Next 16.2.12 still declares optional
+  `sharp ^0.34.5`, while the sharp advisory is fixed only in 0.35.x.
 - Affected users: all deployed users.
-- Outcome: compatibility-reviewed patch versions with unchanged behavior.
+- Remaining outcome: upgrade normally when a stable Next release declares
+  sharp >=0.35; do not use a direct dependency, override, canary, downgrade, or
+  audit force to manufacture a green report.
 - Score inputs: `4,4,5,1,5,5,5,5,4` → 80.
-- Risks/dependencies: framework/lockfile regression and OCR image pipeline compatibility.
-- Validation: audit, full tests, build, proxy/auth smoke, OCR trace/runtime smoke.
+- Risks/dependencies: target-platform native SWC/sharp binaries and future
+  stable Next compatibility.
+- Validation completed: exact package/lock contract, npm ci, audit
+  classification, full tests/build, proxy/auth/private API headers, public
+  asset and disabled optimizer runtime, sharp trusted-input transform, and OCR
+  production trace.
 
 ## 4. Protected-page boundary completion
 

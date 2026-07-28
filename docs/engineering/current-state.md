@@ -1,12 +1,12 @@
 # Investment-Eki current state
 
 Date: 2026-07-27
-Baseline commit: `fc0bf00`
-Iteration branch: `feat/loop-engineering-6-cashflow-dialog`
+Baseline commit: `f155463`
+Iteration branch: `feat/loop-engineering-7-next-security-patch`
 
 ## Product and architecture
 
-Investment-Eki is a Next.js 16/React 19 personal-finance application backed by Prisma 6/MySQL. It supports credential and Google authentication, dashboard analytics, encrypted cashflow and transactions, financial accounts and transfers, receipt OCR, budgets, recurring transactions, goals, investments, exports, notifications, password reset, and superadmin SMTP configuration.
+Investment-Eki is a Next.js 16.2.12/React 19 personal-finance application backed by Prisma 6/MySQL. It supports credential and Google authentication, dashboard analytics, encrypted cashflow and transactions, financial accounts and transfers, receipt OCR, budgets, recurring transactions, goals, investments, exports, notifications, password reset, and superadmin SMTP configuration.
 
 Routes live in `src/app`, domain services in `src/services`, cross-cutting server helpers in `src/lib`, and forward-only schema changes in `prisma/migrations`. API handlers use the envelope from `src/lib/api-response.ts`.
 
@@ -30,14 +30,20 @@ mobile More sheet retain their existing hand-built overlay implementations.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 45 suites, 294 tests |
+| Tests | `npm test -- --runInBand` | Pass: 46 suites, 297 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
-| Dependency audit | `npm audit --omit=dev --audit-level=high` | Pre-existing failure: 2 high advisories in Next.js and transitive sharp |
+| Dependency audit | `npm audit --omit=dev --json` | Partial remediation: 0 Critical, 2 High; Next is affected only via residual transitive sharp |
 
 ## Runtime and UI evidence
 
 Local HTTP smoke confirms protected pages redirect anonymous users, `/api/export` returns a private non-cacheable `401`, and the monthly scheduler returns a private non-cacheable `401` for an invalid cron credential without invoking delivery. Authenticated export/UI and valid scheduler smoke remain unavailable; the configured MySQL host is unreachable, and a valid scheduler request can mutate claims and send real email.
+
+The Next 16.2.12 production smoke also confirms `/login` returns 200, ordinary
+public SVG assets return 200, the unused `/_next/image` endpoint returns 404,
+protected pages return 307, live/readiness checks return 200, and representative
+private APIs return 401 with their existing privacy/security headers. The
+corrected localhost Auth.js origin run emitted no server errors.
 
 Authenticated visual, responsive, focus-order, keyboard, and live
 accessibility checks remain unverified. The isolated Cashflow dialog browser
@@ -50,9 +56,11 @@ staging release gate.
 - Investment snapshot and generated-expense writes are atomic for new writes; historical decreases, deletes, and prior divergence remain separate design/reconciliation work.
 - Transaction-derived cashflow and independently writable `MonthlyCashflow` can disagree.
 - Several money boundaries accept non-finite or insufficiently defined IDR values; goals have a concurrent lost-update path.
-- Next.js 16.2.10 and transitive sharp currently produce two high audit
-  findings. The registry now reports a fix path, which needs a compatibility-
-  reviewed dependency slice rather than an automatic lockfile rewrite.
+- Next.js is patched to 16.2.12, clearing the direct reviewed framework
+  advisories. Audit still reports two High package entries because Next's
+  supported optional `sharp ^0.34.5` resolves vulnerable sharp 0.34.5. The
+  unused optimizer surface is disabled; do not force sharp 0.35 until a stable
+  Next release declares compatibility.
 - Login/registration throttling and registration account-enumeration behavior need a separate auth-hardening slice.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
