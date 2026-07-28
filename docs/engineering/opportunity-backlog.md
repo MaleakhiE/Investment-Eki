@@ -9,6 +9,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Priority | Opportunity | Score | Effort | Recommended iteration |
 | ---: | --- | ---: | --- | --- |
 | Done | Make investment snapshot and generated expense atomic and retry-safe | 83 | Small–medium | 001 |
+| Done | Prevent concurrent encrypted goal additions from overwriting each other | 81 | Small | 008 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -31,6 +32,23 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Score inputs: `5,5,3,2,5,5,5,5,5` → 83.
 - Risks/dependencies: no schema or package change; preserve encryption, response contract, and opt-out behavior. MySQL concurrency integration cannot be replayed without disposable Docker.
 - Validation: service tests for transaction-client use, rollback propagation, no-expense branch, and P2034 retry; focused route regression; full suite/build.
+
+## Atomic encrypted goal additions (completed in 008)
+
+- Historical problem: goal contributions decrypted a shared balance and wrote
+  it back without coordination, so concurrent accepted additions could
+  overwrite one another.
+- Outcome: one ownership-scoped conditional write compares the full mutable
+  encrypted goal snapshot, retries from fresh state on comparison/P2034
+  conflicts, and rejects structurally unsafe Add Amount input at both server
+  boundaries.
+- Score inputs: `5,5,4,2,4,5,4,4,5` → 81.
+- Residuals: mocked orchestration does not prove InnoDB contention; ambiguous
+  HTTP retries are not idempotent; absolute edit/add precedence and canonical
+  IDR rules need explicit product/schema decisions.
+- Validation: focused 30-test RED/GREEN suite, 96.2% changed-statement
+  coverage, full 48-suite/327-test regression, build/OCR trace, and five
+  independent approvals.
 
 ## 2. Canonical IDR input boundary
 
