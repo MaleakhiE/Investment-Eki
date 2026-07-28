@@ -27,6 +27,19 @@ export interface FinancialGoal {
   monthly_needed: number | null;
 }
 
+const GOAL_ADDITION_MAX_ATTEMPTS = 3;
+
+export class InvalidGoalAmountError extends Error {}
+
+function isWriteConflict(error: unknown): error is { code: 'P2034' } {
+  return (
+    typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && error.code === 'P2034'
+  );
+}
+
 export async function createGoal(userId: bigint, input: GoalInput): Promise<FinancialGoal> {
   const goal = await prisma.financialGoal.create({
     data: {
@@ -77,30 +90,65 @@ export async function updateGoal(userId: bigint, goalId: bigint, input: Partial<
 }
 
 export async function addToGoal(userId: bigint, goalId: bigint, amount: number): Promise<FinancialGoal | null> {
-  const goal = await prisma.financialGoal.findFirst({
-    where: { id: goalId, user_id: userId },
-  });
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+    throw new InvalidGoalAmountError('Goal addition must be a finite positive number');
+  }
 
-  if (!goal) return null;
+  for (let attempt = 1; attempt <= GOAL_ADDITION_MAX_ATTEMPTS; attempt += 1) {
+    const goal = await prisma.financialGoal.findFirst({
+      where: { id: goalId, user_id: userId },
+    });
 
-  const currentAmount = decryptNumber(goal.current_amount);
-  const targetAmount = decryptNumber(goal.target_amount);
-  const newAmount = currentAmount + amount;
-  const isCompleted = newAmount >= targetAmount;
+    if (!goal) return null;
 
-  await prisma.financialGoal.update({
-    where: { id: goalId },
-    data: {
-      current_amount: encryptNumber(newAmount),
-      is_completed: isCompleted,
-    },
-  });
+    const currentAmount = decryptNumber(goal.current_amount);
+    const targetAmount = decryptNumber(goal.target_amount);
+    if (!Number.isFinite(currentAmount) || !Number.isFinite(targetAmount)) {
+      throw new Error('Stored goal amount is invalid');
+    }
 
-  const updated = await prisma.financialGoal.findFirst({
-    where: { id: goalId },
-  });
+    const newAmount = currentAmount + amount;
+    if (!Number.isFinite(newAmount)) {
+      throw new InvalidGoalAmountError('Goal addition produces an invalid balance');
+    }
 
-  return updated ? formatGoal(updated) : null;
+    const currentAmountCiphertext = encryptNumber(newAmount);
+    const isCompleted = newAmount >= targetAmount;
+
+    try {
+      const updated = await prisma.financialGoal.updateMany({
+        where: {
+          id: goalId,
+          user_id: userId,
+          current_amount: goal.current_amount,
+          target_amount: goal.target_amount,
+          name: goal.name,
+          deadline: goal.deadline,
+          category: goal.category,
+          priority: goal.priority,
+          is_completed: goal.is_completed,
+        },
+        data: {
+          current_amount: currentAmountCiphertext,
+          is_completed: isCompleted,
+        },
+      });
+
+      if (updated.count === 1) {
+        return formatGoal({
+          ...goal,
+          current_amount: currentAmountCiphertext,
+          is_completed: isCompleted,
+        });
+      }
+    } catch (error) {
+      if (!isWriteConflict(error) || attempt === GOAL_ADDITION_MAX_ATTEMPTS) {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error('Goal addition conflict');
 }
 
 export async function deleteGoal(userId: bigint, goalId: bigint) {

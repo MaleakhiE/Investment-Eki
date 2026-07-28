@@ -1,7 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
-import { responseAPI } from '@/lib/api-response';
-import { updateGoal, addToGoal, deleteGoal } from '@/services/goals.service';
+import { responseAPI, validationErrorResponse } from '@/lib/api-response';
+import {
+  InvalidGoalAmountError,
+  updateGoal,
+  addToGoal,
+  deleteGoal,
+} from '@/services/goals.service';
+
+const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
+
+function parseGoalId(id: string): bigint | null {
+  if (!/^[1-9]\d*$/.test(id)) return null;
+  const value = BigInt(id);
+  return value <= MAX_SIGNED_BIGINT ? value : null;
+}
+
+function safeDatabaseErrorCode(error: unknown): string {
+  if (
+    typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && typeof error.code === 'string'
+    && /^P\d{4}$/.test(error.code)
+  ) {
+    return error.code;
+  }
+  return 'UNCLASSIFIED';
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,12 +37,36 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const { id } = await params;
-    const goalId = BigInt(id);
-    const body = await request.json();
+    const goalId = parseGoalId(id);
+    if (!goalId) {
+      return NextResponse.json(validationErrorResponse(['Invalid goal ID']), { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(validationErrorResponse(['Invalid JSON body']), { status: 400 });
+    }
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+      return NextResponse.json(validationErrorResponse(['Invalid JSON body']), { status: 400 });
+    }
 
     // Check if this is an "add amount" request
-    if (body.add_amount !== undefined) {
-      const goal = await addToGoal(userId, goalId, body.add_amount);
+    if ('add_amount' in body) {
+      const addAmount = body.add_amount;
+      if (
+        typeof addAmount !== 'number'
+        || !Number.isFinite(addAmount)
+        || addAmount <= 0
+      ) {
+        return NextResponse.json(
+          validationErrorResponse(['add_amount must be a finite positive number']),
+          { status: 400 },
+        );
+      }
+
+      const goal = await addToGoal(userId, goalId, addAmount);
       if (!goal) {
         return NextResponse.json(responseAPI(404, 'ERROR', 'Goal not found', null), { status: 404 });
       }
@@ -31,7 +81,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(responseAPI(200, 'SUCCESS', 'Goal updated', goal));
   } catch (error) {
-    console.error('Update goal error:', error);
+    if (error instanceof InvalidGoalAmountError) {
+      return NextResponse.json(
+        validationErrorResponse(['add_amount produces an invalid goal balance']),
+        { status: 400 },
+      );
+    }
+    console.error('Update goal error:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
   }
 }
@@ -50,7 +106,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json(responseAPI(200, 'SUCCESS', 'Goal deleted', null));
   } catch (error) {
-    console.error('Delete goal error:', error);
+    console.error('Delete goal error:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
   }
 }

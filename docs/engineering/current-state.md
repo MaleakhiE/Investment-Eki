@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-27
-Baseline commit: `f155463`
-Iteration branch: `feat/loop-engineering-7-next-security-patch`
+Baseline commit: `38b8d4b`
+Iteration branch: `feat/loop-engineering-8-goal-atomic-additions`
 
 ## Product and architecture
 
@@ -15,6 +15,12 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the
 mobile More sheet retain their existing hand-built overlay implementations.
+
+Goal Add Amount writes now use an ownership-scoped encrypted compare-and-swap
+with bounded fresh-state retries. The API/service reject non-finite and
+non-positive additions, malformed bodies, invalid IDs, and non-finite results
+before persistence. Exact HTTP retry idempotency and absolute-edit precedence
+remain separate product/schema decisions.
 
 ## Tool inventory used
 
@@ -30,7 +36,7 @@ mobile More sheet retain their existing hand-built overlay implementations.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 46 suites, 297 tests |
+| Tests | `npm test -- --runInBand` | Pass: 48 suites, 327 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
 | Dependency audit | `npm audit --omit=dev --json` | Partial remediation: 0 Critical, 2 High; Next is affected only via residual transitive sharp |
@@ -55,7 +61,14 @@ staging release gate.
 
 - Investment snapshot and generated-expense writes are atomic for new writes; historical decreases, deletes, and prior divergence remain separate design/reconciliation work.
 - Transaction-derived cashflow and independently writable `MonthlyCashflow` can disagree.
-- Several money boundaries accept non-finite or insufficiently defined IDR values; goals have a concurrent lost-update path.
+- Goal additions no longer use the known last-writer-wins path: their
+  ownership-scoped CAS compares the complete mutable snapshot and retries from
+  fresh encrypted state. Real InnoDB contention remains a deployment gate;
+  ambiguous HTTP retries can still duplicate a contribution, and absolute
+  edits still need an explicit conflict policy.
+- Several other money boundaries still accept non-finite or insufficiently
+  defined IDR values; canonical rounding, scale, integer, sign, and maximum
+  policy remains undecided.
 - Next.js is patched to 16.2.12, clearing the direct reviewed framework
   advisories. Audit still reports two High package entries because Next's
   supported optional `sharp ^0.34.5` resolves vulnerable sharp 0.34.5. The
