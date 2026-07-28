@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-07-27
-Baseline commit: `38b8d4b`
-Iteration branch: `feat/loop-engineering-8-goal-atomic-additions`
+Date: 2026-07-28
+Baseline commit: `5d94054`
+Iteration branch: `feat/loop-engineering-9-bcrypt-byte-boundary`
 
 ## Product and architecture
 
@@ -22,6 +22,12 @@ non-positive additions, malformed bodies, invalid IDs, and non-finite results
 before persistence. Exact HTTP retry idempotency and absolute-edit precedence
 remain separate product/schema decisions.
 
+All newly persisted bcrypt passwords now enforce the algorithm's inclusive
+72-byte UTF-8 input boundary across registration, password reset, and
+superadmin seed configuration. Registration/reset pages use the same shared
+validator. Credential login intentionally remains permissive for compatibility
+with historical hashes created from over-limit input.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -36,8 +42,9 @@ remain separate product/schema decisions.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 48 suites, 327 tests |
+| Tests | `npm test -- --runInBand` | Pass: 51 suites, 343 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
+| Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
 | Dependency audit | `npm audit --omit=dev --json` | Partial remediation: 0 Critical, 2 High; Next is affected only via residual transitive sharp |
 
@@ -74,7 +81,11 @@ staging release gate.
   supported optional `sharp ^0.34.5` resolves vulnerable sharp 0.34.5. The
   unused optimizer surface is disabled; do not force sharp 0.35 until a stable
   Next release declares compatibility.
-- Login/registration throttling and registration account-enumeration behavior need a separate auth-hardening slice.
+- New bcrypt hashes can no longer contain silently ignored suffix bytes.
+  Historical over-72-byte credentials remain compatible but need an explicit
+  remediation/reset policy.
+- Login/registration throttling, credential timing, and registration
+  account-enumeration behavior need separate auth-hardening contracts.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
   custom-alert delivery semantics still require a product contract.

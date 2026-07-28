@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
+import { validatePassword } from '@/lib/validation';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -28,8 +29,9 @@ function ResetPasswordForm() {
       setError('This reset link is invalid. Request a new one.');
       return;
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.errors[0]);
       return;
     }
     if (password !== confirmPassword) {
