@@ -18,6 +18,9 @@ const contentSecurityPolicy = [
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  images: {
+    unoptimized: true,
+  },
   transpilePackages: ['next-auth', '@auth/core'],
   serverExternalPackages: ['tesseract.js'],
   outputFileTracingRoot: repositoryRoot,
