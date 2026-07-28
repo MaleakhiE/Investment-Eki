@@ -13,6 +13,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce bcrypt's 72-byte UTF-8 boundary for every new password hash | 84 | Small | 009 |
 | Done | Reject non-finite amounts and normalized dates at direct transaction sources | 82 | Small | 010 |
 | Done | Make recurring deployment-scheduler responses and logs private | 78 | Small | 011 |
+| Done | Make session recurring API responses and logs private | 77 | Small | 012 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -96,11 +97,25 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   aggregate counts cross the response boundary, and logs contain fixed events
   plus closed-taxonomy codes. Same-date `P2002` retry remains a silent skip.
 - Score inputs: `4,4,5,2,4,5,5,5,5` → 78.
-- Residuals: session-authenticated recurring routes still need the same cache
-  and raw-error treatment; external log/ingress retention is a deployment
-  control.
+- Residuals: external cache/log/ingress behavior is a deployment control.
 - Validation: focused 3-suite/52-test RED/GREEN, 100% of 15 changed production
   statements, full 51-suite/409-test regression, build/OCR trace, and five
+  independent approvals.
+
+## Session recurring API privacy (completed in 012)
+
+- Historical problem: owner-facing recurring responses lacked explicit
+  private/no-store headers, and all four route catches logged raw errors.
+- Outcome: every collection/item outcome is private/no-store; unexpected logs
+  contain only fixed operation labels plus closed-taxonomy codes. Statuses,
+  bodies, owner DTOs, manual processing results, ownership, and financial
+  behavior are unchanged.
+- Score inputs: `4,4,5,2,4,5,5,5,5` → 77.
+- Residuals: runtime request schemas and malformed JSON/BigInt status policy are
+  separate work; proxy/CDN/access-log and prior-data handling remain deployment
+  controls.
+- Validation: focused 4-suite/63-test RED/GREEN, 100% of 25 changed production
+  statements, full 53-suite/426-test regression, build/OCR trace, and five
   independent approvals.
 
 ## Canonical IDR input boundary
@@ -179,5 +194,5 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy over-limit credential remediation, auth throttling, quote coalescing,
   CI/MySQL concurrency, and full browser accessibility remain valuable
   follow-ups.
-- Session-authenticated recurring API private/no-store headers and sanitized
-  route errors are the next policy-neutral privacy follow-up.
+- Recurring API runtime structure and identifier validation is the next
+  candidate only if its status/message compatibility can remain explicit.
