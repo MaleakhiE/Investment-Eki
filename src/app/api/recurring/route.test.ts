@@ -177,6 +177,31 @@ describe('/api/recurring privacy', () => {
     expect(createRecurring).toHaveBeenCalledWith(userId, expect.objectContaining(input));
   });
 
+  it.each([false, 0])(
+    'passes explicit non-string description %p to service validation',
+    async (description) => {
+      jest.mocked(createRecurring).mockRejectedValue(
+        new RecurringInputError('Description must be a string'),
+      );
+
+      const response = await POST(request(JSON.stringify({
+        type: 'EXPENSE',
+        category: 'Housing',
+        description,
+        amount: 2_500_000,
+        frequency: 'MONTHLY',
+        day_of_month: 31,
+        start_date: '2026-01-01',
+      })));
+
+      expect(response.status).toBe(400);
+      expect(createRecurring).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({ description }),
+      );
+    },
+  );
+
   it('keeps recurring validation failures private and unlogged', async () => {
     jest.mocked(createRecurring).mockRejectedValue(
       new RecurringInputError('Amount must be a positive number'),

@@ -17,6 +17,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Prevent invalid recurring cadence and one-sided transfer materialization | 87 | Small | 013 |
 | Done | Validate recurring JSON structure and canonical item IDs | 73 | Small | 014 |
 | Done | Enforce canonical optional recurring linked-account IDs | 76 | Small | 015 |
+| Done | Prevent recurring description materialization overflow | 82 | Small | 016 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -161,11 +162,27 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   strings, preserves optional/clear semantics, and reuses the exact bigint for
   owned-active lookup and persistence.
 - Score inputs: `4,5,4,2,4,5,5,5,5` → 76.
-- Residuals: category/description policy remains separate. Descriptions of 506
-  through 512 characters can exceed transaction capacity after `[Auto] `.
-  Production remains blocked by Loop 13's mandatory zero-result target audit.
+- Residuals: category policy remains separate. Description materialization
+  capacity was completed in 016. Production remains blocked by the mandatory
+  Loop 13 and Loop 16 target audits.
 - Validation: focused 5-suite/225-test regression, 18/18 changed production
   statements, full 54-suite/588-test regression, build/OCR trace, and five
+  independent approvals.
+
+## Recurring description materialization capacity (completed in 016)
+
+- Historical problem: both description columns allowed 512 characters, but
+  automatic posting added `[Auto] ` and could repeatedly fail rules containing
+  506 through 512 characters.
+- Outcome: a prefix-derived 505-code-point boundary preserves text losslessly;
+  legacy oversized rules fail before a database transaction and expose no
+  misleading next run while remaining correctable/deactivatable.
+- Score inputs: `5,5,4,3,4,5,5,5,5` → 82.
+- Residuals: category policy remains separate. Production requires zero-result
+  Loop 13 and Loop 16 aggregate audits, with owner-approved handling for any
+  historical hit.
+- Validation: focused 5-suite/258-test regression, 24/24 changed production
+  statements, full 54-suite/621-test regression, build/OCR trace, and five
   independent approvals.
 
 ## Canonical IDR input boundary
@@ -244,6 +261,5 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy over-limit credential remediation, auth throttling, quote coalescing,
   CI/MySQL concurrency, and full browser accessibility remain valuable
   follow-ups.
-- Assess recurring category/description validation separately, beginning with
-  the 506..512-character `[Auto] ` posting-capacity hazard and a read-only
-  historical audit.
+- Assess recurring category validation separately; description capacity is
+  complete, subject to the mandatory target audit.

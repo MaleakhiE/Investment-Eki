@@ -153,6 +153,32 @@ describe('processDueRecurrings', () => {
     expect(transaction).toHaveBeenCalledTimes(1);
   });
 
+  it('posts the exact 512-code-point expanded description', async () => {
+    const description = '😀'.repeat(505);
+    recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, description }]);
+
+    await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
+      .resolves.toEqual({ created: ['Housing'], skipped: [], failed: [] });
+
+    const postedDescription = transactionCreate.create.mock.calls[0][0].data.description;
+    expect(postedDescription).toBe(`[Auto] ${description}`);
+    expect(Array.from(postedDescription)).toHaveLength(512);
+  });
+
+  it.each(['A'.repeat(506), '😀'.repeat(506)])(
+    'fails a due legacy oversized description before opening a transaction',
+    async (description) => {
+      recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, description }]);
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
+        .resolves.toEqual({ created: [], skipped: [], failed: ['Housing'] });
+
+      expect(transaction).not.toHaveBeenCalled();
+      expect(consoleError).not.toHaveBeenCalled();
+    },
+  );
+
   it.each([
     { type: 'TRANSFER', frequency: 'DAILY', day_of_month: null, day_of_week: null, month_of_year: null },
     { type: 'EXPENSE', frequency: 'WEEKLY', day_of_month: null, day_of_week: null, month_of_year: null },
@@ -175,6 +201,44 @@ describe('createRecurring account ownership', () => {
   };
 
   beforeEach(() => jest.clearAllMocks());
+
+  it.each([
+    false, 0, [], {}, 'A'.repeat(506), '😀'.repeat(506),
+  ])('rejects invalid description %p before lookup, encryption, or create', async (description) => {
+    await expect(createRecurring(BigInt(7), {
+      ...input,
+      description: description as unknown as string,
+    })).rejects.toThrow(
+      typeof description === 'string'
+        ? 'Description must be at most 505 characters'
+        : 'Description must be a string',
+    );
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [undefined, ''],
+    [null, ''],
+    ['', ''],
+    ['   ', '   '],
+    ['A'.repeat(505), 'A'.repeat(505)],
+    ['😀'.repeat(505), '😀'.repeat(505)],
+  ])('persists accepted description %p exactly as %p', async (description, expected) => {
+    recurringTransaction.create.mockResolvedValue({ ...monthlyRule, description: expected });
+
+    await createRecurring(BigInt(7), {
+      ...input,
+      description: description as unknown as string,
+      account_id: undefined,
+    });
+
+    expect(recurringTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ description: expected }),
+    });
+  });
 
   it.each([
     0, 2, Number.MAX_SAFE_INTEGER + 1, BigInt(2), false, true, [], {}, '0', '00',
@@ -349,6 +413,18 @@ describe('recurring rule read/update semantics', () => {
     expect(rule.next_run).toBeNull();
   });
 
+  it.each(['A'.repeat(506), '😀'.repeat(506)])(
+    'preserves a legacy oversized description without reporting a next run',
+    async (description) => {
+      recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, description }]);
+
+      const [rule] = await getRecurrings(BigInt(7));
+
+      expect(rule.description).toBe(description);
+      expect(rule.next_run).toBeNull();
+    },
+  );
+
   it.each([
     { frequency: 'DAILY', day_of_month: null, day_of_week: null, expected: '2026-06-02' },
     { frequency: 'WEEKLY', day_of_month: null, day_of_week: 1, expected: '2026-06-08' },
@@ -419,6 +495,25 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
   });
 
+  it.each([
+    false, 0, [], {}, 'A'.repeat(506), '😀'.repeat(506),
+  ])('rejects invalid update description %p after owner lookup and before side effects', async (description) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      description: description as unknown as string,
+      account_id: '3',
+    })).rejects.toThrow(
+      typeof description === 'string'
+        ? 'Description must be at most 505 characters'
+        : 'Description must be a string',
+    );
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
   it('returns missing before validating an invalid update account ID', async () => {
     recurringTransaction.findFirst.mockResolvedValue(null);
 
@@ -478,6 +573,76 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
       where: { id: BigInt(5), user_id: BigInt(7) },
       data: { account_id: null },
+    });
+  });
+
+  it.each([
+    [null, ''],
+    ['', ''],
+    ['   ', '   '],
+    ['A'.repeat(505), 'A'.repeat(505)],
+    ['😀'.repeat(505), '😀'.repeat(505)],
+  ])('persists accepted update description %p exactly as %p', async (description, expected) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      description: description as unknown as string,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { description: expected },
+    });
+  });
+
+  it('rejects activating an oversized legacy description without correcting it', async () => {
+    recurringTransaction.findFirst.mockResolvedValue({
+      ...monthlyRule,
+      description: 'A'.repeat(506),
+      is_active: false,
+    });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      is_active: true,
+    })).rejects.toThrow('Description must be at most 505 characters');
+
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('allows an oversized legacy description to be deactivated', async () => {
+    recurringTransaction.findFirst.mockResolvedValue({
+      ...monthlyRule,
+      description: 'A'.repeat(506),
+    });
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      is_active: false,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { is_active: false },
+    });
+  });
+
+  it('allows activation when the same update corrects a legacy description', async () => {
+    recurringTransaction.findFirst.mockResolvedValue({
+      ...monthlyRule,
+      description: 'A'.repeat(506),
+      is_active: false,
+    });
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      description: 'A'.repeat(505),
+      is_active: true,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { description: 'A'.repeat(505), is_active: true },
     });
   });
 
