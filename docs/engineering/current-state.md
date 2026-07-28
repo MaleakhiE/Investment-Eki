@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `5d94054`
-Iteration branch: `feat/loop-engineering-9-bcrypt-byte-boundary`
+Baseline commit: `7212e14`
+Iteration branch: `feat/loop-engineering-10-strict-transaction-inputs`
 
 ## Product and architecture
 
@@ -28,6 +28,12 @@ superadmin seed configuration. Registration/reset pages use the same shared
 validator. Credential login intentionally remains permissive for compatibility
 with historical hashes created from over-limit input.
 
+Transaction create/update/transfer and recurring-rule create/update now share a
+finite-positive amount boundary and strict real `YYYY-MM-DD` parsing within
+MySQL's supported date range. Accepted dates persist at UTC midnight; valid
+fractions remain unchanged. Recurring end-date clearing and all scheduler
+cadence/idempotency behavior remain unchanged.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -42,7 +48,7 @@ with historical hashes created from over-limit input.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 51 suites, 343 tests |
+| Tests | `npm test -- --runInBand` | Pass: 51 suites, 391 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -73,9 +79,12 @@ staging release gate.
   fresh encrypted state. Real InnoDB contention remains a deployment gate;
   ambiguous HTTP retries can still duplicate a contribution, and absolute
   edits still need an explicit conflict policy.
-- Several other money boundaries still accept non-finite or insufficiently
-  defined IDR values; canonical rounding, scale, integer, sign, and maximum
-  policy remains undecided.
+- Transaction and recurring write inputs now reject non-finite values. Other
+  money boundaries still lack one canonical rounding, scale, integer, sign,
+  and maximum policy.
+- Historical malformed recurring ciphertext is not reconciled; the scheduler
+  can still copy such a legacy value into a transaction. Detection and repair
+  need a separate data-handling policy and staging evidence.
 - Next.js is patched to 16.2.12, clearing the direct reviewed framework
   advisories. Audit still reports two High package entries because Next's
   supported optional `sharp ^0.34.5` resolves vulnerable sharp 0.34.5. The

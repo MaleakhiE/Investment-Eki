@@ -11,6 +11,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Make investment snapshot and generated expense atomic and retry-safe | 83 | Small–medium | 001 |
 | Done | Prevent concurrent encrypted goal additions from overwriting each other | 81 | Small | 008 |
 | Done | Enforce bcrypt's 72-byte UTF-8 boundary for every new password hash | 84 | Small | 009 |
+| Done | Reject non-finite amounts and normalized dates at direct transaction sources | 82 | Small | 010 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -19,11 +20,11 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Remove per-user metadata from monthly cron responses | 77 | Small | 004 |
 | Done | Honor explicit monthly reminder/summary opt-outs | 77 | Small | 005 |
 | Done | Migrate the read-only Cashflow history to a native accessible dialog | 70 | Small | 006 |
-| 4 | Define and enforce notification timing and alert semantics | 77 | Medium | Needs product policy decision |
-| 5 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
-| 6 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
-| 7 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
-| 8 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
+| 2 | Define and enforce notification timing and alert semantics | 77 | Medium | Needs product policy decision |
+| 3 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
+| 4 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
+| 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
+| 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
 ## 1. Atomic investment snapshot accounting (completed in 001)
 
@@ -68,9 +69,28 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   statements, seed import smoke, full 51-suite/343-test regression,
   build/OCR trace, and five independent approvals.
 
-## 2. Canonical IDR input boundary
+## Strict financial write inputs (completed in 010)
 
-- Problem: transaction validation accepts `NaN`/`Infinity`; budget and goal paths do not share finite, sign, scale, or maximum rules. Budget output hides overage by clamping.
+- Historical problem: transaction create/update accepted non-finite amounts,
+  and transaction, transfer, and recurring inputs allowed impossible dates to
+  normalize before persistence. Recurring partial update also treated explicit
+  invalid runtime values as omitted.
+- Outcome: one shared finite-positive amount and exact real MySQL-range calendar
+  boundary protects transaction create/update/transfer and recurring
+  create/update before encryption or downstream writes.
+- Score inputs: `5,5,4,2,4,5,5,5,5` → 82.
+- Residuals: valid fractions remain supported because integer/scale/max rules
+  need owner policy; historical malformed recurring ciphertext can still be
+  materialized by the scheduler and needs separate reconciliation.
+- Validation: focused 3-suite/75-test RED/GREEN, 100% of 29 changed production
+  statements, full 51-suite/391-test regression, build/OCR trace, and five
+  independent approvals.
+
+## Canonical IDR input boundary
+
+- Problem: budget, goal, and other money paths do not share canonical sign,
+  scale, rounding, integer, or maximum rules. Budget output hides overage by
+  clamping. Transaction/recurring non-finite rejection was completed in 010.
 - Affected users: all users entering money.
 - Outcome: one documented IDR policy and shared validation with signed overage semantics.
 - Score inputs: `5,5,3,3,5,5,4,5,5` → 83.
