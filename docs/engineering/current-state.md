@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `a08c3f1`
-Iteration branch: `feat/loop-engineering-12-recurring-api-privacy`
+Baseline commit: `362076a`
+Iteration branch: `feat/loop-engineering-13-recurring-cadence-integrity`
 
 ## Product and architecture
 
@@ -46,6 +46,13 @@ closed recurring error taxonomy and never log raw request, financial, route,
 user, rule, account, session, or database details. Existing owner DTOs, manual
 processing output, statuses, messages, and service scoping are unchanged.
 
+Recurring rules now enforce exact financial type/frequency discriminators and
+integer cadence requirements at the shared service boundary. PATCH preserves
+omitted cadence while rejecting explicit null when the resulting frequency
+requires that field. New invalid rules and legacy transfer or malformed-cadence
+rows fail closed before scheduler materialization and expose no misleading
+`next_run`.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -60,7 +67,7 @@ processing output, statuses, messages, and service scoping are unchanged.
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 53 suites, 426 tests |
+| Tests | `npm test -- --runInBand` | Pass: 53 suites, 481 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -97,6 +104,11 @@ staging release gate.
 - Historical malformed recurring ciphertext is not reconciled; the scheduler
   can still copy such a legacy value into a transaction. Detection and repair
   need a separate data-handling policy and staging evidence.
+- New recurring transfer and malformed-cadence writes are rejected, and legacy
+  transfer or malformed-cadence rows fail closed during processing/read
+  presentation. The required target aggregate audit could not run because
+  MySQL is unreachable; deployment must stop until it returns zero, with any
+  hit requiring owner-approved remediation.
 - Next.js is patched to 16.2.12, clearing the direct reviewed framework
   advisories. Audit still reports two High package entries because Next's
   supported optional `sharp ^0.34.5` resolves vulnerable sharp 0.34.5. The

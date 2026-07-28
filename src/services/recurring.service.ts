@@ -74,7 +74,22 @@ export async function createRecurring(userId: bigint, input: RecurringInput) {
   return formatRecurring(recurring);
 }
 
-function validateRecurringSchedule(input: RecurringInput): void {
+function validateRecurringSchedule(input: {
+  type: unknown;
+  amount: unknown;
+  frequency: unknown;
+  day_of_month?: unknown;
+  day_of_week?: unknown;
+  month_of_year?: unknown;
+  start_date: unknown;
+  end_date?: unknown;
+}): void {
+  if (input.type !== 'INCOME' && input.type !== 'EXPENSE') {
+    throw new RecurringInputError('Recurring type must be INCOME or EXPENSE');
+  }
+  if (!['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(input.frequency as string)) {
+    throw new RecurringInputError('Invalid recurring frequency');
+  }
   if (!isFinitePositiveAmount(input.amount)) {
     throw new RecurringInputError('Amount must be a positive number');
   }
@@ -89,17 +104,46 @@ function validateRecurringSchedule(input: RecurringInput): void {
   ) {
     throw new RecurringInputError('Invalid end date. Use YYYY-MM-DD');
   }
-  if (input.frequency === 'WEEKLY' && (input.day_of_week === undefined || input.day_of_week < 0 || input.day_of_week > 6)) {
+  if (
+    input.day_of_week !== undefined
+    && input.day_of_week !== null
+    && (!Number.isInteger(input.day_of_week) || (input.day_of_week as number) < 0 || (input.day_of_week as number) > 6)
+  ) {
     throw new RecurringInputError('Weekly recurring transactions require day_of_week from 0 to 6');
   }
-  if ((input.frequency === 'MONTHLY' || input.frequency === 'YEARLY')
-    && (input.day_of_month === undefined || input.day_of_month < 1 || input.day_of_month > 31)) {
+  if (
+    input.day_of_month !== undefined
+    && input.day_of_month !== null
+    && (!Number.isInteger(input.day_of_month) || (input.day_of_month as number) < 1 || (input.day_of_month as number) > 31)
+  ) {
     throw new RecurringInputError('Monthly and yearly recurring transactions require day_of_month from 1 to 31');
   }
-  if (input.frequency === 'YEARLY'
-    && (input.month_of_year === undefined || input.month_of_year < 1 || input.month_of_year > 12)) {
+  if (
+    input.month_of_year !== undefined
+    && input.month_of_year !== null
+    && (!Number.isInteger(input.month_of_year) || (input.month_of_year as number) < 1 || (input.month_of_year as number) > 12)
+  ) {
     throw new RecurringInputError('Yearly recurring transactions require month_of_year from 1 to 12');
   }
+  if (input.frequency === 'WEEKLY' && !isIntegerInRange(input.day_of_week, 0, 6)) {
+    throw new RecurringInputError('Weekly recurring transactions require day_of_week from 0 to 6');
+  }
+  if (
+    (input.frequency === 'MONTHLY' || input.frequency === 'YEARLY')
+    && !isIntegerInRange(input.day_of_month, 1, 31)
+  ) {
+    throw new RecurringInputError('Monthly and yearly recurring transactions require day_of_month from 1 to 31');
+  }
+  if (input.frequency === 'YEARLY' && !isIntegerInRange(input.month_of_year, 1, 12)) {
+    throw new RecurringInputError('Yearly recurring transactions require month_of_year from 1 to 12');
+  }
+}
+
+function isIntegerInRange(value: unknown, minimum: number, maximum: number): boolean {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= minimum
+    && value <= maximum;
 }
 
 export async function getRecurrings(userId: bigint): Promise<RecurringTransaction[]> {
@@ -114,6 +158,18 @@ export async function getRecurrings(userId: bigint): Promise<RecurringTransactio
 export async function updateRecurring(userId: bigint, id: bigint, input: Partial<RecurringInput> & { is_active?: boolean }) {
   const existing = await prisma.recurringTransaction.findFirst({ where: { id, user_id: userId } });
   if (!existing) return false;
+  if (input.type !== undefined && input.type !== 'INCOME' && input.type !== 'EXPENSE') {
+    throw new RecurringInputError('Recurring type must be INCOME or EXPENSE');
+  }
+  if (
+    input.frequency !== undefined
+    && !['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(input.frequency)
+  ) {
+    throw new RecurringInputError('Invalid recurring frequency');
+  }
+  if (input.is_active !== undefined && typeof input.is_active !== 'boolean') {
+    throw new RecurringInputError('is_active must be a boolean');
+  }
   if (input.amount !== undefined && !isFinitePositiveAmount(input.amount)) {
     throw new RecurringInputError('Amount must be a positive number');
   }
@@ -122,15 +178,12 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
     throw new RecurringInputError('Invalid start date. Use YYYY-MM-DD');
   }
   validateRecurringSchedule({
-    type: (input.type ?? existing.type) as 'INCOME' | 'EXPENSE',
-    category: input.category ?? existing.category,
-    description: input.description ?? existing.description,
+    type: (input.type === undefined ? existing.type : input.type) as 'INCOME' | 'EXPENSE',
     amount: input.amount ?? decryptNumber(existing.amount),
-    frequency: (input.frequency ?? existing.frequency) as RecurringInput['frequency'],
-    day_of_month: input.day_of_month ?? existing.day_of_month ?? undefined,
-    day_of_week: input.day_of_week ?? existing.day_of_week ?? undefined,
-    month_of_year: input.month_of_year ?? existing.month_of_year ?? undefined,
-    account_id: input.account_id ?? existing.account_id?.toString(),
+    frequency: (input.frequency === undefined ? existing.frequency : input.frequency) as RecurringInput['frequency'],
+    day_of_month: input.day_of_month === undefined ? existing.day_of_month : input.day_of_month,
+    day_of_week: input.day_of_week === undefined ? existing.day_of_week : input.day_of_week,
+    month_of_year: input.month_of_year === undefined ? existing.month_of_year : input.month_of_year,
     start_date: startDate?.toISOString().slice(0, 10) ?? existing.start_date.toISOString().slice(0, 10),
     end_date: input.end_date ?? existing.end_date?.toISOString().slice(0, 10),
   });
@@ -265,9 +318,10 @@ export async function processAllDueRecurrings(asOf: Date = new Date()): Promise<
 }
 
 function isDueOn(
-  rec: { frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null },
+  rec: { type: string; frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null },
   date: Date,
 ): boolean {
+  if (!hasValidRecurringCadence(rec)) return false;
   const dayOfWeek = date.getUTCDay();
   const dayOfMonth = date.getUTCDate();
   const month = date.getUTCMonth() + 1;
@@ -279,11 +333,34 @@ function isDueOn(
     case 'DAILY':
       return true;
     case 'WEEKLY':
-      return rec.day_of_week === null || rec.day_of_week === dayOfWeek;
+      return rec.day_of_week === dayOfWeek;
     case 'MONTHLY':
       return dayOfMonth === effectiveDay;
     case 'YEARLY':
       return rec.month_of_year === month && dayOfMonth === effectiveDay;
+    default:
+      return false;
+  }
+}
+
+function hasValidRecurringCadence(rec: {
+  type: string;
+  frequency: string;
+  day_of_month: number | null;
+  day_of_week: number | null;
+  month_of_year: number | null;
+}): boolean {
+  if (rec.type !== 'INCOME' && rec.type !== 'EXPENSE') return false;
+  switch (rec.frequency) {
+    case 'DAILY':
+      return true;
+    case 'WEEKLY':
+      return isIntegerInRange(rec.day_of_week, 0, 6);
+    case 'MONTHLY':
+      return isIntegerInRange(rec.day_of_month, 1, 31);
+    case 'YEARLY':
+      return isIntegerInRange(rec.day_of_month, 1, 31)
+        && isIntegerInRange(rec.month_of_year, 1, 12);
     default:
       return false;
   }
@@ -336,8 +413,8 @@ function formatRecurring(rec: {
   };
 }
 
-function calculateNextRun(rec: { frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null; start_date: Date; end_date: Date | null; is_active: boolean }): string | null {
-  if (!rec.is_active) return null;
+function calculateNextRun(rec: { type: string; frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null; start_date: Date; end_date: Date | null; is_active: boolean }): string | null {
+  if (!rec.is_active || !hasValidRecurringCadence(rec)) return null;
 
   const today = getJakartaCalendarDate(new Date());
   let next = new Date(today);
@@ -347,18 +424,18 @@ function calculateNextRun(rec: { frequency: string; day_of_month: number | null;
       next.setDate(next.getDate() + 1);
       break;
     case 'WEEKLY':
-      const targetDay = rec.day_of_week ?? 0;
+      const targetDay = rec.day_of_week!;
       const currentDay = next.getUTCDay();
       const daysUntil = (targetDay - currentDay + 7) % 7 || 7;
       next.setUTCDate(next.getUTCDate() + daysUntil);
       break;
     case 'MONTHLY':
-      next = calendarDate(today.getUTCFullYear(), today.getUTCMonth() + 1, rec.day_of_month ?? 1);
-      if (next <= today) next = calendarDate(today.getUTCFullYear(), today.getUTCMonth() + 2, rec.day_of_month ?? 1);
+      next = calendarDate(today.getUTCFullYear(), today.getUTCMonth() + 1, rec.day_of_month!);
+      if (next <= today) next = calendarDate(today.getUTCFullYear(), today.getUTCMonth() + 2, rec.day_of_month!);
       break;
     case 'YEARLY':
-      next = calendarDate(today.getUTCFullYear(), rec.month_of_year ?? 1, rec.day_of_month ?? 1);
-      if (next <= today) next = calendarDate(today.getUTCFullYear() + 1, rec.month_of_year ?? 1, rec.day_of_month ?? 1);
+      next = calendarDate(today.getUTCFullYear(), rec.month_of_year!, rec.day_of_month!);
+      if (next <= today) next = calendarDate(today.getUTCFullYear() + 1, rec.month_of_year!, rec.day_of_month!);
       break;
   }
 
