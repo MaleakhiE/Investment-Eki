@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-28
-Baseline commit: `362076a`
-Iteration branch: `feat/loop-engineering-13-recurring-cadence-integrity`
+Baseline commit: `87e4d96`
+Iteration branch: `feat/loop-engineering-14-recurring-route-inputs`
 
 ## Product and architecture
 
@@ -53,6 +53,12 @@ requires that field. New invalid rules and legacy transfer or malformed-cadence
 rows fail closed before scheduler materialization and expose no misleading
 `next_run`.
 
+Recurring POST/PATCH transport now accepts only JSON objects, while item routes
+accept only canonical positive signed-BIGINT IDs. Authentication precedes all
+input access, item ID validation precedes PATCH body parsing, and expected
+structural faults return private, unlogged standard 400 validation envelopes.
+Valid objects and IDs still reach the same owner-scoped services unchanged.
+
 ## Tool inventory used
 
 - Local shell/Git, npm, Jest, TypeScript, ESLint, Next.js, and Prisma CLI.
@@ -67,7 +73,7 @@ rows fail closed before scheduler materialization and expose no misleading
 | Prisma validation | `npx prisma validate` | Pass |
 | Type checking | `npx tsc --noEmit` | Pass |
 | Lint | `npm run lint` | Pass |
-| Tests | `npm test -- --runInBand` | Pass: 53 suites, 481 tests |
+| Tests | `npm test -- --runInBand` | Pass: 54 suites, 532 tests |
 | Build | `npm run build` | Pass, including OCR trace verification |
 | Migration status | `npm run db:status` | Environment-related failure: configured MySQL returned `P1001` |
 | Migration replay | `npm run db:verify` | Environment-related failure: Docker daemon unavailable |
@@ -122,10 +128,10 @@ staging release gate.
 - Notification delivery honors explicit reminder and summary opt-outs for the
   derived monthly type. Reminder-day, end-of-month, low-balance, and
   custom-alert delivery semantics still require a product contract.
-- Recurring API runtime inputs still rely on ad hoc destructuring and BigInt
-  conversion. Malformed JSON/IDs remain generic 500s, while runtime
-  type/frequency, string-length, and account-ID validation need a bounded
-  compatibility contract before tightening.
+- Recurring JSON structure and item IDs are now validated before services.
+  Field-level category/description/account-ID constraints and normalization
+  still need bounded compatibility contracts; unknown keys and empty PATCH
+  remain intentionally supported.
 
 ## Operational gaps
 

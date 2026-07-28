@@ -232,26 +232,43 @@ describe('/api/recurring privacy', () => {
       .not.toMatch(/Housing|Rent|2500000|user 7|private-host|accountId/);
   });
 
-  it('keeps malformed authenticated JSON private and out of logs', async () => {
+  it('returns a private unlogged validation error for malformed authenticated JSON', async () => {
     const sensitiveBody = '{"category":"Private Housing","amount":2500000';
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const response = await POST(request(sensitiveBody));
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(400);
     expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
     await expect(response.json()).resolves.toEqual({
-      responseCode: 500,
+      responseCode: 400,
       responseStatus: 'ERROR',
-      responseMessage: 'Internal server error',
-      responseDetails: null,
+      responseMessage: 'Validation failed',
+      responseDetails: { errors: ['Invalid JSON body'] },
     });
     expect(createRecurring).not.toHaveBeenCalled();
     expect(processRecurrings).not.toHaveBeenCalled();
-    expect(consoleError).toHaveBeenCalledWith(
-      'Recurring create or process failed',
-      { code: 'UNCLASSIFIED' },
-    );
-    expect(JSON.stringify(consoleError.mock.calls)).not.toMatch(/Private Housing|2500000/);
+    expect(consoleError).not.toHaveBeenCalled();
   });
+
+  it.each(['null', '[]', '"private"', '42', 'true'])(
+    'returns the same private validation error for non-object JSON %s',
+    async (body) => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      const response = await POST(request(body));
+
+      expect(response.status).toBe(400);
+      expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
+      await expect(response.json()).resolves.toEqual({
+        responseCode: 400,
+        responseStatus: 'ERROR',
+        responseMessage: 'Validation failed',
+        responseDetails: { errors: ['Invalid JSON body'] },
+      });
+      expect(createRecurring).not.toHaveBeenCalled();
+      expect(processRecurrings).not.toHaveBeenCalled();
+      expect(consoleError).not.toHaveBeenCalled();
+    },
+  );
 });

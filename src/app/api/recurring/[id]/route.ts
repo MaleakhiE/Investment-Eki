@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
-import { responseAPI } from '@/lib/api-response';
+import { responseAPI, validationErrorResponse } from '@/lib/api-response';
+import { isJsonObject, parseRecurringId } from '@/lib/recurring-route-input';
 import {
   updateRecurring,
   deleteRecurring,
   getSafeRecurringErrorCode,
+  type RecurringInput,
   RecurringInputError,
 } from '@/services/recurring.service';
 
@@ -23,8 +25,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const { id } = await params;
-    const recurringId = BigInt(id);
-    const body = await request.json();
+    const recurringId = parseRecurringId(id);
+    if (!recurringId) {
+      return NextResponse.json(validationErrorResponse(['Invalid recurring ID']), {
+        status: 400,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
+    }
+    let parsedBody: unknown;
+    try {
+      parsedBody = await request.json();
+    } catch {
+      return NextResponse.json(validationErrorResponse(['Invalid JSON body']), {
+        status: 400,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
+    }
+    if (!isJsonObject(parsedBody)) {
+      return NextResponse.json(validationErrorResponse(['Invalid JSON body']), {
+        status: 400,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
+    }
+    const body = parsedBody as Partial<RecurringInput> & { is_active?: boolean };
 
     const success = await updateRecurring(userId, recurringId, body);
 
@@ -64,7 +87,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id } = await params;
-    const recurringId = BigInt(id);
+    const recurringId = parseRecurringId(id);
+    if (!recurringId) {
+      return NextResponse.json(validationErrorResponse(['Invalid recurring ID']), {
+        status: 400,
+        headers: PRIVATE_NO_STORE_HEADERS,
+      });
+    }
 
     await deleteRecurring(userId, recurringId);
 
