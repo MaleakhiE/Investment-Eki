@@ -39,9 +39,13 @@ afterEach(() => jest.restoreAllMocks());
 describe('/api/recurring/[id] privacy', () => {
   it('returns exact private 401 responses without invoking mutation services', async () => {
     jest.mocked(getCurrentUserId).mockResolvedValue(null);
+    const then = jest.fn(() => {
+      throw new Error('private params must not be awaited');
+    });
+    const untouchedParams = { params: { then } as never };
 
-    const patchResponse = await PATCH(request('{invalid private json'), params());
-    const deleteResponse = await DELETE(request(), params());
+    const patchResponse = await PATCH(request('{invalid private json'), untouchedParams);
+    const deleteResponse = await DELETE(request(), untouchedParams);
 
     for (const response of [patchResponse, deleteResponse]) {
       expect(response.status).toBe(401);
@@ -53,6 +57,7 @@ describe('/api/recurring/[id] privacy', () => {
         responseDetails: null,
       });
     }
+    expect(then).not.toHaveBeenCalled();
     expect(updateRecurring).not.toHaveBeenCalled();
     expect(deleteRecurring).not.toHaveBeenCalled();
   });
@@ -127,19 +132,65 @@ describe('/api/recurring/[id] privacy', () => {
       .not.toMatch(/Rule 5|Housing|2500000|user 7|accountId/);
   });
 
-  it('keeps malformed rule IDs generic, private, and out of logs', async () => {
+  it.each([
+    '', '0', '00', '01', '+1', '-1', ' 1', '1 ', '1.0', '1e3', '0x1',
+    '１２', '9223372036854775808', '12345678901234567890', 'secret-rule-id',
+  ])('rejects invalid rule ID %p before parsing or mutating', async (id) => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const json = jest.fn().mockRejectedValue(new Error('private body must not be read'));
+    const invalidRequest = { json } as never;
 
-    const response = await PATCH(request(), params('secret-rule-id'));
+    const patchResponse = await PATCH(invalidRequest, params(id));
+    const deleteResponse = await DELETE(request(), params(id));
 
-    expect(response.status).toBe(500);
-    expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
+    for (const response of [patchResponse, deleteResponse]) {
+      expect(response.status).toBe(400);
+      expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
+      await expect(response.json()).resolves.toEqual({
+        responseCode: 400,
+        responseStatus: 'ERROR',
+        responseMessage: 'Validation failed',
+        responseDetails: { errors: ['Invalid recurring ID'] },
+      });
+    }
+    expect(json).not.toHaveBeenCalled();
     expect(updateRecurring).not.toHaveBeenCalled();
-    expect(consoleError).toHaveBeenCalledWith(
-      'Recurring update failed',
-      { code: 'UNCLASSIFIED' },
-    );
-    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('secret-rule-id');
+    expect(deleteRecurring).not.toHaveBeenCalled();
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it.each(['{invalid', 'null', '[]', '"private"', '42', 'true'])(
+    'rejects malformed or non-object PATCH JSON %s without mutating',
+    async (body) => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      const response = await PATCH(request(body), params());
+
+      expect(response.status).toBe(400);
+      expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
+      await expect(response.json()).resolves.toEqual({
+        responseCode: 400,
+        responseStatus: 'ERROR',
+        responseMessage: 'Validation failed',
+        responseDetails: { errors: ['Invalid JSON body'] },
+      });
+      expect(updateRecurring).not.toHaveBeenCalled();
+      expect(consoleError).not.toHaveBeenCalled();
+    },
+  );
+
+  it('passes signed BIGINT boundary IDs to the scoped services', async () => {
+    jest.mocked(updateRecurring).mockResolvedValue(true);
+    jest.mocked(deleteRecurring).mockResolvedValue(undefined);
+    const maximum = '9223372036854775807';
+
+    const patchResponse = await PATCH(request(), params(maximum));
+    const deleteResponse = await DELETE(request(), params('1'));
+
+    expect(patchResponse.status).toBe(200);
+    expect(deleteResponse.status).toBe(200);
+    expect(updateRecurring).toHaveBeenCalledWith(userId, BigInt(maximum), {});
+    expect(deleteRecurring).toHaveBeenCalledWith(userId, BigInt(1));
   });
 
   it('deletes an owned or missing rule with the existing private idempotent response', async () => {
