@@ -392,5 +392,30 @@ describe('account transfers', () => {
       net_cashflow: 80_000,
     }));
   });
+
+  it('groups prototype-reserved category names as exact numeric own properties', async () => {
+    transactionRepository.findMany.mockResolvedValue([
+      { type: 'EXPENSE', category: '__proto__', amount: 'encrypted:10' },
+      { type: 'EXPENSE', category: '__proto__', amount: 'encrypted:5' },
+      { type: 'EXPENSE', category: 'constructor', amount: 'encrypted:20' },
+      { type: 'EXPENSE', category: 'toString', amount: 'encrypted:30' },
+      { type: 'EXPENSE', category: 'Food', amount: 'encrypted:40' },
+    ]);
+
+    const result = await getMonthlySummary(BigInt(20), '2026-07');
+    const expected = Object.fromEntries([
+      ['__proto__', 15],
+      ['constructor', 20],
+      ['toString', 30],
+      ['Food', 40],
+    ]);
+
+    expect(result.total_expense).toBe(105);
+    expect(result.expense_by_category).toEqual(expected);
+    expect(JSON.parse(JSON.stringify(result.expense_by_category))).toEqual(expected);
+    for (const category of Object.keys(expected)) {
+      expect(Object.hasOwn(result.expense_by_category, category)).toBe(true);
+    }
+  });
 });
 import fc from 'fast-check';

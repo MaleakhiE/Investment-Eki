@@ -165,6 +165,20 @@ describe('processDueRecurrings', () => {
     expect(Array.from(postedDescription)).toHaveLength(512);
   });
 
+  it.each(['A'.repeat(50), '😀'.repeat(50), '__proto__'])(
+    'posts the exact valid category %p',
+    async (category) => {
+      recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, category }]);
+
+      await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
+        .resolves.toEqual({ created: [category], skipped: [], failed: [] });
+
+      expect(transactionCreate.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ category }),
+      });
+    },
+  );
+
   it.each(['A'.repeat(506), '😀'.repeat(506)])(
     'fails a due legacy oversized description before opening a transaction',
     async (description) => {
@@ -173,6 +187,20 @@ describe('processDueRecurrings', () => {
 
       await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
         .resolves.toEqual({ created: [], skipped: [], failed: ['Housing'] });
+
+      expect(transaction).not.toHaveBeenCalled();
+      expect(consoleError).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['', ' \t\n', '\u00a0', 'A'.repeat(51), '😀'.repeat(51)])(
+    'fails a due legacy invalid category %p before opening a transaction',
+    async (category) => {
+      recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, category }]);
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await expect(processDueRecurrings(BigInt(7), new Date('2026-02-28T12:00:00+07:00')))
+        .resolves.toEqual({ created: [], skipped: [], failed: [category] });
 
       expect(transaction).not.toHaveBeenCalled();
       expect(consoleError).not.toHaveBeenCalled();
@@ -201,6 +229,41 @@ describe('createRecurring account ownership', () => {
   };
 
   beforeEach(() => jest.clearAllMocks());
+
+  it.each([
+    undefined, null, false, 0, [], {}, '', ' \t\n', '\u00a0',
+    'A'.repeat(51), '😀'.repeat(51),
+  ])('rejects invalid category %p before lookup, encryption, or create', async (category) => {
+    await expect(createRecurring(BigInt(7), {
+      ...input,
+      category: category as unknown as string,
+    })).rejects.toThrow(
+      typeof category === 'string' && Array.from(category).length > 50
+        ? 'Category must be at most 50 characters'
+        : 'Category must be a non-empty string',
+    );
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    'Housing', ' Housing ', 'A'.repeat(50), '😀'.repeat(50),
+    '__proto__', 'constructor', '<script>', '=SUM(A1:A2)',
+  ])('persists accepted category %p exactly', async (category) => {
+    recurringTransaction.create.mockResolvedValue({ ...monthlyRule, category });
+
+    await createRecurring(BigInt(7), {
+      ...input,
+      category,
+      account_id: undefined,
+    });
+
+    expect(recurringTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ category }),
+    });
+  });
 
   it.each([
     false, 0, [], {}, 'A'.repeat(506), '😀'.repeat(506),
@@ -425,6 +488,18 @@ describe('recurring rule read/update semantics', () => {
     },
   );
 
+  it.each(['', ' \t\n', '\u00a0', 'A'.repeat(51), '😀'.repeat(51)])(
+    'preserves a legacy invalid category without reporting a next run',
+    async (category) => {
+      recurringTransaction.findMany.mockResolvedValue([{ ...monthlyRule, category }]);
+
+      const [rule] = await getRecurrings(BigInt(7));
+
+      expect(rule.category).toBe(category);
+      expect(rule.next_run).toBeNull();
+    },
+  );
+
   it.each([
     { frequency: 'DAILY', day_of_month: null, day_of_week: null, expected: '2026-06-02' },
     { frequency: 'WEEKLY', day_of_month: null, day_of_week: 1, expected: '2026-06-08' },
@@ -514,6 +589,25 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
   });
 
+  it.each([
+    null, false, 0, [], {}, '', ' \t\n', '\u00a0', 'A'.repeat(51), '😀'.repeat(51),
+  ])('rejects invalid update category %p after owner lookup and before side effects', async (category) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      category: category as unknown as string,
+      account_id: '3',
+    })).rejects.toThrow(
+      typeof category === 'string' && Array.from(category).length > 50
+        ? 'Category must be at most 50 characters'
+        : 'Category must be a non-empty string',
+    );
+
+    expect(financialAccount.findFirst).not.toHaveBeenCalled();
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
   it('returns missing before validating an invalid update account ID', async () => {
     recurringTransaction.findFirst.mockResolvedValue(null);
 
@@ -593,6 +687,73 @@ describe('recurring rule read/update semantics', () => {
     expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
       where: { id: BigInt(5), user_id: BigInt(7) },
       data: { description: expected },
+    });
+  });
+
+  it.each([
+    'Housing', ' Housing ', 'A'.repeat(50), '😀'.repeat(50),
+    '__proto__', 'constructor',
+  ])('persists accepted update category %p exactly', async (category) => {
+    recurringTransaction.findFirst.mockResolvedValue(monthlyRule);
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      category,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { category },
+    });
+  });
+
+  it('rejects activating an invalid legacy category without correcting it', async () => {
+    recurringTransaction.findFirst.mockResolvedValue({
+      ...monthlyRule,
+      category: ' \t',
+      is_active: false,
+    });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      is_active: true,
+    })).rejects.toThrow('Category must be a non-empty string');
+
+    expect(recurringTransaction.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('allows an invalid legacy category to be deactivated', async () => {
+    recurringTransaction.findFirst.mockResolvedValue({
+      ...monthlyRule,
+      category: ' \t',
+    });
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      is_active: false,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { is_active: false },
+    });
+  });
+
+  it('allows activation when the same update corrects a legacy category', async () => {
+    recurringTransaction.findFirst.mockResolvedValue({
+      ...monthlyRule,
+      category: ' \t',
+      is_active: false,
+    });
+    recurringTransaction.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(updateRecurring(BigInt(7), BigInt(5), {
+      category: 'Housing',
+      is_active: true,
+    })).resolves.toBe(true);
+
+    expect(recurringTransaction.updateMany).toHaveBeenCalledWith({
+      where: { id: BigInt(5), user_id: BigInt(7) },
+      data: { category: 'Housing', is_active: true },
     });
   });
 
