@@ -20,6 +20,10 @@ The Budget create form now also uses the shared labelled native dialog with
 associated controls and reversible focus/scroll lifecycle. Goal forms and the
 mobile More sheet remain separate follow-up slices.
 
+The mobile More sheet now also uses the shared native dialog lifecycle while
+preserving its navigation and sign-out behavior. Goal forms remain the next
+dialog migration candidate.
+
 Goal Add Amount writes now use an ownership-scoped encrypted compare-and-swap
 with bounded fresh-state retries. The API/service reject non-finite and
 non-positive additions, malformed bodies, invalid IDs, and non-finite results
