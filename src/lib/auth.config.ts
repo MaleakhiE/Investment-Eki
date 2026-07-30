@@ -7,8 +7,13 @@
 
 import type { NextAuthConfig } from 'next-auth';
 import { isSessionVersionCurrent } from './auth-session';
+import { readAuthEnvironment } from './auth-environment';
+
+const authEnvironment = readAuthEnvironment();
 
 export const authConfig: NextAuthConfig = {
+  // Resolve once so the proxy and the Node handlers cannot use different env aliases.
+  secret: authEnvironment.secret,
   pages: {
     signIn: '/login',
   },

@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-07-28
-Baseline commit: `83f10a3`
-Iteration branch: `feat/loop-engineering-17-recurring-category-integrity`
+Date: 2026-07-30
+Baseline commit: `f7547b8`
+Iteration branch: `feat/loop-engineering-18-auth-session-persistence`
 
 ## Product and architecture
 
@@ -11,6 +11,12 @@ Investment-Eki is a Next.js 16.2.12/React 19 personal-finance application backed
 Routes live in `src/app`, domain services in `src/services`, cross-cutting server helpers in `src/lib`, and forward-only schema changes in `prisma/migrations`. API handlers use the envelope from `src/lib/api-response.ts`.
 
 The identity boundary retains internal BIGINT relational keys while JWT/session/API identity uses `users.public_id`. `src/lib/auth-session.ts` resolves public UUIDs; `session_version` invalidates old JWTs after password reset. Existing accounts/transfers, recurring occurrence idempotency, hardened review-first OCR, fail-closed cron auth, private exports, and CSV formula neutralization must not be duplicated or weakened. JSON export is now explicitly a versioned, non-restorable data export; CSV supports owned-account and inclusive date filters with transfer-aware signed deltas.
+
+Auth.js now receives one explicit `AUTH_SECRET`/`NEXTAUTH_SECRET` resolution in
+both the proxy and Node handlers. Production must replace the example secret,
+set the real `AUTH_URL`/`NEXTAUTH_URL`, use identical values across instances,
+and clear old cookies after rotation. Browser and multi-instance validation
+remain deployment gates because the configured MySQL is unreachable here.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the
