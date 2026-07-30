@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface FinancialGoal {
@@ -243,35 +244,34 @@ export default function GoalsPage() {
             )}
 
             {/* Form Modal */}
-            {showForm && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
-                <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-                  <h3 className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
+            <AccessibleDialog open={showForm} labelledBy="goal-dialog-title" onClose={() => setShowForm(false)}>
+                <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                  <h3 id="goal-dialog-title" className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Goal name</label>
-                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Six-month emergency fund" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                      <label htmlFor="goal-name" className="block text-xs text-zinc-400 mb-1">Goal name</label>
+                      <input id="goal-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Six-month emergency fund" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-zinc-400 mb-1">Target</label>
-                        <CurrencyInput value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                        <label htmlFor="goal-target" className="block text-xs text-zinc-400 mb-1">Target</label>
+                        <CurrencyInput id="goal-target" value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                       </div>
                       <div>
-                        <label className="block text-xs text-zinc-400 mb-1">Current</label>
-                        <CurrencyInput value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                        <label htmlFor="goal-current" className="block text-xs text-zinc-400 mb-1">Current</label>
+                        <CurrencyInput id="goal-current" value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-zinc-400 mb-1">Category</label>
-                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
+                        <label htmlFor="goal-category" className="block text-xs text-zinc-400 mb-1">Category</label>
+                        <select id="goal-category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                           {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-zinc-400 mb-1">Priority</label>
-                        <select value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
+                        <label htmlFor="goal-priority" className="block text-xs text-zinc-400 mb-1">Priority</label>
+                        <select id="goal-priority" value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                           <option value={1}>High</option>
                           <option value={2}>Medium</option>
                           <option value={3}>Low</option>
@@ -279,17 +279,16 @@ export default function GoalsPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Deadline (optional)</label>
-                      <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                      <label htmlFor="goal-deadline" className="block text-xs text-zinc-400 mb-1">Deadline (optional)</label>
+                      <input id="goal-deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="flex gap-2 pt-2">
                       <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
-                      <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
+                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
                     </div>
                   </form>
                 </div>
-              </div>
-            )}
+            </AccessibleDialog>
 
             {/* Active Goals */}
             <div className="card rounded-xl p-5">
