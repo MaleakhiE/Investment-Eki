@@ -34,6 +34,13 @@ MySQL's supported date range. Accepted dates persist at UTC midnight; valid
 fractions remain unchanged. Recurring end-date clearing and all scheduler
 cadence/idempotency behavior remain unchanged.
 
+All monetary write paths now share the same compatibility-preserving IDR
+boundary: finite values only, at most two decimal places, and a maximum of
+90,000,000,000,000. Positive domains reject zero; cashflow components,
+non-negative account opening balances, and goal current amounts may be zero.
+Budget and goal routes return validation responses before encryption or
+persistence. Existing encrypted values are not rewritten.
+
 The deployment recurring scheduler now returns only explicitly allowlisted
 aggregate counts with private/no-store headers on every outcome. Its top-level
 and shared per-rule posting failures log fixed events plus closed-taxonomy

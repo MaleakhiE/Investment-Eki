@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
+import { FinancialInputError, isFinitePositiveAmount } from '@/lib/financial-input';
 
 export interface BudgetInput {
   category: string;
@@ -19,6 +20,10 @@ export interface BudgetWithSpent {
 }
 
 export async function createOrUpdateBudget(userId: bigint, input: BudgetInput) {
+  if (!isFinitePositiveAmount(input.amount)) {
+    throw new FinancialInputError('Amount must be a positive number');
+  }
+
   const encryptedAmount = encryptNumber(input.amount);
   
   const budget = await prisma.budget.upsert({

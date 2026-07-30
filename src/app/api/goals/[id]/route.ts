@@ -7,6 +7,7 @@ import {
   addToGoal,
   deleteGoal,
 } from '@/services/goals.service';
+import { FinancialInputError, isFinitePositiveAmount } from '@/lib/financial-input';
 
 const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
 
@@ -55,11 +56,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Check if this is an "add amount" request
     if ('add_amount' in body) {
       const addAmount = body.add_amount;
-      if (
-        typeof addAmount !== 'number'
-        || !Number.isFinite(addAmount)
-        || addAmount <= 0
-      ) {
+      if (!isFinitePositiveAmount(addAmount)) {
         return NextResponse.json(
           validationErrorResponse(['add_amount must be a finite positive number']),
           { status: 400 },
@@ -81,6 +78,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(responseAPI(200, 'SUCCESS', 'Goal updated', goal));
   } catch (error) {
+    if (error instanceof FinancialInputError && !(error instanceof InvalidGoalAmountError)) {
+      return NextResponse.json(validationErrorResponse([error.message]), { status: 400 });
+    }
     if (error instanceof InvalidGoalAmountError) {
       return NextResponse.json(
         validationErrorResponse(['add_amount produces an invalid goal balance']),
