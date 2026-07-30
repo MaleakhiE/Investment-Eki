@@ -1,5 +1,10 @@
 import prisma from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
+import {
+  FinancialInputError,
+  isFiniteNonNegativeAmount,
+  isFinitePositiveAmount,
+} from '@/lib/financial-input';
 
 export type GoalCategory = 'EMERGENCY_FUND' | 'INVESTMENT' | 'VACATION' | 'GADGET' | 'VEHICLE' | 'PROPERTY' | 'EDUCATION' | 'WEDDING' | 'OTHER';
 
@@ -29,7 +34,7 @@ export interface FinancialGoal {
 
 const GOAL_ADDITION_MAX_ATTEMPTS = 3;
 
-export class InvalidGoalAmountError extends Error {}
+export class InvalidGoalAmountError extends FinancialInputError {}
 
 function isWriteConflict(error: unknown): error is { code: 'P2034' } {
   return (
@@ -41,6 +46,13 @@ function isWriteConflict(error: unknown): error is { code: 'P2034' } {
 }
 
 export async function createGoal(userId: bigint, input: GoalInput): Promise<FinancialGoal> {
+  if (!isFinitePositiveAmount(input.target_amount)) {
+    throw new FinancialInputError('Target amount must be a positive number');
+  }
+  if (input.current_amount !== undefined && !isFiniteNonNegativeAmount(input.current_amount)) {
+    throw new FinancialInputError('Current amount must be a non-negative number');
+  }
+
   const goal = await prisma.financialGoal.create({
     data: {
       user_id: userId,
@@ -66,6 +78,13 @@ export async function getGoals(userId: bigint): Promise<FinancialGoal[]> {
 }
 
 export async function updateGoal(userId: bigint, goalId: bigint, input: Partial<GoalInput> & { is_completed?: boolean }): Promise<FinancialGoal | null> {
+  if (input.target_amount !== undefined && !isFinitePositiveAmount(input.target_amount)) {
+    throw new FinancialInputError('Target amount must be a positive number');
+  }
+  if (input.current_amount !== undefined && !isFiniteNonNegativeAmount(input.current_amount)) {
+    throw new FinancialInputError('Current amount must be a non-negative number');
+  }
+
   const data: Record<string, unknown> = {};
   if (input.name) data.name = input.name;
   if (input.target_amount !== undefined) data.target_amount = encryptNumber(input.target_amount);
@@ -90,7 +109,7 @@ export async function updateGoal(userId: bigint, goalId: bigint, input: Partial<
 }
 
 export async function addToGoal(userId: bigint, goalId: bigint, amount: number): Promise<FinancialGoal | null> {
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+  if (!isFinitePositiveAmount(amount)) {
     throw new InvalidGoalAmountError('Goal addition must be a finite positive number');
   }
 
@@ -103,12 +122,12 @@ export async function addToGoal(userId: bigint, goalId: bigint, amount: number):
 
     const currentAmount = decryptNumber(goal.current_amount);
     const targetAmount = decryptNumber(goal.target_amount);
-    if (!Number.isFinite(currentAmount) || !Number.isFinite(targetAmount)) {
+    if (!isFiniteNonNegativeAmount(currentAmount) || !isFinitePositiveAmount(targetAmount)) {
       throw new Error('Stored goal amount is invalid');
     }
 
     const newAmount = currentAmount + amount;
-    if (!Number.isFinite(newAmount)) {
+    if (!isFiniteNonNegativeAmount(newAmount)) {
       throw new InvalidGoalAmountError('Goal addition produces an invalid balance');
     }
 

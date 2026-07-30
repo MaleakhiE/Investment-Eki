@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
 import { createOrUpdateBudget, getBudgets, getBudgetAlerts } from '@/services/budget.service';
+import { FinancialInputError } from '@/lib/financial-input';
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(responseAPI(200, 'SUCCESS', 'Budget saved', budget));
   } catch (error) {
+    if (error instanceof FinancialInputError) {
+      return NextResponse.json(responseAPI(400, 'ERROR', error.message, null), { status: 400 });
+    }
     console.error('Create budget error:', error);
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
   }

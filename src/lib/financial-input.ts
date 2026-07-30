@@ -1,5 +1,25 @@
+export const MAX_FINANCIAL_AMOUNT = 90_000_000_000_000;
+
+export class FinancialInputError extends Error {}
+
+function hasAtMostTwoDecimalPlaces(value: number): boolean {
+  const [coefficient, exponentText] = value.toString().toLowerCase().split('e');
+  const decimalPlaces = (coefficient.split('.')[1]?.length ?? 0) - Number(exponentText ?? 0);
+  return decimalPlaces <= 2;
+}
+
+export function isFiniteNonNegativeAmount(value: unknown): value is number {
+  return (
+    typeof value === 'number'
+    && Number.isFinite(value)
+    && value >= 0
+    && value <= MAX_FINANCIAL_AMOUNT
+    && hasAtMostTwoDecimalPlaces(value)
+  );
+}
+
 export function isFinitePositiveAmount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+  return isFiniteNonNegativeAmount(value) && value > 0;
 }
 
 export function parseCalendarDate(value: unknown): Date | null {

@@ -58,7 +58,7 @@ describe('financial account validation', () => {
     expect(result.errors).toEqual([
       'Account name is required',
       'Account type must be BANK, WALLET, or CASH',
-      'Opening balance cannot be negative',
+      'Opening balance must be a finite non-negative amount with at most two decimal places',
       'Color must be a six-digit hex value',
     ]);
   });

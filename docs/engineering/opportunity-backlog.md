@@ -19,8 +19,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce canonical optional recurring linked-account IDs | 76 | Small | 015 |
 | Done | Prevent recurring description materialization overflow | 82 | Small | 016 |
 | Done | Enforce recurring category and aggregation integrity | 84 | Small–medium | 017 |
-| Done | Stabilize shared Auth.js secret and URL configuration | 81 | Small | 018 |
-| 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
+| Done | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | 018 |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
 | Done | Protect all navigable authenticated pages consistently | 78 | Small | 002 |
@@ -213,6 +212,12 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 - Score inputs: `5,5,3,3,5,5,4,5,5` → 83.
 - Risks/dependencies: existing decimal data and product semantics require an explicit compatibility decision.
 - Validation: zero, negative, fractional, maximum-safe, non-finite, encryption round-trip, and route-envelope tests.
+
+Completed in 018. The compatibility policy preserves fractions through two
+decimal places, caps new monetary inputs at 90,000,000,000,000 IDR, and keeps
+zero valid only for non-negative domains such as cashflow components, account
+opening balances, and goal current amounts. No rounding, migration, or
+historical rewrite was introduced.
 
 ## 3. Production dependency patch (direct Next completed in 007)
 

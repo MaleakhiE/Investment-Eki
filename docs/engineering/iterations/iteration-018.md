@@ -1,33 +1,33 @@
-# Iteration 018: Auth.js session configuration
+# Iteration 018 plan: canonical IDR amount boundary
 
-Date: 2026-07-30
-Branch: `feat/loop-engineering-18-auth-session-persistence`
+## Decision
 
-## Problem
+Preserve existing fractional monetary values for compatibility. New monetary
+writes accept finite JavaScript numbers from `0` through `90,000,000,000,000`
+IDR with at most two decimal places. Positive-write paths require values above
+zero; balance/opening and cashflow components may be zero.
 
-Login succeeded, but a subsequent protected-page navigation could appear to
-log the user out. Branch 16 changed recurring data only; the auth boundary was
-already using JWTs, public UUIDs, and database-backed `session_version` checks.
-The checkout's `.env` contains the literal example secret and localhost URL.
-Multiple deployments must also not resolve different Auth.js secret aliases.
+This is an application-only validation change. Existing encrypted values remain
+readable and are not rewritten.
 
-## Change
+## Scope
 
-- Resolve `AUTH_SECRET`/`AUTH_URL` first, with `NEXTAUTH_*` compatibility aliases.
-- Pass the resolved secret explicitly through the shared Auth.js config used by
-  both the Node handlers and Next.js proxy.
-- Add a pure environment check that rejects missing, short, or example secrets.
-- Update `.env.example` to use the canonical Auth.js names.
+- Reuse one shared amount predicate at transaction, transfer, recurring,
+  account, budget, goal, cashflow, and investment write boundaries.
+- Preserve existing response envelopes and ownership checks.
+- Add boundary tests before encryption or persistence.
 
-The application does not print secret values. Production still requires the
-operator to set one high-entropy identical secret and the real public URL in
-every instance, then clear old cookies after changing either value.
+## Exclusions
 
-## Verification
+- No database migration or historical data rewrite.
+- No rounding of accepted values.
+- No change to encrypted storage or public API numeric serialization.
 
-- Auth environment and callback tests: 39 passing.
-- Full Jest suite: 56 suites / 684 tests passing.
-- TypeScript and lint passing.
+## Acceptance criteria
 
-Database reachability remains unavailable in this environment (`P1001`), so a
-real multi-instance cookie/browser smoke test is still a deployment gate.
+- Zero is accepted only where the existing domain permits it.
+- Positive amounts reject zero, negatives, non-finite values, values above the
+  maximum, and more than two decimal places.
+- Existing `0.25` behavior remains valid and unchanged.
+- Invalid values do not decrypt, encrypt, query, or persist financial records.
+- Focused and full regression tests pass.

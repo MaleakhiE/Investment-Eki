@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decryptNumber, encryptNumber } from '@/lib/encryption';
+import { isFiniteNonNegativeAmount } from '@/lib/financial-input';
 
 export type AccountType = 'BANK' | 'WALLET' | 'CASH';
 
@@ -47,8 +48,8 @@ export function validateAccountInput(input: AccountInput): ValidAccountInput {
   if (!['BANK', 'WALLET', 'CASH'].includes(input.type)) {
     errors.push('Account type must be BANK, WALLET, or CASH');
   }
-  if (!Number.isFinite(input.opening_balance) || input.opening_balance < 0) {
-    errors.push('Opening balance cannot be negative');
+  if (!isFiniteNonNegativeAmount(input.opening_balance)) {
+    errors.push('Opening balance must be a finite non-negative amount with at most two decimal places');
   }
   if (color && !/^#[0-9a-fA-F]{6}$/.test(color)) {
     errors.push('Color must be a six-digit hex value');

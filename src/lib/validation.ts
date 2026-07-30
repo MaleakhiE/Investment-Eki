@@ -9,6 +9,8 @@
  * - Composite input validation for cashflow and snapshots
  */
 
+import { isFiniteNonNegativeAmount, MAX_FINANCIAL_AMOUNT } from './financial-input';
+
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -66,12 +68,16 @@ export function validateMonetaryValue(value: number, fieldName: string): Validat
     return { valid: false, errors: [`${fieldName} must be a number`] };
   }
 
-  if (isNaN(value)) {
+  if (Number.isNaN(value)) {
     errors.push(`${fieldName} must be a valid number`);
+  } else if (!Number.isFinite(value)) {
+    errors.push(`${fieldName} must be a finite number`);
   } else if (value < 0) {
     errors.push(`${fieldName} must be non-negative`);
-  } else if (!isFinite(value)) {
-    errors.push(`${fieldName} must be a finite number`);
+  } else if (value > MAX_FINANCIAL_AMOUNT) {
+    errors.push(`${fieldName} must be at most ${MAX_FINANCIAL_AMOUNT}`);
+  } else if (!isFiniteNonNegativeAmount(value)) {
+    errors.push(`${fieldName} must have at most two decimal places`);
   }
 
   return { valid: errors.length === 0, errors };

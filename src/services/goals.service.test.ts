@@ -159,19 +159,18 @@ describe('addToGoal atomic encrypted addition', () => {
     },
   );
 
-  it('rejects a non-finite result before encryption or persistence', async () => {
-    financialGoal.findFirst.mockResolvedValueOnce(goal(Number.MAX_VALUE, Number.MAX_VALUE));
-
+  it('rejects an amount above the policy maximum before reading financial state', async () => {
     await expect(
       addToGoal(userId, goalId, Number.MAX_VALUE),
     ).rejects.toBeInstanceOf(InvalidGoalAmountError);
 
+    expect(financialGoal.findFirst).not.toHaveBeenCalled();
     expect(encryptNumber).not.toHaveBeenCalled();
     expect(financialGoal.updateMany).not.toHaveBeenCalled();
   });
 
   it('fails closed when stored financial state is non-finite', async () => {
-    financialGoal.findFirst.mockResolvedValueOnce(goal(Number.POSITIVE_INFINITY));
+    financialGoal.findFirst.mockResolvedValueOnce(goal(Number.MAX_VALUE));
 
     await expect(addToGoal(userId, goalId, 25)).rejects.toThrow(
       'Stored goal amount is invalid',
