@@ -29,7 +29,8 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Migrate the read-only Cashflow history to a native accessible dialog | 70 | Small | 006 |
 | 2 | Define and enforce notification timing and alert semantics | 77 | Medium | Needs product policy decision |
 | 3 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
-| 4 | Add duplicate transaction review and exact retry idempotency | 76 | Medium | After amount policy |
+| Done | Add exact transaction retry idempotency | 76 | Medium | 019 |
+| 4 | Add duplicate transaction review | 76 | Medium | After idempotency |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -218,6 +219,14 @@ decimal places, caps new monetary inputs at 90,000,000,000,000 IDR, and keeps
 zero valid only for non-negative domains such as cashflow components, account
 opening balances, and goal current amounts. No rounding, migration, or
 historical rewrite was introduced.
+
+## Exact transaction retry idempotency
+
+Completed in 019. An optional user-scoped `Idempotency-Key` prevents duplicate
+creates after network retries, returns exact replays, rejects changed payloads,
+and reconciles concurrent unique-key races. Requests without a key retain the
+legacy behavior. The migration must be deployed before clients depend on the
+header.
 
 ## 3. Production dependency patch (direct Next completed in 007)
 

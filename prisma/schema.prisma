@@ -112,6 +112,7 @@ model Transaction {
   account_id             BigInt?
   destination_account_id BigInt?
   receipt_image          String?         @db.LongText
+  idempotency_key        String?         @db.VarChar(128)
   created_at             DateTime        @default(now())
   updated_at             DateTime        @updatedAt
 
@@ -123,6 +124,7 @@ model Transaction {
   @@index([user_id, date])
   @@index([account_id, type])
   @@index([destination_account_id, type])
+  @@unique([user_id, idempotency_key])
   @@map("transactions")
 }
 
