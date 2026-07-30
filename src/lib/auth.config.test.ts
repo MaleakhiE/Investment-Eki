@@ -18,6 +18,10 @@ const jwt = authConfig.callbacks?.jwt as unknown as JwtCallback;
 const authorized = authConfig.callbacks?.authorized as unknown as AuthorizedCallback;
 const session = authConfig.callbacks?.session as unknown as SessionCallback;
 const publicUserId = '3d594650-3436-4aa2-bb39-9fc9f5bc521d';
+
+it('uses one explicit secret for proxy and server Auth.js handlers', () => {
+  expect(authConfig.secret).toBe(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET);
+});
 const privatePaths = [
   '/dashboard',
   '/accounts',
