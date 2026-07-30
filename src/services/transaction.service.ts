@@ -53,6 +53,15 @@ export interface TransactionRecord {
   updated_at: Date;
 }
 
+const MAX_IDEMPOTENCY_KEY_LENGTH = 128;
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && error.code === 'P2002';
+}
+
 export interface MonthlySummary {
   month: string;
   total_income: number;
@@ -100,6 +109,69 @@ export const ACCOUNT_PRESETS = [
 function normalizeAccount(account: string | null | undefined): string | null {
   const normalized = account?.trim();
   return normalized ? normalized : null;
+}
+
+function normalizeIdempotencyKey(value: string | undefined): string | null {
+  if (value === undefined) return null;
+  return new RegExp(`^[\\x21-\\x7E]{1,${MAX_IDEMPOTENCY_KEY_LENGTH}}$`).test(value)
+    ? value
+    : null;
+}
+
+function matchesIdempotentTransaction(
+  record: {
+    date: Date;
+    type: string;
+    category: string;
+    description: string;
+    amount: string;
+    account: string | null;
+    account_id: bigint | null;
+    receipt_image: string | null;
+  },
+  input: TransactionInput,
+  accountName: string | null,
+): boolean {
+  return record.date.toISOString().slice(0, 10) === input.date
+    && record.type === input.type
+    && record.category === input.category.trim()
+    && record.description === input.description.trim()
+    && decryptNumber(record.amount) === input.amount
+    && record.account === (accountName ?? normalizeAccount(input.account))
+    && record.account_id === parseAccountId(input.account_id)
+    && record.receipt_image === (input.receipt_image ?? null);
+}
+
+function formatTransactionRecord(record: {
+  id: bigint;
+  user_id: bigint;
+  date: Date;
+  type: string;
+  category: string;
+  description: string;
+  amount: string;
+  account: string | null;
+  account_id: bigint | null;
+  destination_account_id: bigint | null;
+  receipt_image: string | null;
+  created_at: Date;
+  updated_at: Date;
+}): TransactionRecord {
+  return {
+    id: record.id,
+    user_id: record.user_id,
+    date: record.date,
+    type: record.type as TransactionType,
+    category: record.category,
+    description: record.description,
+    amount: decryptNumber(record.amount),
+    account: record.account,
+    account_id: record.account_id,
+    destination_account_id: record.destination_account_id,
+    receipt_image: record.receipt_image,
+    created_at: record.created_at,
+    updated_at: record.updated_at,
+  };
 }
 
 function parseAccountId(value: string | bigint | null | undefined): bigint | null {
@@ -170,10 +242,15 @@ export async function createTransaction(
   userId: bigint,
   input: TransactionInput,
   databaseClient: TransactionDatabaseClient = prisma,
-): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string }> {
+  idempotencyKey?: string,
+): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string; replayed?: boolean }> {
   const validation = validateTransactionInput(input);
   if (!validation.valid) {
     return { success: false, error: validation.errors.join(', ') };
+  }
+
+  if (idempotencyKey !== undefined && !normalizeIdempotencyKey(idempotencyKey)) {
+    return { success: false, error: 'Idempotency-Key must be 1-128 visible ASCII characters' };
   }
 
   const encryptedAmount = encryptNumber(input.amount);
@@ -186,37 +263,50 @@ export async function createTransaction(
     : null;
   if (requestedAccountId && !linkedAccount) return { success: false, error: 'Account not found' };
 
-  const record = await databaseClient.transaction.create({
-    data: {
-      user_id: userId,
-      date: parseCalendarDate(input.date)!,
-      type: input.type,
-      category: input.category.trim(),
-      description: input.description.trim(),
-      amount: encryptedAmount,
-      account: linkedAccount?.name ?? normalizeAccount(input.account),
-      ...(requestedAccountId ? { account_id: requestedAccountId } : {}),
-      ...(input.receipt_image !== undefined ? { receipt_image: input.receipt_image } : {}),
-    },
-  });
+  const normalizedIdempotencyKey = idempotencyKey ? normalizeIdempotencyKey(idempotencyKey) : null;
+  if (normalizedIdempotencyKey) {
+    const existing = await databaseClient.transaction.findFirst({
+      where: { user_id: userId, idempotency_key: normalizedIdempotencyKey },
+    });
+    if (existing) {
+      if (!matchesIdempotentTransaction(existing, input, linkedAccount?.name ?? null)) {
+        return { success: false, error: 'Idempotency key already used for a different transaction' };
+      }
+      return { success: true, replayed: true, transaction: formatTransactionRecord(existing) };
+    }
+  }
+
+  let record;
+  try {
+    record = await databaseClient.transaction.create({
+      data: {
+        user_id: userId,
+        date: parseCalendarDate(input.date)!,
+        type: input.type,
+        category: input.category.trim(),
+        description: input.description.trim(),
+        amount: encryptedAmount,
+        account: linkedAccount?.name ?? normalizeAccount(input.account),
+        ...(requestedAccountId ? { account_id: requestedAccountId } : {}),
+        ...(input.receipt_image !== undefined ? { receipt_image: input.receipt_image } : {}),
+        ...(normalizedIdempotencyKey ? { idempotency_key: normalizedIdempotencyKey } : {}),
+      },
+    });
+  } catch (error) {
+    if (!normalizedIdempotencyKey || !isUniqueConstraintError(error)) throw error;
+    const existing = await databaseClient.transaction.findFirst({
+      where: { user_id: userId, idempotency_key: normalizedIdempotencyKey },
+    });
+    if (!existing) throw error;
+    if (!matchesIdempotentTransaction(existing, input, linkedAccount?.name ?? null)) {
+      return { success: false, error: 'Idempotency key already used for a different transaction' };
+    }
+    return { success: true, replayed: true, transaction: formatTransactionRecord(existing) };
+  }
 
   return {
     success: true,
-    transaction: {
-      id: record.id,
-      user_id: record.user_id,
-      date: record.date,
-      type: record.type as TransactionType,
-      category: record.category,
-      description: record.description,
-      amount: input.amount,
-      account: record.account,
-      account_id: record.account_id,
-      destination_account_id: record.destination_account_id,
-      receipt_image: record.receipt_image,
-      created_at: record.created_at,
-      updated_at: record.updated_at,
-    },
+    transaction: formatTransactionRecord(record),
   };
 }
 

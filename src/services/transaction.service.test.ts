@@ -250,6 +250,76 @@ describe('transaction optional field round trips', () => {
   });
 });
 
+describe('transaction idempotency', () => {
+  const replayable = {
+    ...persisted,
+    account: null,
+    account_id: null,
+    destination_account_id: null,
+    receipt_image: null,
+  };
+
+  it('rejects an invalid key before querying or writing', async () => {
+    const result = await createTransaction(BigInt(20), baseInput, undefined, 'bad key');
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Idempotency-Key must be 1-128 visible ASCII characters',
+    });
+    expect(transactionRepository.findFirst).not.toHaveBeenCalled();
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing transaction for an exact retry', async () => {
+    transactionRepository.findFirst.mockResolvedValue(replayable);
+
+    const result = await createTransaction(BigInt(20), baseInput, undefined, 'request-123');
+
+    expect(result).toEqual(expect.objectContaining({ success: true, replayed: true }));
+    expect(result.transaction).toEqual(expect.objectContaining({ id: replayable.id, amount: 50_000 }));
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects reuse of a key with a different transaction payload', async () => {
+    transactionRepository.findFirst.mockResolvedValue(replayable);
+
+    const result = await createTransaction(
+      BigInt(20),
+      { ...baseInput, description: 'Different transaction' },
+      undefined,
+      'request-123',
+    );
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Idempotency key already used for a different transaction',
+    });
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('persists the key on a first successful request', async () => {
+    transactionRepository.findFirst.mockResolvedValue(null);
+    transactionRepository.create.mockResolvedValue(replayable);
+
+    await createTransaction(BigInt(20), baseInput, undefined, 'request-123');
+
+    expect(transactionRepository.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ idempotency_key: 'request-123' }),
+    });
+  });
+
+  it('reconciles a concurrent unique-key race as a replay', async () => {
+    transactionRepository.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(replayable);
+    transactionRepository.create.mockRejectedValueOnce({ code: 'P2002' });
+
+    const result = await createTransaction(BigInt(20), baseInput, undefined, 'request-123');
+
+    expect(result).toEqual(expect.objectContaining({ success: true, replayed: true }));
+  });
+});
+
 describe('linked account transactions', () => {
   it('rejects a transaction linked to an account the user does not own', async () => {
     financialAccountRepository.findFirst.mockResolvedValue(null);

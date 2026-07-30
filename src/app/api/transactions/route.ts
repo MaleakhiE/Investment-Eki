@@ -36,12 +36,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await createTransaction(userId, body);
+    const idempotencyKey = request.headers.get('Idempotency-Key') ?? undefined;
+    const result = await createTransaction(userId, body, undefined, idempotencyKey);
 
     if (!result.success) {
+      const status = result.error === 'Idempotency key already used for a different transaction' ? 409 : 400;
       return NextResponse.json(
         validationErrorResponse([result.error || 'Failed to create transaction']),
-        { status: 400 }
+        { status }
       );
     }
 
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       successResponse(transactionResponse, 'Transaction created successfully'),
-      { status: 201 }
+      { status: result.replayed ? 200 : 201 }
     );
   } catch (error) {
     console.error('Error creating transaction:', error);

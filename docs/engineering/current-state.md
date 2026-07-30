@@ -41,6 +41,12 @@ non-negative account opening balances, and goal current amounts may be zero.
 Budget and goal routes return validation responses before encryption or
 persistence. Existing encrypted values are not rewritten.
 
+Transaction creation now accepts an optional `Idempotency-Key` header. The key
+is user-scoped and unique; exact retries replay the original transaction,
+changed payloads return a conflict, and concurrent key races reconcile by
+reading the winner. Requests without a key remain compatible with the prior
+create behavior. The migration must be deployed before clients rely on this.
+
 The deployment recurring scheduler now returns only explicitly allowlisted
 aggregate counts with private/no-store headers on every outcome. Its top-level
 and shared per-rule posting failures log fixed events plus closed-taxonomy
