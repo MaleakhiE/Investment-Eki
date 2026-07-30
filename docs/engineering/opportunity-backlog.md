@@ -18,6 +18,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Validate recurring JSON structure and canonical item IDs | 73 | Small | 014 |
 | Done | Enforce canonical optional recurring linked-account IDs | 76 | Small | 015 |
 | Done | Prevent recurring description materialization overflow | 82 | Small | 016 |
+| Done | Enforce recurring category and aggregation integrity | 84 | Small–medium | 017 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
@@ -178,11 +179,27 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy oversized rules fail before a database transaction and expose no
   misleading next run while remaining correctable/deactivatable.
 - Score inputs: `5,5,4,3,4,5,5,5,5` → 82.
-- Residuals: category policy remains separate. Production requires zero-result
-  Loop 13 and Loop 16 aggregate audits, with owner-approved handling for any
-  historical hit.
+- Residuals: category integrity was completed in 017. Production requires
+  zero-result Loop 13, 16, and 17 aggregate audits, with owner-approved handling
+  for any historical hit.
 - Validation: focused 5-suite/258-test regression, 24/24 changed production
   statements, full 54-suite/621-test regression, build/OCR trace, and five
+  independent approvals.
+
+## Recurring category and aggregation integrity (completed in 017)
+
+- Historical problem: recurring category runtime values reached Prisma or
+  silently no-op'd, invalid legacy categories remained schedulable, and plain
+  object accumulators corrupted prototype-reserved financial grouping keys.
+- Outcome: exact non-whitespace categories through 50 Unicode code points are
+  enforced; legacy invalid rules fail closed; both summary paths use Map-based
+  aggregation and preserve every exact numeric own JSON key.
+- Score inputs: `5,5,5,3,4,5,5,5,5` → 84.
+- Residuals: taxonomy, normalization, historical regrouping, and direct
+  transaction width policy require separate decisions. Production requires
+  zero-result Loop 13, 16, and 17 target audits.
+- Validation: focused 9-suite/390-test regression, 26/26 changed production
+  statements, full 55-suite/681-test regression, build/OCR trace, and five
   independent approvals.
 
 ## Canonical IDR input boundary
@@ -261,5 +278,5 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
   legacy over-limit credential remediation, auth throttling, quote coalescing,
   CI/MySQL concurrency, and full browser accessibility remain valuable
   follow-ups.
-- Assess recurring category validation separately; description capacity is
-  complete, subject to the mandatory target audit.
+- Recurring category and description integrity are complete, subject to their
+  mandatory target audits.

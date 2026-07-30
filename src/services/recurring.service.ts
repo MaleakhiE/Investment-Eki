@@ -8,6 +8,7 @@ const SAFE_RECURRING_ERROR_CODES = new Set(['P1001', 'P2002', 'P2025', 'P2034'])
 const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
 const AUTO_DESCRIPTION_PREFIX = '[Auto] ';
 const RECURRING_DESCRIPTION_MAX_CHARACTERS = 512 - Array.from(AUTO_DESCRIPTION_PREFIX).length;
+const RECURRING_CATEGORY_MAX_CHARACTERS = 50;
 
 export function getSafeRecurringErrorCode(error: unknown): string {
   if (typeof error !== 'object' || error === null) return 'UNCLASSIFIED';
@@ -49,6 +50,7 @@ export interface RecurringTransaction {
 }
 
 export async function createRecurring(userId: bigint, input: RecurringInput) {
+  const category = validateRecurringCategory(input.category);
   const description = validateRecurringDescription(input.description ?? '');
   validateRecurringSchedule(input);
   const accountId = parseRecurringAccountId(input.account_id);
@@ -63,7 +65,7 @@ export async function createRecurring(userId: bigint, input: RecurringInput) {
     data: {
       user_id: userId,
       type: input.type,
-      category: input.category,
+      category,
       description,
       amount: encryptNumber(input.amount),
       frequency: input.frequency,
@@ -163,13 +165,35 @@ function parseRecurringAccountId(value: unknown): bigint | null {
   return parsed;
 }
 
-function hasMaterializableDescription(value: string): boolean {
+function hasAtMostCharacters(value: string, maximum: number): boolean {
   let characters = 0;
   for (const character of value) {
     void character;
-    if (++characters > RECURRING_DESCRIPTION_MAX_CHARACTERS) return false;
+    if (++characters > maximum) return false;
   }
   return true;
+}
+
+function hasValidRecurringCategory(value: string): boolean {
+  return hasAtMostCharacters(value, RECURRING_CATEGORY_MAX_CHARACTERS)
+    && value.trim().length > 0;
+}
+
+function validateRecurringCategory(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new RecurringInputError('Category must be a non-empty string');
+  }
+  if (!hasAtMostCharacters(value, RECURRING_CATEGORY_MAX_CHARACTERS)) {
+    throw new RecurringInputError('Category must be at most 50 characters');
+  }
+  if (value.trim().length === 0) {
+    throw new RecurringInputError('Category must be a non-empty string');
+  }
+  return value;
+}
+
+function hasMaterializableDescription(value: string): boolean {
+  return hasAtMostCharacters(value, RECURRING_DESCRIPTION_MAX_CHARACTERS);
 }
 
 function validateRecurringDescription(value: unknown): string {
@@ -209,6 +233,12 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
   if (input.amount !== undefined && !isFinitePositiveAmount(input.amount)) {
     throw new RecurringInputError('Amount must be a positive number');
   }
+  const category = input.category === undefined
+    ? undefined
+    : validateRecurringCategory(input.category);
+  if (input.is_active === true && category === undefined) {
+    validateRecurringCategory(existing.category);
+  }
   const description = input.description === undefined
     ? undefined
     : validateRecurringDescription(input.description ?? '');
@@ -241,7 +271,7 @@ export async function updateRecurring(userId: bigint, id: bigint, input: Partial
   }
   const data: Record<string, unknown> = {};
   if (input.type) data.type = input.type;
-  if (input.category) data.category = input.category;
+  if (category !== undefined) data.category = category;
   if (description !== undefined) data.description = description;
   if (input.amount !== undefined) data.amount = encryptNumber(input.amount);
   if (input.frequency) data.frequency = input.frequency;
@@ -296,7 +326,7 @@ export async function processDueRecurrings(
 
   for (const rec of recurrings) {
     if (!isDueOn(rec, scheduledDate)) continue;
-    if (!hasMaterializableDescription(rec.description)) {
+    if (!hasValidRecurringCategory(rec.category) || !hasMaterializableDescription(rec.description)) {
       failed.push(rec.category);
       continue;
     }
@@ -462,8 +492,8 @@ function formatRecurring(rec: {
   };
 }
 
-function calculateNextRun(rec: { type: string; frequency: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null; description: string; start_date: Date; end_date: Date | null; is_active: boolean }): string | null {
-  if (!rec.is_active || !hasValidRecurringCadence(rec) || !hasMaterializableDescription(rec.description)) return null;
+function calculateNextRun(rec: { type: string; frequency: string; category: string; day_of_month: number | null; day_of_week: number | null; month_of_year: number | null; description: string; start_date: Date; end_date: Date | null; is_active: boolean }): string | null {
+  if (!rec.is_active || !hasValidRecurringCadence(rec) || !hasValidRecurringCategory(rec.category) || !hasMaterializableDescription(rec.description)) return null;
 
   const today = getJakartaCalendarDate(new Date());
   let next = new Date(today);

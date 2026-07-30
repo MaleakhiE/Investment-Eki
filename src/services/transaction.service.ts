@@ -376,7 +376,7 @@ export async function getMonthlySummary(
 
   let totalIncome = 0;
   let totalExpense = 0;
-  const expenseByCategory: Record<string, number> = {};
+  const expenseByCategory = new Map<string, number>();
 
   for (const record of records) {
     const amount = decryptNumber(record.amount);
@@ -385,7 +385,7 @@ export async function getMonthlySummary(
       totalIncome += amount;
     } else if (record.type === 'EXPENSE') {
       totalExpense += amount;
-      expenseByCategory[record.category] = (expenseByCategory[record.category] || 0) + amount;
+      expenseByCategory.set(record.category, (expenseByCategory.get(record.category) ?? 0) + amount);
     }
   }
 
@@ -394,7 +394,7 @@ export async function getMonthlySummary(
     total_income: totalIncome,
     total_expense: totalExpense,
     net_cashflow: totalIncome - totalExpense,
-    expense_by_category: expenseByCategory,
+    expense_by_category: Object.fromEntries(expenseByCategory),
   };
 }
 

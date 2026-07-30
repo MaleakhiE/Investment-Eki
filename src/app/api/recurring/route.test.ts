@@ -150,6 +150,30 @@ describe('/api/recurring privacy', () => {
     expect(consoleError).not.toHaveBeenCalled();
   });
 
+  it.each([undefined, null, false, 0, '', ' \t', []])(
+    'passes category-only fault %p to service validation',
+    async (category) => {
+      jest.mocked(createRecurring).mockRejectedValue(
+        new RecurringInputError('Category must be a non-empty string'),
+      );
+
+      const response = await POST(request(JSON.stringify({
+        type: 'EXPENSE',
+        ...(category === undefined ? {} : { category }),
+        amount: 2_500_000,
+        frequency: 'MONTHLY',
+        day_of_month: 31,
+        start_date: '2026-01-01',
+      })));
+
+      expect(response.status).toBe(400);
+      expect(createRecurring).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({ category }),
+      );
+    },
+  );
+
   it('creates a recurring rule with the exact private response and service mapping', async () => {
     jest.mocked(createRecurring).mockResolvedValue(recurring as never);
     const input = {

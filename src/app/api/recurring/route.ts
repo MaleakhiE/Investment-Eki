@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!body.type || !body.category || !body.amount || !body.frequency || !body.start_date) {
+    if (!body.type || !body.amount || !body.frequency || !body.start_date) {
       return NextResponse.json(responseAPI(400, 'ERROR', 'Missing required fields', null), {
         status: 400,
         headers: PRIVATE_NO_STORE_HEADERS,
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     const recurring = await createRecurring(userId, {
       type: body.type,
-      category: body.category,
+      category: body.category as string,
       description: body.description ?? '',
       amount: body.amount,
       frequency: body.frequency,
