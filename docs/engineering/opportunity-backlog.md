@@ -31,6 +31,9 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | 3 | Replace prescriptive investment recommendations with explainable descriptive insights | 82 | Medium | Requires product/API contract decision |
 | Done | Add exact transaction retry idempotency | 76 | Medium | 019 |
 | 4 | Add duplicate transaction review | 76 | Medium | After idempotency |
+| Done | Migrate Budget form to the shared accessible dialog | 70 | Small | 020 |
+| Done | Migrate mobile More navigation to the shared accessible dialog | 70 | Small | 021 |
+| Done | Migrate Goal form to the shared accessible dialog | 70 | Small | 022 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 

@@ -6,6 +6,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import AppIcon from '@/components/ui/AppIcon';
+import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { moreNavigation, primaryNavigation, type NavigationItem } from './navigation';
 
 function NavLink({ item, pathname, onClick }: { item: NavigationItem; pathname: string; onClick?: () => void }) {
@@ -55,8 +56,8 @@ export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenu
         : <Link key={item.href} href={item.href} className={`app-bottom-link ${item.match(pathname) ? 'is-active' : ''}`}><AppIcon name={item.icon}/><span>{item.label}</span></Link>)}
     </nav>
 
-    {moreOpen && <div className="app-sheet-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setMoreOpen(false); }}>
-      <section className="app-sheet" role="dialog" aria-modal="true" aria-labelledby="more-title"><div className="app-sheet-handle"/><div className="app-sheet-heading"><div><p className="app-eyebrow">Navigation</p><h2 id="more-title">More</h2></div><button type="button" onClick={() => setMoreOpen(false)} className="app-sheet-close">Close</button></div><div className="app-more-grid">{extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setMoreOpen(false)}/>)}</div><button type="button" onClick={() => void handleSignOut()} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button></section>
-    </div>}
+    <AccessibleDialog open={moreOpen} labelledBy="more-title" onClose={() => setMoreOpen(false)}>
+      <section className="app-sheet self-end"><div className="app-sheet-handle"/><div className="app-sheet-heading"><div><p className="app-eyebrow">Navigation</p><h2 id="more-title">More</h2></div><button type="button" data-dialog-initial-focus onClick={() => setMoreOpen(false)} className="app-sheet-close">Close</button></div><div className="app-more-grid">{extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setMoreOpen(false)}/>)}</div><button type="button" onClick={() => void handleSignOut()} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button></section>
+    </AccessibleDialog>
   </>;
 }

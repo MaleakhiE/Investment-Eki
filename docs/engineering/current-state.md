@@ -22,6 +22,17 @@ The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the
 mobile More sheet retain their existing hand-built overlay implementations.
 
+The Budget create form now also uses the shared labelled native dialog with
+associated controls and reversible focus/scroll lifecycle. Goal forms and the
+mobile More sheet remain separate follow-up slices.
+
+The mobile More sheet now also uses the shared native dialog lifecycle while
+preserving its navigation and sign-out behavior.
+
+The Goal create/edit form now uses the shared labelled native dialog with
+associated controls and reversible focus/scroll lifecycle. The remaining
+dialog migration backlog is now subject to browser/staging smoke evidence.
+
 Goal Add Amount writes now use an ownership-scoped encrypted compare-and-swap
 with bounded fresh-state retries. The API/service reject non-finite and
 non-positive additions, malformed bodies, invalid IDs, and non-finite results

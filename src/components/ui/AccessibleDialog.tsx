@@ -37,7 +37,7 @@ export default function AccessibleDialog({
       if (dialog.open) dialog.close();
       if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

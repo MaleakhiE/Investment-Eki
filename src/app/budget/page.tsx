@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
+import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface BudgetWithSpent {
@@ -141,24 +142,23 @@ export default function BudgetPage() {
             </div>
 
             {/* Form Modal */}
-            {showForm && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
-                <div className="bg-white rounded-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
-                  <h3 className="font-semibold text-[#16332f] text-lg mb-4">Create budget</h3>
+            <AccessibleDialog open={showForm} labelledBy="budget-dialog-title" onClose={() => setShowForm(false)}>
+                <div className="bg-white rounded-2xl w-full max-w-sm p-6">
+                  <h3 id="budget-dialog-title" className="font-semibold text-[#16332f] text-lg mb-4">Create budget</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Category</label>
-                      <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
+                      <label htmlFor="budget-category" className="block text-xs text-zinc-400 mb-1">Category</label>
+                      <select id="budget-category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                         {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Budget amount</label>
-                      <CurrencyInput value={amount} onChange={setAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                      <label htmlFor="budget-amount" className="block text-xs text-zinc-400 mb-1">Budget amount</label>
+                      <CurrencyInput id="budget-amount" value={amount} onChange={setAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-400 mb-1">Period</label>
-                      <select value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
+                      <label htmlFor="budget-period" className="block text-xs text-zinc-400 mb-1">Period</label>
+                      <select id="budget-period" value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                         <option value="WEEKLY">Weekly</option>
                         <option value="MONTHLY">Monthly</option>
                         <option value="YEARLY">Yearly</option>
@@ -166,12 +166,11 @@ export default function BudgetPage() {
                     </div>
                     <div className="flex gap-2 pt-2">
                       <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : 'Save'}</button>
-                      <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
+                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
                     </div>
                   </form>
                 </div>
-              </div>
-            )}
+            </AccessibleDialog>
 
             {/* Budget List */}
             <div className="card rounded-xl p-5">
