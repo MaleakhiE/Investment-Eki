@@ -19,6 +19,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce canonical optional recurring linked-account IDs | 76 | Small | 015 |
 | Done | Prevent recurring description materialization overflow | 82 | Small | 016 |
 | Done | Enforce recurring category and aggregation integrity | 84 | Small–medium | 017 |
+| Done | Stabilize shared Auth.js secret and URL configuration | 81 | Small | 018 |
 | 1 | Define and enforce canonical finite IDR boundaries across transaction, budget, and goal writes | 83 | Medium | Needs owner policy decision |
 | Done | Patch direct reviewed Next.js production advisories | 80 | Small | 007 |
 | Blocked | Remove the transitive sharp 0.34.5 advisory | 80 | Small–medium | First stable Next release supporting sharp >=0.35 |
