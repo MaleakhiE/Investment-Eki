@@ -38,6 +38,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce canonical goal DELETE identifiers | 79 | Small | 029 |
 | Done | Consolidate account mutation ID boundaries | 79 | Small | 030 |
 | Done | Enforce canonical budget DELETE identifiers | 78 | Small | 031 |
+| Done | Enforce canonical investment snapshot DELETE identifiers | 78 | Small | 032 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -353,4 +354,16 @@ header.
 - Residuals: investment snapshot and other route-specific ID boundaries remain
   separate; no broad parser rewrite is included.
 - Validation: focused route matrix, full 67-suite/814-test regression,
+  build/OCR trace, Prisma checks, migration status, and diff checks.
+
+## Investment snapshot DELETE identifier boundary (completed in 032)
+
+- Historical problem: snapshot DELETE directly coerced arbitrary IDs and logged
+  raw service failures.
+- Outcome: shared bounded parsing and sanitized error-code logging now protect
+  the route before service access; valid success/not-found behavior is intact.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 78.
+- Residuals: service-level concurrent deletion behavior and remaining product
+  decisions are separate.
+- Validation: focused route matrix, full 68-suite/827-test regression,
   build/OCR trace, Prisma checks, migration status, and diff checks.

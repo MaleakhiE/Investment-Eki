@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-31
-Baseline commit: `50b9148`
-Iteration branch: `feat/loop-engineering-31-budget-delete-id-boundary`
+Baseline commit: `3ea4e52`
+Iteration branch: `feat/loop-engineering-32-investment-snapshot-id-boundary`
 
 ## Product and architecture
 
@@ -32,6 +32,9 @@ their local unbounded BigInt coercion while preserving user-scoped mutations.
 
 Budget DELETE now uses the same parser and sanitizes service-error logging while
 preserving user-scoped deletion and standard responses.
+
+Investment snapshot DELETE now uses the same parser and sanitized error-code
+logging while preserving existing success/not-found behavior.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the
