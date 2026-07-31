@@ -40,6 +40,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce canonical budget DELETE identifiers | 78 | Small | 031 |
 | Done | Enforce canonical investment snapshot DELETE identifiers | 78 | Small | 032 |
 | Done | Consolidate shared bounded database ID parsing | 76 | Small | 033 |
+| Done | Fail closed on invalid Auth.js session configuration | 81 | Small | 034 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 

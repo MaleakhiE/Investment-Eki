@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-31
-Baseline commit: `8eb6117`
-Iteration branch: `feat/loop-engineering-33-consolidate-id-parser`
+Baseline commit: `d01cf80`
+Iteration branch: `feat/loop-engineering-34-auth-config-stability`
 
 ## Product and architecture
 
@@ -15,8 +15,11 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 Auth.js now receives one explicit `AUTH_SECRET`/`NEXTAUTH_SECRET` resolution in
 both the proxy and Node handlers. Production must replace the example secret,
 set the real `AUTH_URL`/`NEXTAUTH_URL`, use identical values across instances,
-and clear old cookies after rotation. Browser and multi-instance validation
-remain deployment gates because the configured MySQL is unreachable here.
+and clear old cookies after rotation. Auth initialization now fails closed when
+either alias group is missing or the secret is short/placeholder, preventing
+unstable cookies from presenting as a successful login. The checked-in local
+`.env` still contains a placeholder secret and must not be used for runtime.
+Browser and multi-instance validation remain deployment gates.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and
