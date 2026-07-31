@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-07-30
-Baseline commit: `f7547b8`
-Iteration branch: `feat/loop-engineering-18-auth-session-persistence`
+Date: 2026-07-31
+Baseline commit: `f08f3ee`
+Iteration branch: `feat/loop-engineering-28-cashflow-date-range`
 
 ## Product and architecture
 
@@ -17,6 +17,12 @@ both the proxy and Node handlers. Production must replace the example secret,
 set the real `AUTH_URL`/`NEXTAUTH_URL`, use identical values across instances,
 and clear old cookies after rotation. Browser and multi-instance validation
 remain deployment gates because the configured MySQL is unreachable here.
+
+Goal create and update boundaries now share finite monetary validation and
+strict goal-field validation. Explicit goal names, categories, priorities, and
+deadlines fail before persistence; explicit deadline clearing remains
+supported. The configured Test-Eki MySQL currently reports all nine migrations
+up to date.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the

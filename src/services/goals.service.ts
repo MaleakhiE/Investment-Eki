@@ -40,6 +40,10 @@ const GOAL_ADDITION_MAX_ATTEMPTS = 3;
 
 export class InvalidGoalAmountError extends FinancialInputError {}
 
+function isValidGoalPriority(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5;
+}
+
 function isWriteConflict(error: unknown): error is { code: 'P2034' } {
   return (
     typeof error === 'object'
@@ -65,7 +69,7 @@ export async function createGoal(userId: bigint, input: GoalInput): Promise<Fina
   if (input.deadline && !parseCalendarDate(input.deadline)) {
     throw new FinancialInputError('Invalid deadline format. Use YYYY-MM-DD');
   }
-  if (input.priority !== undefined && (typeof input.priority !== 'number' || input.priority < 1 || input.priority > 5)) {
+  if (input.priority !== undefined && !isValidGoalPriority(input.priority)) {
     throw new FinancialInputError('Priority must be between 1 and 5');
   }
 
@@ -93,20 +97,43 @@ export async function getGoals(userId: bigint): Promise<FinancialGoal[]> {
   return goals.map(formatGoal);
 }
 
-export async function updateGoal(userId: bigint, goalId: bigint, input: Partial<GoalInput> & { is_completed?: boolean }): Promise<FinancialGoal | null> {
+export type GoalUpdateInput = Partial<Omit<GoalInput, 'deadline'>> & {
+  deadline?: string | null;
+  is_completed?: boolean;
+};
+
+export async function updateGoal(userId: bigint, goalId: bigint, input: GoalUpdateInput): Promise<FinancialGoal | null> {
+  const updateInput = input as Record<string, unknown>;
   if (input.target_amount !== undefined && !isFinitePositiveAmount(input.target_amount)) {
     throw new FinancialInputError('Target amount must be a positive number');
   }
   if (input.current_amount !== undefined && !isFiniteNonNegativeAmount(input.current_amount)) {
     throw new FinancialInputError('Current amount must be a non-negative number');
   }
+  if ('name' in updateInput && (typeof updateInput.name !== 'string' || updateInput.name.trim().length === 0 || updateInput.name.trim().length > 100)) {
+    throw new FinancialInputError('Goal name is required and must be at most 100 characters');
+  }
+  if ('deadline' in updateInput && updateInput.deadline !== null && updateInput.deadline !== '') {
+    if (!parseCalendarDate(updateInput.deadline)) {
+      throw new FinancialInputError('Invalid deadline format. Use YYYY-MM-DD');
+    }
+  }
+  if ('category' in updateInput && (typeof updateInput.category !== 'string' || !VALID_GOAL_CATEGORIES.has(updateInput.category as GoalCategory))) {
+    throw new FinancialInputError('Invalid goal category');
+  }
+  if ('priority' in updateInput && !isValidGoalPriority(updateInput.priority)) {
+    throw new FinancialInputError('Priority must be an integer between 1 and 5');
+  }
+  if ('is_completed' in updateInput && typeof updateInput.is_completed !== 'boolean') {
+    throw new FinancialInputError('is_completed must be a boolean');
+  }
 
   const data: Record<string, unknown> = {};
-  if (input.name) data.name = input.name;
+  if ('name' in updateInput) data.name = (updateInput.name as string).trim();
   if (input.target_amount !== undefined) data.target_amount = encryptNumber(input.target_amount);
   if (input.current_amount !== undefined) data.current_amount = encryptNumber(input.current_amount);
-  if (input.deadline !== undefined) data.deadline = input.deadline ? new Date(input.deadline) : null;
-  if (input.category) data.category = input.category;
+  if ('deadline' in updateInput) data.deadline = updateInput.deadline ? parseCalendarDate(updateInput.deadline)! : null;
+  if ('category' in updateInput) data.category = updateInput.category;
   if (input.priority !== undefined) data.priority = input.priority;
   if (input.is_completed !== undefined) data.is_completed = input.is_completed;
 

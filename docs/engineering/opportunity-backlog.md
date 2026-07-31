@@ -34,6 +34,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Migrate Budget form to the shared accessible dialog | 70 | Small | 020 |
 | Done | Migrate mobile More navigation to the shared accessible dialog | 70 | Small | 021 |
 | Done | Migrate Goal form to the shared accessible dialog | 70 | Small | 022 |
+| Done | Enforce goal update field integrity before persistence | 82 | Small | 028 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -298,3 +299,17 @@ header.
   follow-ups.
 - Recurring category and description integrity are complete, subject to their
   mandatory target audits.
+
+## Goal update field integrity (completed in 028)
+
+- Historical problem: goal PATCH updates validated amounts only. Explicit
+  invalid names, categories, priorities, and dates could be ignored, persisted,
+  or normalized by JavaScript before the database boundary.
+- Outcome: create/update use the same finite priority predicate; update fields
+  reject before reads/writes, while valid partial edits and deadline clearing
+  remain compatible.
+- Score inputs: `5,5,4,3,5,5,5,5,5` → 82.
+- Residuals: product-defined notification timing/recommendation semantics,
+  browser/staging smoke, and historical recurring audits remain separate.
+- Validation: RED/GREEN service and route matrix, full 65-suite/768-test
+  regression, build/OCR trace, Prisma validation, and current migration status.

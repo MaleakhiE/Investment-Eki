@@ -10,6 +10,7 @@ jest.mock('@/services/goals.service', () => {
 });
 
 import { InvalidGoalAmountError } from '@/services/goals.service';
+import { FinancialInputError } from '@/lib/financial-input';
 import { PATCH } from './route';
 
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -129,6 +130,17 @@ describe('PATCH /api/goals/[id]', () => {
     expect(response.status).toBe(200);
     expect(updateGoal).toHaveBeenCalledWith(BigInt(20), BigInt(30), { name: 'Updated' });
     expect(addToGoal).not.toHaveBeenCalled();
+  });
+
+  it('maps invalid goal update input to a private validation response', async () => {
+    updateGoal.mockRejectedValueOnce(new FinancialInputError('Invalid deadline format. Use YYYY-MM-DD'));
+
+    const response = await PATCH(request({ deadline: '2026-02-30' }), params('30'));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).responseDetails).toEqual({
+      errors: ['Invalid deadline format. Use YYYY-MM-DD'],
+    });
   });
 
   it('keeps unexpected failures private', async () => {
