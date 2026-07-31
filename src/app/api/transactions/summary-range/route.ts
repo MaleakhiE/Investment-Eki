@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { decryptNumber } from '@/lib/encryption';
+import { parseCalendarDate } from '@/lib/financial-input';
 import {
   successResponse,
   unauthorizedResponse,
@@ -35,10 +36,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate date format
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+    // Validate date format and calendar correctness
+    const parsedStart = parseCalendarDate(startDate);
+    const parsedEnd = parseCalendarDate(endDate);
+
+    if (!parsedStart || !parsedEnd) {
       return NextResponse.json(
-        validationErrorResponse(['Invalid date format. Use YYYY-MM-DD']),
+        validationErrorResponse(['Invalid date format or impossible calendar date. Use YYYY-MM-DD']),
+        { status: 400 }
+      );
+    }
+
+    if (parsedStart > parsedEnd) {
+      return NextResponse.json(
+        validationErrorResponse(['startDate must not be after endDate']),
         { status: 400 }
       );
     }
@@ -47,8 +58,8 @@ export async function GET(request: NextRequest) {
       where: {
         user_id: userId,
         date: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: parsedStart,
+          lte: parsedEnd,
         },
       },
     });

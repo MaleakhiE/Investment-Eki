@@ -11,6 +11,7 @@ import { useCallback } from 'react';
 
 interface CurrencyInputProps {
   id?: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -18,6 +19,8 @@ interface CurrencyInputProps {
   disabled?: boolean;
   className?: string;
   min?: number;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
 }
 
 export function formatNumber(value: number | string): string {
@@ -32,12 +35,15 @@ export function parseFormattedNumber(value: string): string {
 
 export default function CurrencyInput({
   id,
+  name,
   value,
   onChange,
   placeholder = '0',
   required = false,
   disabled = false,
   className = '',
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
 }: CurrencyInputProps) {
   
   const displayValue = value ? formatNumber(value) : '';
@@ -58,6 +64,7 @@ export default function CurrencyInput({
       </span>
       <input
         id={id}
+        name={name}
         type="text"
         inputMode="numeric"
         value={displayValue}
@@ -65,6 +72,8 @@ export default function CurrencyInput({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
         className={`pl-7 pr-2 text-zinc-900 ${cleanedClassName}`}
       />
     </div>

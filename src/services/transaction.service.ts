@@ -332,6 +332,10 @@ export async function updateTransaction(
     return { success: false, error: 'Transaction not found' };
   }
 
+  if (existing.type === 'TRANSFER') {
+    return { success: false, error: 'Transfers must be edited through the transfer workflow' };
+  }
+
   const encryptedAmount = encryptNumber(input.amount);
   const requestedAccountId = parseAccountId(input.account_id);
   if (input.account_id !== undefined && input.account_id !== null && !requestedAccountId) {

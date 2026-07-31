@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { updateTransaction, deleteTransaction, TransactionInput } from '@/services/transaction.service';
+import { parseDatabaseId } from '@/lib/database-id';
 import {
   successResponse,
   unauthorizedResponse,
@@ -32,7 +33,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    const transactionId = BigInt(id);
+    const transactionId = parseDatabaseId(id);
+    if (!transactionId) return NextResponse.json(validationErrorResponse(['Invalid transaction ID']), { status: 400 });
 
     let body: TransactionInput;
     try {
@@ -86,7 +88,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    const transactionId = BigInt(id);
+    const transactionId = parseDatabaseId(id);
+    if (!transactionId) return NextResponse.json(validationErrorResponse(['Invalid transaction ID']), { status: 400 });
 
     const result = await deleteTransaction(userId, transactionId);
 

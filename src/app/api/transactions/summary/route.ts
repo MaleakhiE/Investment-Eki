@@ -35,10 +35,17 @@ export async function GET(request: NextRequest) {
       month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     }
 
-    // Validate month format
+    // Validate month format and calendar correctness
     if (!/^\d{4}-\d{2}$/.test(month)) {
       return NextResponse.json(
         validationErrorResponse(['Invalid month format. Use YYYY-MM']),
+        { status: 400 }
+      );
+    }
+    const [year, monthNum] = month.split('-').map(Number);
+    if (monthNum < 1 || monthNum > 12) {
+      return NextResponse.json(
+        validationErrorResponse(['Invalid month. Use a value between 01 and 12']),
         { status: 400 }
       );
     }

@@ -4,9 +4,13 @@ import {
   FinancialInputError,
   isFiniteNonNegativeAmount,
   isFinitePositiveAmount,
+  parseCalendarDate,
 } from '@/lib/financial-input';
 
 export type GoalCategory = 'EMERGENCY_FUND' | 'INVESTMENT' | 'VACATION' | 'GADGET' | 'VEHICLE' | 'PROPERTY' | 'EDUCATION' | 'WEDDING' | 'OTHER';
+const VALID_GOAL_CATEGORIES: Set<GoalCategory> = new Set([
+  'EMERGENCY_FUND', 'INVESTMENT', 'VACATION', 'GADGET', 'VEHICLE', 'PROPERTY', 'EDUCATION', 'WEDDING', 'OTHER',
+]);
 
 export interface GoalInput {
   name: string;
@@ -46,20 +50,32 @@ function isWriteConflict(error: unknown): error is { code: 'P2034' } {
 }
 
 export async function createGoal(userId: bigint, input: GoalInput): Promise<FinancialGoal> {
+  if (!input.name || input.name.trim().length === 0 || input.name.trim().length > 100) {
+    throw new FinancialInputError('Goal name is required and must be at most 100 characters');
+  }
   if (!isFinitePositiveAmount(input.target_amount)) {
     throw new FinancialInputError('Target amount must be a positive number');
   }
   if (input.current_amount !== undefined && !isFiniteNonNegativeAmount(input.current_amount)) {
     throw new FinancialInputError('Current amount must be a non-negative number');
   }
+  if (!VALID_GOAL_CATEGORIES.has(input.category)) {
+    throw new FinancialInputError('Invalid goal category');
+  }
+  if (input.deadline && !parseCalendarDate(input.deadline)) {
+    throw new FinancialInputError('Invalid deadline format. Use YYYY-MM-DD');
+  }
+  if (input.priority !== undefined && (typeof input.priority !== 'number' || input.priority < 1 || input.priority > 5)) {
+    throw new FinancialInputError('Priority must be between 1 and 5');
+  }
 
   const goal = await prisma.financialGoal.create({
     data: {
       user_id: userId,
-      name: input.name,
+      name: input.name.trim(),
       target_amount: encryptNumber(input.target_amount),
       current_amount: encryptNumber(input.current_amount || 0),
-      deadline: input.deadline ? new Date(input.deadline) : null,
+      deadline: input.deadline ? parseCalendarDate(input.deadline) : null,
       category: input.category,
       priority: input.priority || 2,
     },

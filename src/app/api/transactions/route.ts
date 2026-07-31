@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { parseCalendarDate } from '@/lib/financial-input';
 import { createTransaction, getTransactions, TransactionInput } from '@/services/transaction.service';
 import {
   successResponse,
@@ -79,12 +80,44 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate') || undefined;
-    const endDate = searchParams.get('endDate') || undefined;
+    const startDateRaw = searchParams.get('startDate');
+    const endDateRaw = searchParams.get('endDate');
     const limitParam = searchParams.get('limit');
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
-    const transactions = await getTransactions(userId, startDate, endDate, limit);
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+
+    if (startDateRaw) {
+      const parsed = parseCalendarDate(startDateRaw);
+      if (!parsed) {
+        return NextResponse.json(
+          validationErrorResponse(['Invalid startDate. Use YYYY-MM-DD with a valid calendar date']),
+          { status: 400 }
+        );
+      }
+      startDate = parsed;
+    }
+
+    if (endDateRaw) {
+      const parsed = parseCalendarDate(endDateRaw);
+      if (!parsed) {
+        return NextResponse.json(
+          validationErrorResponse(['Invalid endDate. Use YYYY-MM-DD with a valid calendar date']),
+          { status: 400 }
+        );
+      }
+      endDate = parsed;
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+      return NextResponse.json(
+        validationErrorResponse(['startDate must not be after endDate']),
+        { status: 400 }
+      );
+    }
+
+    const transactions = await getTransactions(userId, startDateRaw ?? undefined, endDateRaw ?? undefined, limit);
 
     const transactionsResponse = transactions.map(({ user_id: internalUserId, ...transaction }) => {
       void internalUserId;

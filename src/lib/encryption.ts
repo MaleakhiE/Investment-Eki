@@ -105,8 +105,17 @@ export function encryptNumber(value: number): string {
 
 export function decryptNumber(ciphertext: string): number {
   const decrypted = decrypt(ciphertext);
-  const num = parseFloat(decrypted);
-  if (isNaN(num)) {
+  const normalized = decrypted.trim();
+  // Accept only a canonical signed decimal. parseFloat/Number are too permissive
+  // here: parseFloat('100junk') yields 100 and Number('0x10') yields 16, both of
+  // which would let corrupted or legacy ciphertext masquerade as valid money.
+  // Full-string validation keeps encrypted monetary storage the trustworthy
+  // source of truth.
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) {
+    throw new Error('Decrypted value is not a valid number');
+  }
+  const num = Number(normalized);
+  if (!Number.isFinite(num)) {
     throw new Error('Decrypted value is not a valid number');
   }
   return num;

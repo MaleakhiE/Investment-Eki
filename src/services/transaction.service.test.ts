@@ -198,6 +198,24 @@ describe('transaction account validation', () => {
 });
 
 describe('transaction optional field round trips', () => {
+  it('rejects generic edits of transfers before encryption or persistence', async () => {
+    transactionRepository.findFirst.mockResolvedValue({
+      ...persisted,
+      type: 'TRANSFER',
+      account_id: BigInt(1),
+      destination_account_id: BigInt(2),
+    });
+
+    const result = await updateTransaction(BigInt(20), BigInt(10), baseInput);
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Transfers must be edited through the transfer workflow',
+    });
+    expect(mockEncryptNumber).not.toHaveBeenCalled();
+    expect(transactionRepository.update).not.toHaveBeenCalled();
+  });
+
   it('normalizes account and persists account and receipt image on create', async () => {
     transactionRepository.create.mockResolvedValue({
       ...persisted,
