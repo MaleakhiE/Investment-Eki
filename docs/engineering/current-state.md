@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-31
-Baseline commit: `f08f3ee`
-Iteration branch: `feat/loop-engineering-28-cashflow-date-range`
+Baseline commit: `876ded1`
+Iteration branch: `feat/loop-engineering-29-goal-delete-id-boundary`
 
 ## Product and architecture
 
@@ -23,6 +23,9 @@ strict goal-field validation. Explicit goal names, categories, priorities, and
 deadlines fail before persistence; explicit deadline clearing remains
 supported. The configured Test-Eki MySQL currently reports all nine migrations
 up to date.
+
+Goal DELETE now shares the canonical signed-BIGINT ID boundary with PATCH and
+rejects malformed IDs before the scoped delete service.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the

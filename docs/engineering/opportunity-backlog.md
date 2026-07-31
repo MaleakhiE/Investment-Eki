@@ -35,6 +35,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Migrate mobile More navigation to the shared accessible dialog | 70 | Small | 021 |
 | Done | Migrate Goal form to the shared accessible dialog | 70 | Small | 022 |
 | Done | Enforce goal update field integrity before persistence | 82 | Small | 028 |
+| Done | Enforce canonical goal DELETE identifiers | 79 | Small | 029 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -313,3 +314,16 @@ header.
   browser/staging smoke, and historical recurring audits remain separate.
 - Validation: RED/GREEN service and route matrix, full 65-suite/768-test
   regression, build/OCR trace, Prisma validation, and current migration status.
+
+## Goal DELETE identifier boundary (completed in 029)
+
+- Historical problem: DELETE coerced arbitrary route IDs with `BigInt`, causing
+  generic failures and inconsistent handling compared with PATCH.
+- Outcome: authentication-first canonical positive signed-BIGINT parsing now
+  returns a private 400 before deletion; valid IDs and ownership semantics are
+  unchanged.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 79.
+- Residuals: other route-specific ID boundaries and product-defined semantics
+  remain separate opportunities.
+- Validation: RED/GREEN route matrix, full regression, build/OCR trace, Prisma
+  validation, migration status, and private-error assertions.

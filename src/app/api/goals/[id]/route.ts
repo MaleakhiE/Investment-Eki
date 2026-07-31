@@ -100,7 +100,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id } = await params;
-    const goalId = BigInt(id);
+    const goalId = parseGoalId(id);
+    if (!goalId) {
+      return NextResponse.json(validationErrorResponse(['Invalid goal ID']), { status: 400 });
+    }
 
     await deleteGoal(userId, goalId);
 

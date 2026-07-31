@@ -11,7 +11,7 @@ jest.mock('@/services/goals.service', () => {
 
 import { InvalidGoalAmountError } from '@/services/goals.service';
 import { FinancialInputError } from '@/lib/financial-input';
-import { PATCH } from './route';
+import { DELETE, PATCH } from './route';
 
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 const request = (body: unknown) => new Request('http://localhost/api/goals/30', {
@@ -19,6 +19,7 @@ const request = (body: unknown) => new Request('http://localhost/api/goals/30', 
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify(body),
 }) as never;
+const deleteRequest = () => new Request('http://localhost/api/goals/30', { method: 'DELETE' }) as never;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -156,6 +157,54 @@ describe('PATCH /api/goals/[id]', () => {
       { code: 'UNCLASSIFIED' },
     );
     expect(JSON.stringify(consoleError.mock.calls)).not.toContain('ciphertext:secret');
+    consoleError.mockRestore();
+  });
+});
+
+describe('DELETE /api/goals/[id]', () => {
+  it('authenticates before validating the identifier', async () => {
+    getCurrentUserId.mockResolvedValueOnce(null);
+
+    const response = await DELETE(deleteRequest(), params('invalid'));
+
+    expect(response.status).toBe(401);
+    expect(deleteGoal).not.toHaveBeenCalled();
+  });
+
+  it.each(['invalid', '0', '00', '01', '-1', '1.0', '1e3', '9223372036854775808'])(
+    'rejects malformed goal ID %s before invoking the service',
+    async (id) => {
+      const response = await DELETE(deleteRequest(), params(id));
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        responseCode: 400,
+        responseStatus: 'ERROR',
+        responseMessage: 'Validation failed',
+        responseDetails: { errors: ['Invalid goal ID'] },
+      });
+      expect(deleteGoal).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['1', '9223372036854775807'])('passes valid goal ID %s to the scoped service', async (id) => {
+    const response = await DELETE(deleteRequest(), params(id));
+
+    expect(response.status).toBe(200);
+    expect(deleteGoal).toHaveBeenCalledWith(BigInt(20), BigInt(id));
+    expect((await response.json()).responseMessage).toBe('Goal deleted');
+  });
+
+  it('keeps unexpected delete failures private', async () => {
+    deleteGoal.mockRejectedValueOnce(Object.assign(new Error('private db detail'), { code: 'P2025' }));
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const response = await DELETE(deleteRequest(), params('30'));
+
+    expect(response.status).toBe(500);
+    expect((await response.json()).responseDetails).toBeNull();
+    expect(consoleError).toHaveBeenCalledWith('Delete goal error:', { code: 'P2025' });
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('private db detail');
     consoleError.mockRestore();
   });
 });
