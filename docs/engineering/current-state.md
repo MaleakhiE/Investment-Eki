@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-31
-Baseline commit: `3ea4e52`
-Iteration branch: `feat/loop-engineering-32-investment-snapshot-id-boundary`
+Baseline commit: `8eb6117`
+Iteration branch: `feat/loop-engineering-33-consolidate-id-parser`
 
 ## Product and architecture
 
@@ -35,6 +35,9 @@ preserving user-scoped deletion and standard responses.
 
 Investment snapshot DELETE now uses the same parser and sanitized error-code
 logging while preserving existing success/not-found behavior.
+
+Goal route IDs and export account filters now reuse `parseDatabaseId`; duplicate
+bounded regex/max logic has been removed without changing API behavior.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the

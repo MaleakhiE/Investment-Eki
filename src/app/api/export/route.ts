@@ -12,11 +12,11 @@ import {
   exportTransactions,
   getExportSummary,
 } from '@/services/export.service';
+import { parseDatabaseId } from '@/lib/database-id';
 
 const PRIVATE_NO_STORE_HEADERS = {
   'Cache-Control': 'private, no-store, max-age=0',
 };
-const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
 
 function parseDate(value: string | null, field: 'from' | 'to'): Date | string | undefined {
   if (value === null) return undefined;
@@ -65,16 +65,9 @@ export async function GET(request: NextRequest) {
 
     let accountId: bigint | undefined;
     if (accountIdValue !== null) {
-      if (!/^[1-9]\d{0,18}$/.test(accountIdValue)) {
-        errors.push('accountId must be a positive integer');
-      } else {
-        const parsedAccountId = BigInt(accountIdValue);
-        if (parsedAccountId > MAX_SIGNED_BIGINT) {
-          errors.push('accountId must be a positive integer');
-        } else {
-          accountId = parsedAccountId;
-        }
-      }
+      const parsedAccountId = parseDatabaseId(accountIdValue);
+      if (!parsedAccountId) errors.push('accountId must be a positive integer');
+      else accountId = parsedAccountId;
     }
 
     if (from instanceof Date && to instanceof Date && from > to) {

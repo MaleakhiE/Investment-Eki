@@ -39,6 +39,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Consolidate account mutation ID boundaries | 79 | Small | 030 |
 | Done | Enforce canonical budget DELETE identifiers | 78 | Small | 031 |
 | Done | Enforce canonical investment snapshot DELETE identifiers | 78 | Small | 032 |
+| Done | Consolidate shared bounded database ID parsing | 76 | Small | 033 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -367,3 +368,15 @@ header.
   decisions are separate.
 - Validation: focused route matrix, full 68-suite/827-test regression,
   build/OCR trace, Prisma checks, migration status, and diff checks.
+
+## Shared bounded database ID parsing (completed in 033)
+
+- Historical problem: goal and export routes duplicated signed-BIGINT parsing,
+  creating drift risk after neighboring routes adopted the shared helper.
+- Outcome: both callers use `parseDatabaseId`; existing messages, ownership,
+  filtering, and response behavior remain unchanged.
+- Score inputs: `4,4,4,3,5,5,5,5,5` → 76.
+- Residuals: notification/recommendation product semantics, historical audits,
+  and the blocked transitive sharp advisory remain.
+- Validation: focused 62-test parser/export/goal matrix, full 68-suite/827-test
+  regression, build/OCR trace, Prisma checks, migration status, and diff checks.
