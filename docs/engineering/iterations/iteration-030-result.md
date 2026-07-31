@@ -23,7 +23,7 @@ The local parser was removed rather than duplicated.
 
 | Check | Result |
 | --- | --- |
-| Focused account route tests | Pass: 26 tests |
+| Focused account route tests | Pass: 27 tests (21 item-route, 6 collection/transfer) |
 | Full Jest suite | Pass: 66 suites, 802 tests |
 | TypeScript/lint | Pass |
 | Prisma/build/OCR | Pass |
