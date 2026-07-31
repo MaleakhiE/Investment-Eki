@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-07-31
-Baseline commit: `d5373bd`
-Iteration branch: `feat/loop-engineering-30-account-id-boundary`
+Baseline commit: `50b9148`
+Iteration branch: `feat/loop-engineering-31-budget-delete-id-boundary`
 
 ## Product and architecture
 
@@ -29,6 +29,9 @@ rejects malformed IDs before the scoped delete service.
 
 Account PUT and DELETE now reuse the same canonical bounded ID parser, removing
 their local unbounded BigInt coercion while preserving user-scoped mutations.
+
+Budget DELETE now uses the same parser and sanitizes service-error logging while
+preserving user-scoped deletion and standard responses.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the

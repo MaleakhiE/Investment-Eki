@@ -37,6 +37,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce goal update field integrity before persistence | 82 | Small | 028 |
 | Done | Enforce canonical goal DELETE identifiers | 79 | Small | 029 |
 | Done | Consolidate account mutation ID boundaries | 79 | Small | 030 |
+| Done | Enforce canonical budget DELETE identifiers | 78 | Small | 031 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -340,3 +341,16 @@ header.
   separate bounded slices; no broad rewrite is included.
 - Validation: focused PUT/DELETE matrix, collection regressions, full
   66-suite/802-test regression, build/OCR trace, Prisma checks, and diff checks.
+
+## Budget DELETE identifier boundary (completed in 031)
+
+- Historical problem: budget DELETE directly coerced arbitrary route IDs and
+  logged raw service errors.
+- Outcome: shared bounded parsing returns private 400 responses before service
+  access, and failures log only allowlisted codes; valid scoped deletion is
+  unchanged.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 78.
+- Residuals: investment snapshot and other route-specific ID boundaries remain
+  separate; no broad parser rewrite is included.
+- Validation: focused route matrix, full 67-suite/814-test regression,
+  build/OCR trace, Prisma checks, migration status, and diff checks.
