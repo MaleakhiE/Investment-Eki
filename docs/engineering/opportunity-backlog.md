@@ -36,6 +36,7 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Migrate Goal form to the shared accessible dialog | 70 | Small | 022 |
 | Done | Enforce goal update field integrity before persistence | 82 | Small | 028 |
 | Done | Enforce canonical goal DELETE identifiers | 79 | Small | 029 |
+| Done | Consolidate account mutation ID boundaries | 79 | Small | 030 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -327,3 +328,15 @@ header.
   remain separate opportunities.
 - Validation: RED/GREEN route matrix, full regression, build/OCR trace, Prisma
   validation, migration status, and private-error assertions.
+
+## Account mutation ID boundary (completed in 030)
+
+- Historical problem: account PUT/DELETE used unbounded `BigInt` coercion and
+  accepted noncanonical identifiers or generic-failure paths.
+- Outcome: both mutations reuse `parseDatabaseId`; malformed IDs fail before
+  service calls, while valid IDs retain ownership and response behavior.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 79.
+- Residuals: investment snapshot, budget, and other route-specific IDs require
+  separate bounded slices; no broad rewrite is included.
+- Validation: focused PUT/DELETE matrix, collection regressions, full
+  66-suite/802-test regression, build/OCR trace, Prisma checks, and diff checks.

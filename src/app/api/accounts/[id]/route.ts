@@ -2,13 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { archiveAccount, updateAccount, type AccountInput, type AccountRecord } from '@/services/account.service';
 import { notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-response';
+import { parseDatabaseId } from '@/lib/database-id';
 
 interface RouteParams { params: Promise<{ id: string }> }
-
-function parseId(id: string): bigint | null {
-  try { const value = BigInt(id); return value > 0 ? value : null; }
-  catch { return null; }
-}
 
 function serializeAccount({ user_id: internalUserId, ...account }: AccountRecord) {
   void internalUserId;
@@ -19,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) return NextResponse.json(unauthorizedResponse(), { status: 401 });
-    const accountId = parseId((await params).id);
+    const accountId = parseDatabaseId((await params).id);
     if (!accountId) return NextResponse.json(validationErrorResponse(['Invalid account ID']), { status: 400 });
 
     let body: AccountInput;
@@ -42,7 +38,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) return NextResponse.json(unauthorizedResponse(), { status: 401 });
-    const accountId = parseId((await params).id);
+    const accountId = parseDatabaseId((await params).id);
     if (!accountId) return NextResponse.json(validationErrorResponse(['Invalid account ID']), { status: 400 });
 
     const result = await archiveAccount(userId, accountId);
