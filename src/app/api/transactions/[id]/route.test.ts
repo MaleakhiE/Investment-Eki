@@ -11,7 +11,8 @@ jest.mock('@/services/transaction.service', () => ({
 import { DELETE, PUT } from './route';
 
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
-const request = { json: jest.fn() } as never;
+const json = jest.fn();
+const request = { json } as never;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -27,7 +28,7 @@ describe('transaction item ID validation', () => {
 
       expect(putResponse.status).toBe(400);
       expect(deleteResponse.status).toBe(400);
-      expect(request.json).not.toHaveBeenCalled();
+      expect(json).not.toHaveBeenCalled();
       expect(updateTransaction).not.toHaveBeenCalled();
       expect(deleteTransaction).not.toHaveBeenCalled();
     },

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    const [year, monthNum] = month.split('-').map(Number);
+    const [, monthNum] = month.split('-').map(Number);
     if (monthNum < 1 || monthNum > 12) {
       return NextResponse.json(
         validationErrorResponse(['Invalid month. Use a value between 01 and 12']),
