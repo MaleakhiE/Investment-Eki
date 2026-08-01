@@ -3,17 +3,7 @@ import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI, validationErrorResponse } from '@/lib/api-response';
 import { deleteBudget } from '@/services/budget.service';
 import { parseDatabaseId } from '@/lib/database-id';
-
-function safeDatabaseErrorCode(error: unknown): string {
-  if (
-    typeof error === 'object'
-    && error !== null
-    && 'code' in error
-    && typeof error.code === 'string'
-    && /^P\d{4}$/.test(error.code)
-  ) return error.code;
-  return 'UNCLASSIFIED';
-}
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

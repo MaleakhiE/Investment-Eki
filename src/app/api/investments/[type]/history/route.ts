@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { getSnapshotsByUserAndType } from '@/services/investment.service';
 import { validateInvestmentType, InvestmentType } from '@/lib/validation';
 import {
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       successResponse(snapshotsResponse, `${type} investment history retrieved successfully`)
     );
   } catch (error) {
-    console.error('Error getting investment history:', error);
+    console.error('Error getting investment history:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

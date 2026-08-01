@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { prisma } from '@/lib/prisma';
 import {
   successResponse,
@@ -43,7 +44,7 @@ export async function GET() {
       successResponse(investmentsResponse, 'Investments retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting investments:', error);
+    console.error('Error getting investments:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { getMonthlySummary } from '@/services/transaction.service';
 import {
   successResponse,
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       successResponse(summary, 'Monthly summary retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting monthly summary:', error);
+    console.error('Error getting monthly summary:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

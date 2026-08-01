@@ -55,6 +55,30 @@ describe('/api/accounts', () => {
     expect(response.status).toBe(201);
     expect(mockedCreateAccount).toHaveBeenCalledWith(BigInt(7), expect.objectContaining({ name: 'Mandiri' }));
   });
+
+  it.each([
+    ['GET', GET, mockedGetAccounts],
+    ['POST', POST, mockedCreateAccount],
+  ] as const)('keeps %s service failures private', async (_method, handler, service) => {
+    mockedUserId.mockResolvedValue(BigInt(7));
+    const privateMessage = 'private account balance SQL details';
+    service.mockRejectedValue(new Error(privateMessage));
+    const request = new Request('http://localhost/api/accounts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'BCA', type: 'BANK', opening_balance: 0 }),
+    }) as never;
+    const errorLog = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const response = await (handler as (input?: never) => Promise<Response>)(
+      handler === GET ? undefined : request,
+    );
+
+    expect(response.status).toBe(500);
+    expect(errorLog.mock.calls.flat().join(' ')).not.toContain(privateMessage);
+    expect(errorLog).toHaveBeenCalledWith(expect.any(String), { code: 'UNCLASSIFIED' });
+    errorLog.mockRestore();
+  });
 });
 
 describe('POST /api/accounts/transfer', () => {
@@ -91,5 +115,22 @@ describe('POST /api/accounts/transfer', () => {
       id: '9', account_id: '1', destination_account_id: '2',
     }));
     expect(body).not.toHaveProperty('user_id');
+  });
+
+  it('keeps transfer failures private while preserving a safe code', async () => {
+    mockedUserId.mockResolvedValue(BigInt(7));
+    mockedCreateTransfer.mockRejectedValue({ code: 'P2034', message: 'private transfer SQL details' });
+    const errorLog = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const response = await POST_TRANSFER(new Request('http://localhost/api/accounts/transfer', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ source_account_id: '1', destination_account_id: '2', amount: 10, date: '2026-07-17' }),
+    }) as never);
+
+    expect(response.status).toBe(500);
+    expect(errorLog).toHaveBeenCalledWith('Error creating transfer:', { code: 'P2034' });
+    expect(errorLog.mock.calls.flat().join(' ')).not.toContain('private transfer SQL details');
+    errorLog.mockRestore();
   });
 });

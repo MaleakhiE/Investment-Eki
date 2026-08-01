@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import {
   notFoundResponse,
   responseAPI,
@@ -119,7 +120,7 @@ export async function GET(request: NextRequest) {
         headers: PRIVATE_NO_STORE_HEADERS,
       });
     }
-    console.error('Export error:', error);
+    console.error('Export error:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), {
       status: 500,
       headers: PRIVATE_NO_STORE_HEADERS,

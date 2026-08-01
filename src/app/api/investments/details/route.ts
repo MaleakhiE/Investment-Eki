@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { prisma } from '@/lib/prisma';
 import { decryptNumber } from '@/lib/encryption';
 import {
@@ -73,7 +74,7 @@ export async function GET() {
       successResponse(details, 'Investment details retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting investment details:', error);
+    console.error('Error getting investment details:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

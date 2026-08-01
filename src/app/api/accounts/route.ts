@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { createAccount, getAccounts, type AccountInput, type AccountRecord } from '@/services/account.service';
 import { serverErrorResponse, successResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-response';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 function serializeAccount({ user_id: internalUserId, ...account }: AccountRecord) {
   void internalUserId;
@@ -16,7 +17,7 @@ export async function GET() {
     const accounts = await getAccounts(userId);
     return NextResponse.json(successResponse(accounts.map(serializeAccount), 'Accounts retrieved successfully'));
   } catch (error) {
-    console.error('Error getting accounts:', error);
+    console.error('Error getting accounts:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error('Error creating account:', error);
+    console.error('Error creating account:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

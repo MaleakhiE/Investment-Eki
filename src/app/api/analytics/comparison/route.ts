@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { getInvestmentComparison } from '@/services/analytics.service';
 import {
   successResponse,
@@ -33,7 +34,7 @@ export async function GET() {
       successResponse(comparison, 'Investment comparison retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting investment comparison:', error);
+    console.error('Error getting investment comparison:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
 import {
@@ -70,7 +71,7 @@ export async function GET() {
 
     return NextResponse.json(successResponse(response, 'Notification settings retrieved'));
   } catch (error) {
-    console.error('Error getting notification settings:', error);
+    console.error('Error getting notification settings:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(successResponse(response, 'Notification settings updated'));
   } catch (error) {
-    console.error('Error updating notification settings:', error);
+    console.error('Error updating notification settings:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

@@ -34,3 +34,27 @@ describe('transaction item ID validation', () => {
     },
   );
 });
+
+describe('transaction item error privacy', () => {
+  let errorLog: jest.SpiedFunction<typeof console.error>;
+
+  beforeEach(() => {
+    errorLog = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => errorLog.mockRestore());
+
+  it.each([
+    ['PUT', PUT, updateTransaction],
+    ['DELETE', DELETE, deleteTransaction],
+  ] as const)('keeps %s failures private while preserving a safe code', async (_method, handler, service) => {
+    const privateMessage = 'private SQL transaction amount and account id';
+    service.mockRejectedValue(new Error(privateMessage));
+
+    const response = await handler(request, params('7'));
+
+    expect(response.status).toBe(500);
+    expect(errorLog).toHaveBeenCalledWith(expect.any(String), { code: 'UNCLASSIFIED' });
+    expect(errorLog.mock.calls.flat().join(' ')).not.toContain(privateMessage);
+  });
+});

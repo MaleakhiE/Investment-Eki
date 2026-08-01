@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { getPortfolioSummary, getPortfolioGrowth } from '@/services/analytics.service';
 import {
   successResponse,
@@ -42,7 +43,7 @@ export async function GET() {
       )
     );
   } catch (error) {
-    console.error('Error getting portfolio analytics:', error);
+    console.error('Error getting portfolio analytics:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

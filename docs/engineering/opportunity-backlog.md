@@ -41,6 +41,12 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Enforce canonical investment snapshot DELETE identifiers | 78 | Small | 032 |
 | Done | Consolidate shared bounded database ID parsing | 76 | Small | 033 |
 | Done | Fail closed on invalid Auth.js session configuration | 81 | Small | 034 |
+| Done | Sanitize transaction API error logging | 80 | Small | 035 |
+| Done | Sanitize account and cashflow API error logging | 80 | Small | 036 |
+| Done | Sanitize investment API error logging | 80 | Small | 037 |
+| Done | Sanitize analytics API error logging | 80 | Small | 038 |
+| Done | Sanitize settings API error logging | 80 | Small | 039 |
+| Done | Sanitize financial read and export API error logging | 80 | Small | 040 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 

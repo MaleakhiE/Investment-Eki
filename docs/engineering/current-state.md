@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-07-31
-Baseline commit: `d01cf80`
-Iteration branch: `feat/loop-engineering-34-auth-config-stability`
+Date: 2026-08-01
+Baseline commit: `3d24e8b`
+Iteration branch: `feat/loop-engineering-40-financial-read-error-privacy`
 
 ## Product and architecture
 
@@ -20,6 +20,29 @@ either alias group is missing or the secret is short/placeholder, preventing
 unstable cookies from presenting as a successful login. The checked-in local
 `.env` still contains a placeholder secret and must not be used for runtime.
 Browser and multi-instance validation remain deployment gates.
+
+Transaction collection and item API catches now log only a safe Prisma error
+code or `UNCLASSIFIED`; the shared classifier is reused by other hardened
+financial mutation routes. Raw transaction error details are not serialized to
+application logs.
+
+Account, transfer, and cashflow API catches now use the same safe error-code
+taxonomy; raw balance, SQL, identifier, and encrypted-value details are not
+serialized to those logs.
+
+Investment list, detail, history, and snapshot-write API catches use the same
+taxonomy; raw portfolio and snapshot details are not serialized to logs.
+
+Analytics portfolio, comparison, cashflow-trend, savings-suggestion, and
+recommendation catches use the same taxonomy; raw insight and financial details
+are not serialized to logs.
+
+Settings, notification-preference, and AI-recommendation catches use the same
+taxonomy; raw user preference and configuration details are not serialized to
+logs.
+
+Transaction summary, summary-range, and export catches use the same taxonomy;
+raw financial query and export details are not serialized to logs.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and

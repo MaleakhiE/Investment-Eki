@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import {
   serverErrorResponse,
   successResponse,
@@ -21,7 +22,7 @@ export async function GET() {
       successResponse(suggestions, 'Saran penghematan berhasil dibuat')
     );
   } catch (error) {
-    console.error('Error generating savings suggestions:', error);
+    console.error('Error generating savings suggestions:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { updateTransaction, deleteTransaction, TransactionInput } from '@/services/transaction.service';
 import { parseDatabaseId } from '@/lib/database-id';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import {
   successResponse,
   unauthorizedResponse,
@@ -71,7 +72,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       successResponse(transactionResponse, 'Transaction updated successfully')
     );
   } catch (error) {
-    console.error('Error updating transaction:', error);
+    console.error('Error updating transaction:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -107,7 +108,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       successResponse(null, 'Transaction deleted successfully')
     );
   } catch (error) {
-    console.error('Error deleting transaction:', error);
+    console.error('Error deleting transaction:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

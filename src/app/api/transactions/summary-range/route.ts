@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { prisma } from '@/lib/prisma';
 import { decryptNumber } from '@/lib/encryption';
 import { parseCalendarDate } from '@/lib/financial-input';
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
       successResponse(summary, 'Summary retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting summary:', error);
+    console.error('Error getting summary:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

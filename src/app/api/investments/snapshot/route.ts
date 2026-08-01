@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { saveSnapshot } from '@/services/investment.service';
 import { validateSnapshotInput, InvestmentSnapshotInput } from '@/lib/validation';
 import {
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error saving investment snapshot:', error);
+    console.error('Error saving investment snapshot:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

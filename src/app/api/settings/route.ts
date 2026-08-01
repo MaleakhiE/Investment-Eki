@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { getUserSettings } from '@/services/settings.service';
 import {
   successResponse,
@@ -31,7 +32,7 @@ export async function GET() {
 
     return NextResponse.json(successResponse(settings, 'Settings retrieved successfully'));
   } catch (error) {
-    console.error('Error getting settings:', error);
+    console.error('Error getting settings:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
