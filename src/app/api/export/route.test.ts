@@ -46,6 +46,16 @@ describe('GET /api/export', () => {
     expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
   });
 
+  it('keeps export failures private while preserving a safe code', async () => {
+    exportToJSON.mockRejectedValue({ code: 'P1001', message: 'private export financial data' });
+    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const response = await GET(makeRequest());
+    expect(response.status).toBe(500);
+    expect(log).toHaveBeenCalledWith('Export error:', { code: 'P1001' });
+    expect(log.mock.calls.flat().join(' ')).not.toContain('private export financial data');
+    log.mockRestore();
+  });
+
   it('passes strict inclusive account/date filters only to the CSV transaction export', async () => {
     const response = await GET(makeRequest(
       '?format=csv&from=2026-07-01&to=2026-07-31&accountId=2',

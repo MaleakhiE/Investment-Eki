@@ -45,6 +45,14 @@ it('groups prototype-reserved category names as exact numeric own properties', a
   }
 });
 
+it('keeps summary-range failures private while preserving a safe code', async () => {
+  transactionRepository.findMany.mockRejectedValue({ code: 'P1001', message: 'private range financial data' });
+  const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  const response = await GET(new Request('https://fintrack.example/api/transactions/summary-range?startDate=2026-07-01&endDate=2026-07-31') as never);
+  expect(response.status).toBe(500); expect(log).toHaveBeenCalledWith('Error getting summary:', { code: 'P1001' });
+  expect(log.mock.calls.flat().join(' ')).not.toContain('private range financial data'); log.mockRestore();
+});
+
 describe('summary-range date validation', () => {
   it('rejects impossible calendar dates such as 2026-02-30', async () => {
     const response = await GET(new Request(
