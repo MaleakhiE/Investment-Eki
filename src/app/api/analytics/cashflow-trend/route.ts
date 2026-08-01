@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { getCashflowTrend } from '@/services/analytics.service';
 import {
   successResponse,
@@ -33,7 +34,7 @@ export async function GET() {
       successResponse(trend, 'Cashflow trend retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting cashflow trend:', error);
+    console.error('Error getting cashflow trend:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

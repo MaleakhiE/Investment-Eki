@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { isAIRecommendationEnabled } from '@/services/settings.service';
 import { getInvestmentRecommendation } from '@/services/recommendation.service';
 import {
@@ -56,7 +57,7 @@ export async function GET() {
       successResponse(recommendation, 'Investment recommendation generated successfully')
     );
   } catch (error) {
-    console.error('Error getting investment recommendation:', error);
+    console.error('Error getting investment recommendation:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
