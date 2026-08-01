@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-08-01
-Baseline commit: `184c81e`
-Iteration branch: `feat/loop-engineering-35-transaction-error-privacy`
+Baseline commit: `102c862`
+Iteration branch: `feat/loop-engineering-36-account-cashflow-error-privacy`
 
 ## Product and architecture
 
@@ -25,6 +25,10 @@ Transaction collection and item API catches now log only a safe Prisma error
 code or `UNCLASSIFIED`; the shared classifier is reused by other hardened
 financial mutation routes. Raw transaction error details are not serialized to
 application logs.
+
+Account, transfer, and cashflow API catches now use the same safe error-code
+taxonomy; raw balance, SQL, identifier, and encrypted-value details are not
+serialized to those logs.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and

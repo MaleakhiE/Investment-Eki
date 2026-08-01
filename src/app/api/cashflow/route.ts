@@ -17,6 +17,7 @@ import {
   validationErrorResponse,
   serverErrorResponse,
 } from '@/lib/api-response';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 /**
  * POST /api/cashflow - Create or update cashflow for a month
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error saving cashflow:', error);
+    console.error('Error saving cashflow:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -104,7 +105,7 @@ export async function GET() {
       successResponse(historyResponse, 'Cashflow history retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting cashflow history:', error);
+    console.error('Error getting cashflow history:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

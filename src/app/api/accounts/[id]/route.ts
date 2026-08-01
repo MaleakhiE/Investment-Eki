@@ -3,6 +3,7 @@ import { getCurrentUserId } from '@/lib/auth';
 import { archiveAccount, updateAccount, type AccountInput, type AccountRecord } from '@/services/account.service';
 import { notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse, validationErrorResponse } from '@/lib/api-response';
 import { parseDatabaseId } from '@/lib/database-id';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 interface RouteParams { params: Promise<{ id: string }> }
 
@@ -29,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
     return NextResponse.json(successResponse(serializeAccount(result.account), 'Account updated successfully'));
   } catch (error) {
-    console.error('Error updating account:', error);
+    console.error('Error updating account:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -45,7 +46,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (!result.success) return NextResponse.json(notFoundResponse(result.error || 'Account not found'), { status: 404 });
     return NextResponse.json(successResponse(null, 'Account archived successfully'));
   } catch (error) {
-    console.error('Error archiving account:', error);
+    console.error('Error archiving account:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

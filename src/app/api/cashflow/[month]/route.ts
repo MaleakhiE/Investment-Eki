@@ -17,6 +17,7 @@ import {
   notFoundResponse,
   serverErrorResponse,
 } from '@/lib/api-response';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 interface RouteParams {
   params: Promise<{ month: string }>;
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       successResponse(cashflowResponse, 'Cashflow retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting cashflow:', error);
+    console.error('Error getting cashflow:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

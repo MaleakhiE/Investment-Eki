@@ -81,3 +81,21 @@ describe('/api/accounts/[id] identifier boundary', () => {
     expect(mockedArchiveAccount).not.toHaveBeenCalled();
   });
 });
+
+describe('/api/accounts/[id] error privacy', () => {
+  it.each([
+    ['PUT', PUT, mockedUpdateAccount, putRequest({ name: 'BCA', type: 'BANK', opening_balance: 0 })],
+    ['DELETE', DELETE, mockedArchiveAccount, deleteRequest()],
+  ] as const)('keeps %s service failures private', async (_method, handler, service, request) => {
+    const privateMessage = 'private account SQL and balance details';
+    service.mockRejectedValue(new Error(privateMessage));
+    const errorLog = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const response = await handler(request, params('30'));
+
+    expect(response.status).toBe(500);
+    expect(errorLog.mock.calls.flat().join(' ')).not.toContain(privateMessage);
+    expect(errorLog).toHaveBeenCalledWith(expect.any(String), { code: 'UNCLASSIFIED' });
+    errorLog.mockRestore();
+  });
+});
