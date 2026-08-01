@@ -21,6 +21,7 @@ interface Transaction { id: string; date: string; type: 'INCOME' | 'EXPENSE' | '
 interface GoalProgress { id: string; name: string; target_amount: number; current_amount: number; percentage: number; category: string; days_left: number | null; is_completed: boolean; }
 interface SavingsSuggestion { category: string; current_amount?: number; historical_average?: number; potential_saving?: number; message?: string; }
 interface UpcomingTransaction { id: string; category: string; description: string; amount: number; type: 'INCOME' | 'EXPENSE'; is_active: boolean; next_run: string | null; }
+interface BudgetSummary { id: string; category: string; amount: number; spent: number; remaining: number; percentage: number; isOverBudget: boolean; }
 
 export default function DashboardPage() {
   useSession();
@@ -33,6 +34,8 @@ export default function DashboardPage() {
   const [suggestions, setSuggestions] = useState<SavingsSuggestion[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingTransaction[]>([]);
   const [accounts, setAccounts] = useState<AccountSummary[]>([]);
+  const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
+  const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isLoading, setIsLoading] = useState(true);
   const [periodLabel, setPeriodLabel] = useState('');
 
@@ -64,7 +67,7 @@ export default function DashboardPage() {
       try {
         const period = getSalaryPeriod(new Date());
         setPeriodLabel(period.label);
-        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes, suggestionsRes, recurringRes, accountsRes] = await Promise.all([
+        const [sumRes, compRes, trendRes, invRes, txRes, goalsRes, suggestionsRes, recurringRes, accountsRes, budgetsRes] = await Promise.all([
           fetch(`/api/transactions/summary-range?startDate=${period.startDate}&endDate=${period.endDate}`),
           fetch('/api/analytics/comparison'),
           fetch('/api/analytics/cashflow-trend'),
@@ -74,6 +77,7 @@ export default function DashboardPage() {
           fetch('/api/analytics/savings-suggestions'),
           fetch('/api/recurring'),
           fetch('/api/accounts'),
+          fetch('/api/budgets'),
         ]);
         if (sumRes.ok) { const d = await sumRes.json(); setSummary(d.responseDetails); }
         if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
@@ -84,7 +88,14 @@ export default function DashboardPage() {
         if (suggestionsRes.ok) { const d = await suggestionsRes.json(); const list = d.responseDetails?.suggestions ?? d.responseDetails; setSuggestions(Array.isArray(list) ? list : []); }
         if (recurringRes.ok) { const d = await recurringRes.json(); const list = Array.isArray(d.responseDetails) ? d.responseDetails : []; setUpcoming(list.filter((item: UpcomingTransaction) => item.is_active && item.next_run).sort((a: UpcomingTransaction, b: UpcomingTransaction) => a.next_run!.localeCompare(b.next_run!)).slice(0, 5)); }
         if (accountsRes.ok) { const d = await accountsRes.json(); setAccounts(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
-      } catch (e) { console.error(e); } finally { setIsLoading(false); }
+        if (budgetsRes.ok) {
+          const d = await budgetsRes.json();
+          setBudgets(Array.isArray(d.responseDetails) ? d.responseDetails : []);
+          setBudgetStatus('ready');
+        } else {
+          setBudgetStatus('error');
+        }
+      } catch (e) { console.error(e); setBudgetStatus('error'); } finally { setIsLoading(false); }
     }
     fetchData();
   }, []);
@@ -106,6 +117,10 @@ export default function DashboardPage() {
   const mfVal = safe(comparison?.mutual_fund?.total_current_value);
   const savingsRate = income > 0 ? (net / income) * 100 : 0;
   const trendMax = Math.max(...trend.map(t => Math.max(t.income || 0, t.expense || 0)), 1);
+  const totalBudget = budgets.reduce((sum, budget) => sum + safe(budget.amount), 0);
+  const totalBudgetSpent = budgets.reduce((sum, budget) => sum + safe(budget.spent), 0);
+  const budgetPercent = totalBudget > 0 ? Math.min(100, (totalBudgetSpent / totalBudget) * 100) : 0;
+  const overBudgetCount = budgets.filter((budget) => budget.isOverBudget).length;
 
   // Loading skeleton
   if (isLoading) {
@@ -206,6 +221,50 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
+
+          <section className="card min-w-0 rounded-3xl p-5 animate-fade-in" aria-labelledby="budget-overview-title">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 id="budget-overview-title" className="font-semibold text-[#16332f]">Budget overview</h2>
+                <p className="mt-1 text-xs text-zinc-500">Spending compared with your active limits</p>
+              </div>
+              <Link href="/budget" className="shrink-0 text-xs font-semibold text-[#008f78] hover:underline">Open budgets</Link>
+            </div>
+            {budgetStatus === 'error' ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <p className="font-medium">Budget data is unavailable.</p>
+                <Link href="/budget" className="mt-2 inline-block font-semibold underline underline-offset-2">Retry in Budgets</Link>
+              </div>
+            ) : budgets.length === 0 && budgetStatus === 'ready' ? (
+              <div className="rounded-2xl bg-[#f5fbf9] p-4 text-sm text-zinc-600">
+                <p>You have no active budgets yet.</p>
+                <Link href="/budget" className="mt-2 inline-block font-semibold text-[#008f78] underline underline-offset-2">Set up your first budget</Link>
+              </div>
+            ) : (
+              <div className="space-y-3" aria-live="polite">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-2xl font-bold text-[#16332f]">{formatCurrency(totalBudgetSpent)}</p>
+                  <p className="text-sm text-zinc-500">of {formatCurrency(totalBudget)}</p>
+                </div>
+                <div
+                  className="h-3 overflow-hidden rounded-full bg-[#e9f5f2]"
+                  role="progressbar"
+                  aria-label="Total budget usage"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(budgetPercent)}
+                >
+                  <div className={`h-full rounded-full transition-all ${overBudgetCount > 0 ? 'bg-red-400' : budgetPercent >= 80 ? 'bg-amber-400' : 'bg-[#00d4aa]'}`} style={{ width: `${budgetPercent}%` }} />
+                </div>
+                <div className="flex flex-wrap justify-between gap-2 text-xs text-zinc-500">
+                  <span>{budgetPercent.toFixed(0)}% used</span>
+                  <span className={overBudgetCount > 0 ? 'font-semibold text-red-600' : 'text-[#087f6b]'}>
+                    {overBudgetCount > 0 ? `${overBudgetCount} over budget` : `${formatCurrency(Math.max(0, totalBudget - totalBudgetSpent))} remaining`}
+                  </span>
+                </div>
+              </div>
+            )}
+          </section>
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <section className="card rounded-3xl p-5">

@@ -15,4 +15,13 @@ describe('dashboard mobile account presentation', () => {
     expect(source).toContain('overflow-x-auto');
     expect(source).toContain('<AccountCard');
   });
+
+  it('surfaces budget usage with accessible populated, empty, and retry states', () => {
+    expect(source).toContain("fetch('/api/budgets')");
+    expect(source).toContain('Budget overview');
+    expect(source).toContain('Set up your first budget');
+    expect(source).toContain('Budget data is unavailable');
+    expect(source).toContain('role="progressbar"');
+    expect(source).toContain('aria-valuenow');
+  });
 });
