@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { updateAIRecommendationSetting } from '@/services/settings.service';
 import {
   successResponse,
@@ -55,7 +56,7 @@ export async function PATCH(request: NextRequest) {
       successResponse(settings, 'AI recommendation setting updated successfully')
     );
   } catch (error) {
-    console.error('Error updating AI recommendation setting:', error);
+    console.error('Error updating AI recommendation setting:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

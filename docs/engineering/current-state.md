@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-08-01
-Baseline commit: `245a618`
-Iteration branch: `feat/loop-engineering-38-analytics-error-privacy`
+Baseline commit: `b909cfb`
+Iteration branch: `feat/loop-engineering-39-settings-error-privacy`
 
 ## Product and architecture
 
@@ -36,6 +36,10 @@ taxonomy; raw portfolio and snapshot details are not serialized to logs.
 Analytics portfolio, comparison, cashflow-trend, savings-suggestion, and
 recommendation catches use the same taxonomy; raw insight and financial details
 are not serialized to logs.
+
+Settings, notification-preference, and AI-recommendation catches use the same
+taxonomy; raw user preference and configuration details are not serialized to
+logs.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and
