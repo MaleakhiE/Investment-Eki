@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/auth';
 import { parseCalendarDate } from '@/lib/financial-input';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 import { createTransaction, getTransactions, TransactionInput } from '@/services/transaction.service';
 import {
   successResponse,
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       { status: result.replayed ? 200 : 201 }
     );
   } catch (error) {
-    console.error('Error creating transaction:', error);
+    console.error('Error creating transaction:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
       successResponse({ transactions: transactionsResponse }, 'Transactions retrieved successfully')
     );
   } catch (error) {
-    console.error('Error getting transactions:', error);
+    console.error('Error getting transactions:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

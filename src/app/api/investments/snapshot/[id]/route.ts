@@ -17,20 +17,10 @@ import {
   validationErrorResponse,
 } from '@/lib/api-response';
 import { parseDatabaseId } from '@/lib/database-id';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
-}
-
-function safeDatabaseErrorCode(error: unknown): string {
-  if (
-    typeof error === 'object'
-    && error !== null
-    && 'code' in error
-    && typeof error.code === 'string'
-    && /^P\d{4}$/.test(error.code)
-  ) return error.code;
-  return 'UNCLASSIFIED';
 }
 
 /**

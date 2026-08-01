@@ -1,13 +1,14 @@
 const getCurrentUserId = jest.fn();
 const getTransactions = jest.fn();
+const createTransaction = jest.fn();
 
 jest.mock('@/lib/auth', () => ({ getCurrentUserId }));
 jest.mock('@/services/transaction.service', () => ({
-  createTransaction: jest.fn(),
+  createTransaction,
   getTransactions,
 }));
 
-import { GET } from './route';
+import { GET, POST } from './route';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -46,5 +47,41 @@ describe('transactions list date validation', () => {
       '2026-07-31',
       undefined,
     );
+  });
+});
+
+describe('transaction collection error privacy', () => {
+  let errorLog: jest.SpiedFunction<typeof console.error>;
+
+  beforeEach(() => {
+    errorLog = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => errorLog.mockRestore());
+
+  it('keeps GET failures private while preserving an allowlisted code', async () => {
+    const privateMessage = 'private SQL and encrypted financial details';
+    getTransactions.mockRejectedValue({ code: 'P1001', message: privateMessage });
+
+    const response = await GET(new Request('https://fintrack.example/api/transactions') as never);
+
+    expect(response.status).toBe(500);
+    expect(errorLog).toHaveBeenCalledWith('Error getting transactions:', { code: 'P1001' });
+    expect(errorLog.mock.calls.flat().join(' ')).not.toContain(privateMessage);
+  });
+
+  it('keeps POST failures private and classifies unknown errors', async () => {
+    const privateMessage = 'private SQL and transaction amount';
+    createTransaction.mockRejectedValue(new Error(privateMessage));
+
+    const response = await POST(new Request('https://fintrack.example/api/transactions', {
+      method: 'POST',
+      body: JSON.stringify({}),
+      headers: { 'content-type': 'application/json' },
+    }) as never);
+
+    expect(response.status).toBe(500);
+    expect(errorLog).toHaveBeenCalledWith('Error creating transaction:', { code: 'UNCLASSIFIED' });
+    expect(errorLog.mock.calls.flat().join(' ')).not.toContain(privateMessage);
   });
 });
