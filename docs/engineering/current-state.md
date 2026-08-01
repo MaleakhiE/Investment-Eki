@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-08-01
-Baseline commit: `aab112e`
-Iteration branch: `feat/loop-engineering-41-dashboard-budget-overview`
+Baseline commit: `590b744`
+Iteration branch: `feat/loop-engineering-42-goal-contribution-guidance`
 
 ## Product and architecture
 
@@ -47,6 +47,11 @@ raw financial query and export details are not serialized to logs.
 The dashboard now includes a budget overview sourced from `/api/budgets`, with
 populated, empty, failure, and accessible progress states linking to the full
 Budget workflow.
+
+The goals page now labels progress indicators for assistive technology, explains
+that monthly contribution guidance assumes equal contributions without growth or
+interest, and shows an explicit `Deadline passed` state for overdue goals while
+preserving server-calculated values.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and
