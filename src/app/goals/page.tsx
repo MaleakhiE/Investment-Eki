@@ -315,7 +315,14 @@ export default function GoalsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="flex-1 h-3 bg-[#e9f5f2] rounded-full overflow-hidden">
+                          <div
+                            className="flex-1 h-3 bg-[#e9f5f2] rounded-full overflow-hidden"
+                            role="progressbar"
+                            aria-label={`Progress for ${goal.name}`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={Math.round(Math.min(100, goal.percentage))}
+                          >
                             <div className={`h-full rounded-full transition-all ${goal.percentage >= 100 ? 'bg-green-500' : goal.percentage >= 75 ? 'bg-blue-500' : goal.percentage >= 50 ? 'bg-amber-500' : 'bg-zinc-400'}`} style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
                           </div>
                           <span className="text-sm font-bold text-zinc-300 w-12 text-right">{goal.percentage.toFixed(0)}%</span>
@@ -328,12 +335,17 @@ export default function GoalsPage() {
                           <div className="flex items-center justify-between text-xs mt-1">
                             <span className="text-zinc-500">Deadline: {new Date(goal.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                             {goal.days_left !== null && (
-                              <span className={goal.days_left < 30 ? 'text-red-400' : 'text-zinc-500'}>{goal.days_left} days left</span>
+                              <span className={goal.days_left < 0 || goal.days_left < 30 ? 'text-red-400' : 'text-zinc-500'}>
+                                {goal.days_left < 0 ? 'Deadline passed' : `${goal.days_left} days left`}
+                              </span>
                             )}
                           </div>
                         )}
-                        {goal.monthly_needed && (
-                          <p className="text-xs text-[#00d4aa] mt-1">Need {fmtC(goal.monthly_needed)}/month to reach target</p>
+                        {goal.monthly_needed !== null && (
+                          <div className="mt-1 space-y-0.5">
+                            <p className="text-xs text-[#087f6b]">Plan for {fmtC(goal.monthly_needed)}/month to reach this target.</p>
+                            <p className="text-[11px] text-zinc-500">Assumes equal monthly contributions; excludes growth or interest.</p>
+                          </div>
                         )}
                         <div className="flex gap-2 mt-3">
                           {addAmountId === goal.id ? (

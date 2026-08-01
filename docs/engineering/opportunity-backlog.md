@@ -47,6 +47,8 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Sanitize analytics API error logging | 80 | Small | 038 |
 | Done | Sanitize settings API error logging | 80 | Small | 039 |
 | Done | Sanitize financial read and export API error logging | 80 | Small | 040 |
+| Done | Add dashboard budget overview and empty/error UX | 81 | Small | 041 |
+| Done | Clarify goal contribution assumptions and overdue-deadline UX | 78 | Small | 042 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
