@@ -14,10 +14,23 @@ import {
   unauthorizedResponse,
   notFoundResponse,
   serverErrorResponse,
+  validationErrorResponse,
 } from '@/lib/api-response';
+import { parseDatabaseId } from '@/lib/database-id';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+function safeDatabaseErrorCode(error: unknown): string {
+  if (
+    typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && typeof error.code === 'string'
+    && /^P\d{4}$/.test(error.code)
+  ) return error.code;
+  return 'UNCLASSIFIED';
 }
 
 /**
@@ -32,7 +45,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    const snapshotId = BigInt(id);
+    const snapshotId = parseDatabaseId(id);
+    if (!snapshotId) {
+      return NextResponse.json(validationErrorResponse(['Invalid snapshot ID']), { status: 400 });
+    }
 
     const result = await deleteSnapshot(userId, snapshotId);
 
@@ -47,7 +63,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       successResponse(null, 'Snapshot deleted successfully')
     );
   } catch (error) {
-    console.error('Error deleting snapshot:', error);
+    console.error('Error deleting snapshot:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }

@@ -1,5 +1,8 @@
 const auth = jest.fn();
 
+process.env.AUTH_SECRET = process.env.AUTH_SECRET || 'test-auth-secret-that-is-at-least-32-chars';
+process.env.AUTH_URL = process.env.AUTH_URL || 'https://fintrack.example';
+
 jest.mock('next-auth', () => ({
   __esModule: true,
   default: jest.fn(() => ({ auth })),

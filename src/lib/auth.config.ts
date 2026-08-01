@@ -7,9 +7,9 @@
 
 import type { NextAuthConfig } from 'next-auth';
 import { isSessionVersionCurrent } from './auth-session';
-import { readAuthEnvironment } from './auth-environment';
+import { requireAuthEnvironment } from './auth-environment';
 
-const authEnvironment = readAuthEnvironment();
+const authEnvironment = requireAuthEnvironment();
 
 export const authConfig: NextAuthConfig = {
   // Resolve once so the proxy and the Node handlers cannot use different env aliases.

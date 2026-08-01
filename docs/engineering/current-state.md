@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-07-30
-Baseline commit: `f7547b8`
-Iteration branch: `feat/loop-engineering-18-auth-session-persistence`
+Date: 2026-07-31
+Baseline commit: `d01cf80`
+Iteration branch: `feat/loop-engineering-34-auth-config-stability`
 
 ## Product and architecture
 
@@ -15,8 +15,32 @@ The identity boundary retains internal BIGINT relational keys while JWT/session/
 Auth.js now receives one explicit `AUTH_SECRET`/`NEXTAUTH_SECRET` resolution in
 both the proxy and Node handlers. Production must replace the example secret,
 set the real `AUTH_URL`/`NEXTAUTH_URL`, use identical values across instances,
-and clear old cookies after rotation. Browser and multi-instance validation
-remain deployment gates because the configured MySQL is unreachable here.
+and clear old cookies after rotation. Auth initialization now fails closed when
+either alias group is missing or the secret is short/placeholder, preventing
+unstable cookies from presenting as a successful login. The checked-in local
+`.env` still contains a placeholder secret and must not be used for runtime.
+Browser and multi-instance validation remain deployment gates.
+
+Goal create and update boundaries now share finite monetary validation and
+strict goal-field validation. Explicit goal names, categories, priorities, and
+deadlines fail before persistence; explicit deadline clearing remains
+supported. The configured Test-Eki MySQL currently reports all nine migrations
+up to date.
+
+Goal DELETE now shares the canonical signed-BIGINT ID boundary with PATCH and
+rejects malformed IDs before the scoped delete service.
+
+Account PUT and DELETE now reuse the same canonical bounded ID parser, removing
+their local unbounded BigInt coercion while preserving user-scoped mutations.
+
+Budget DELETE now uses the same parser and sanitizes service-error logging while
+preserving user-scoped deletion and standard responses.
+
+Investment snapshot DELETE now uses the same parser and sanitized error-code
+logging while preserving existing success/not-found behavior.
+
+Goal route IDs and export account filters now reuse `parseDatabaseId`; duplicate
+bounded regex/max logic has been removed without changing API behavior.
 
 The read-only Cashflow history overlay now uses a labelled native modal dialog
 with reversible focus and scroll lifecycle wiring. Budget/Goal forms and the

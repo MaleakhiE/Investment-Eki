@@ -1,4 +1,4 @@
-const PLACEHOLDER_SECRET_PATTERN = /^(your-|change[-_ ]|replace[-_ ])/i;
+const PLACEHOLDER_SECRET_PATTERN = /^(your-|generate[-_ ]|change[-_ ]|replace[-_ ])/i;
 
 export interface AuthEnvironment {
   secret: string | undefined;
@@ -18,4 +18,14 @@ export function readAuthEnvironment(env: Record<string, string | undefined> = pr
   if (!url) errors.push('AUTH_URL or NEXTAUTH_URL is required');
 
   return { secret, url, errors };
+}
+
+export function requireAuthEnvironment(
+  env: Record<string, string | undefined> = process.env,
+): AuthEnvironment {
+  const environment = readAuthEnvironment(env);
+  if (environment.errors.length > 0) {
+    throw new Error(`Auth environment is invalid: ${environment.errors.join('; ')}`);
+  }
+  return environment;
 }

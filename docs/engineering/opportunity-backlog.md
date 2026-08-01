@@ -34,6 +34,13 @@ Maintenance and dependency values are reverse-scored: 5 means low ongoing cost/r
 | Done | Migrate Budget form to the shared accessible dialog | 70 | Small | 020 |
 | Done | Migrate mobile More navigation to the shared accessible dialog | 70 | Small | 021 |
 | Done | Migrate Goal form to the shared accessible dialog | 70 | Small | 022 |
+| Done | Enforce goal update field integrity before persistence | 82 | Small | 028 |
+| Done | Enforce canonical goal DELETE identifiers | 79 | Small | 029 |
+| Done | Consolidate account mutation ID boundaries | 79 | Small | 030 |
+| Done | Enforce canonical budget DELETE identifiers | 78 | Small | 031 |
+| Done | Enforce canonical investment snapshot DELETE identifiers | 78 | Small | 032 |
+| Done | Consolidate shared bounded database ID parsing | 76 | Small | 033 |
+| Done | Fail closed on invalid Auth.js session configuration | 81 | Small | 034 |
 | 5 | Continue accessible dialog migration for forms and mobile navigation | 70 | Medium | After native-dialog staging smoke |
 | 6 | Unify transaction-ledger cashflow and legacy monthly aggregates | 74 | Large | Staged architecture work |
 
@@ -298,3 +305,79 @@ header.
   follow-ups.
 - Recurring category and description integrity are complete, subject to their
   mandatory target audits.
+
+## Goal update field integrity (completed in 028)
+
+- Historical problem: goal PATCH updates validated amounts only. Explicit
+  invalid names, categories, priorities, and dates could be ignored, persisted,
+  or normalized by JavaScript before the database boundary.
+- Outcome: create/update use the same finite priority predicate; update fields
+  reject before reads/writes, while valid partial edits and deadline clearing
+  remain compatible.
+- Score inputs: `5,5,4,3,5,5,5,5,5` → 82.
+- Residuals: product-defined notification timing/recommendation semantics,
+  browser/staging smoke, and historical recurring audits remain separate.
+- Validation: RED/GREEN service and route matrix, full 65-suite/768-test
+  regression, build/OCR trace, Prisma validation, and current migration status.
+
+## Goal DELETE identifier boundary (completed in 029)
+
+- Historical problem: DELETE coerced arbitrary route IDs with `BigInt`, causing
+  generic failures and inconsistent handling compared with PATCH.
+- Outcome: authentication-first canonical positive signed-BIGINT parsing now
+  returns a private 400 before deletion; valid IDs and ownership semantics are
+  unchanged.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 79.
+- Residuals: other route-specific ID boundaries and product-defined semantics
+  remain separate opportunities.
+- Validation: RED/GREEN route matrix, full regression, build/OCR trace, Prisma
+  validation, migration status, and private-error assertions.
+
+## Account mutation ID boundary (completed in 030)
+
+- Historical problem: account PUT/DELETE used unbounded `BigInt` coercion and
+  accepted noncanonical identifiers or generic-failure paths.
+- Outcome: both mutations reuse `parseDatabaseId`; malformed IDs fail before
+  service calls, while valid IDs retain ownership and response behavior.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 79.
+- Residuals: investment snapshot, budget, and other route-specific IDs require
+  separate bounded slices; no broad rewrite is included.
+- Validation: focused PUT/DELETE matrix, collection regressions, full
+  66-suite/802-test regression, build/OCR trace, Prisma checks, and diff checks.
+
+## Budget DELETE identifier boundary (completed in 031)
+
+- Historical problem: budget DELETE directly coerced arbitrary route IDs and
+  logged raw service errors.
+- Outcome: shared bounded parsing returns private 400 responses before service
+  access, and failures log only allowlisted codes; valid scoped deletion is
+  unchanged.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 78.
+- Residuals: investment snapshot and other route-specific ID boundaries remain
+  separate; no broad parser rewrite is included.
+- Validation: focused route matrix, full 67-suite/814-test regression,
+  build/OCR trace, Prisma checks, migration status, and diff checks.
+
+## Investment snapshot DELETE identifier boundary (completed in 032)
+
+- Historical problem: snapshot DELETE directly coerced arbitrary IDs and logged
+  raw service failures.
+- Outcome: shared bounded parsing and sanitized error-code logging now protect
+  the route before service access; valid success/not-found behavior is intact.
+- Score inputs: `5,4,4,3,5,5,5,5,5` → 78.
+- Residuals: service-level concurrent deletion behavior and remaining product
+  decisions are separate.
+- Validation: focused route matrix, full 68-suite/827-test regression,
+  build/OCR trace, Prisma checks, migration status, and diff checks.
+
+## Shared bounded database ID parsing (completed in 033)
+
+- Historical problem: goal and export routes duplicated signed-BIGINT parsing,
+  creating drift risk after neighboring routes adopted the shared helper.
+- Outcome: both callers use `parseDatabaseId`; existing messages, ownership,
+  filtering, and response behavior remain unchanged.
+- Score inputs: `4,4,4,3,5,5,5,5,5` → 76.
+- Residuals: notification/recommendation product semantics, historical audits,
+  and the blocked transitive sharp advisory remain.
+- Validation: focused 62-test parser/export/goal matrix, full 68-suite/827-test
+  regression, build/OCR trace, Prisma checks, migration status, and diff checks.

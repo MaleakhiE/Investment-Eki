@@ -8,14 +8,7 @@ import {
   deleteGoal,
 } from '@/services/goals.service';
 import { FinancialInputError, isFinitePositiveAmount } from '@/lib/financial-input';
-
-const MAX_SIGNED_BIGINT = BigInt('9223372036854775807');
-
-function parseGoalId(id: string): bigint | null {
-  if (!/^[1-9]\d*$/.test(id)) return null;
-  const value = BigInt(id);
-  return value <= MAX_SIGNED_BIGINT ? value : null;
-}
+import { parseDatabaseId } from '@/lib/database-id';
 
 function safeDatabaseErrorCode(error: unknown): string {
   if (
@@ -38,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const { id } = await params;
-    const goalId = parseGoalId(id);
+    const goalId = parseDatabaseId(id);
     if (!goalId) {
       return NextResponse.json(validationErrorResponse(['Invalid goal ID']), { status: 400 });
     }
@@ -100,7 +93,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id } = await params;
-    const goalId = BigInt(id);
+    const goalId = parseDatabaseId(id);
+    if (!goalId) {
+      return NextResponse.json(validationErrorResponse(['Invalid goal ID']), { status: 400 });
+    }
 
     await deleteGoal(userId, goalId);
 

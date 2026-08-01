@@ -1,6 +1,9 @@
 jest.mock('./auth-session', () => ({ isSessionVersionCurrent: jest.fn() }));
 jest.mock('@/services/google-auth.service', () => ({ resolveSessionUserForProvider: jest.fn() }));
 
+process.env.AUTH_SECRET = process.env.AUTH_SECRET || 'test-auth-secret-that-is-at-least-32-chars';
+process.env.AUTH_URL = process.env.AUTH_URL || 'https://fintrack.example';
+
 import { isSessionVersionCurrent } from './auth-session';
 import { resolveSessionUserForProvider } from '@/services/google-auth.service';
 import { authConfig } from './auth.config';
