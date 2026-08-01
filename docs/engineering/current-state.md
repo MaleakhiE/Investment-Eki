@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-08-01
-Baseline commit: `3d24e8b`
-Iteration branch: `feat/loop-engineering-40-financial-read-error-privacy`
+Baseline commit: `aab112e`
+Iteration branch: `feat/loop-engineering-41-dashboard-budget-overview`
 
 ## Product and architecture
 
@@ -43,6 +43,10 @@ logs.
 
 Transaction summary, summary-range, and export catches use the same taxonomy;
 raw financial query and export details are not serialized to logs.
+
+The dashboard now includes a budget overview sourced from `/api/budgets`, with
+populated, empty, failure, and accessible progress states linking to the full
+Budget workflow.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and
