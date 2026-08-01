@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
 Date: 2026-08-01
-Baseline commit: `102c862`
-Iteration branch: `feat/loop-engineering-36-account-cashflow-error-privacy`
+Baseline commit: `f555639`
+Iteration branch: `feat/loop-engineering-37-investment-error-privacy`
 
 ## Product and architecture
 
@@ -29,6 +29,9 @@ application logs.
 Account, transfer, and cashflow API catches now use the same safe error-code
 taxonomy; raw balance, SQL, identifier, and encrypted-value details are not
 serialized to those logs.
+
+Investment list, detail, history, and snapshot-write API catches use the same
+taxonomy; raw portfolio and snapshot details are not serialized to logs.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and
