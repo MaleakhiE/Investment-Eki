@@ -389,3 +389,9 @@ header.
   and the blocked transitive sharp advisory remain.
 - Validation: focused 62-test parser/export/goal matrix, full 68-suite/827-test
   regression, build/OCR trace, Prisma checks, migration status, and diff checks.
+
+## Accessible cashflow entry and filters (completed in 043)
+
+- Historical problem: transaction-entry labels were not programmatically associated, the Expense/Income choice used visual state only, and history filters lacked accessible names.
+- Outcome: stable field associations, pressed-state semantics, named filters, and 44px minimum heights for touched compact controls.
+- Residuals: authenticated keyboard, screen-reader, and responsive browser smoke remain release gates. Analytics semantics and investment error states are separate slices.
