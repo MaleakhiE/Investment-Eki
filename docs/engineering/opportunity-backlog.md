@@ -395,3 +395,9 @@ header.
 - Historical problem: transaction-entry labels were not programmatically associated, the Expense/Income choice used visual state only, and history filters lacked accessible names.
 - Outcome: stable field associations, pressed-state semantics, named filters, and 44px minimum heights for touched compact controls.
 - Residuals: authenticated keyboard, screen-reader, and responsive browser smoke remain release gates. Analytics semantics and investment error states are separate slices.
+
+## Financial-planning collection log privacy (completed in 044)
+
+- Historical problem: budget and goal collection handlers logged raw caught errors.
+- Outcome: all four GET/POST catches use the closed database error taxonomy; focused route tests prove sentinel private values are absent.
+- Residual: OCR error-log sanitation remains a separate high-caution slice.
