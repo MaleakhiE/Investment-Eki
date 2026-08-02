@@ -254,6 +254,15 @@ export default function AnalyticsPage() {
                         </div>
                       </>
                     ) : <p className="text-xs text-zinc-500 text-center py-8">No data</p>}
+                    {trend.length > 0 && (
+                      <div className="mt-5 overflow-x-auto rounded-lg border border-[#dcece8]">
+                        <table className="min-w-full text-left text-xs text-zinc-600">
+                          <caption className="sr-only">Monthly cashflow data table</caption>
+                          <thead className="bg-[#f5fbf9] text-[#16332f]"><tr><th scope="col" className="px-3 py-2 font-semibold">Month</th><th scope="col" className="px-3 py-2 font-semibold">Income</th><th scope="col" className="px-3 py-2 font-semibold">Expense</th><th scope="col" className="px-3 py-2 font-semibold">Net cashflow</th></tr></thead>
+                          <tbody>{trend.map((item) => <tr key={item.month} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{new Date(`${item.month}-01`).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</th><td className="whitespace-nowrap px-3 py-2">{formatCurrency(safe(item.income))}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(safe(item.expense))}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(safe(item.net_cashflow))}</td></tr>)}</tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
 
                   {/* Net Cashflow Trend */}
