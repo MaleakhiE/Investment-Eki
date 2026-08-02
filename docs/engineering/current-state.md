@@ -257,3 +257,5 @@ Iteration 045 makes investment availability truthful and recoverable: complete G
 Iteration 045 makes investment availability truthful: the page now differentiates loading, verified empty/ready, and unavailable states, atomically validates both history envelopes, suppresses false-zero portfolio summaries on incomplete data, and offers an accessible retry without exposing raw errors.
 
 Iteration 046 closes receipt OCR log leakage: scan failures are classified as timeout, busy, or failed and logs retain only the fixed event plus closed code. Upload safety, response behavior, and review-first prefill remain unchanged.
+
+Iteration 047 upgrades analytics view switching to an accessible automatic-activation tab interface with complete ARIA relationships, roving focus, Left/Right/Home/End navigation, 44px targets, visible focus, and mobile-safe containment. Analytics calculations and data behavior are unchanged.

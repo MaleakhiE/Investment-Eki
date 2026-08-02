@@ -419,3 +419,9 @@ header.
 - Historical problem: the high-caution receipt route logged raw OCR errors.
 - Outcome: closed OCR-specific error classification preserves operational value without messages, stacks, paths, or receipt context.
 - Residual: OCR quotas and production worker observability remain separate product/operations decisions.
+
+## Accessible analytics tabs (completed in 047)
+
+- Historical problem: analytics tabs exposed no programmatic selection, relationships, or group keyboard navigation.
+- Outcome: complete tab semantics, automatic keyboard activation, roving focus, touch targets, and mobile containment.
+- Residual: browser/screen-reader smoke and analytics partial-fetch truthfulness remain separate release/future slices.
