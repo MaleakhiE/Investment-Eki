@@ -17,7 +17,7 @@ No API, database, authorization, encryption, or financial calculation changes. U
 - RED focused test failed before the implementation.
 - GREEN focused dashboard tests passed: 2 suites, 4 tests.
 - TypeScript, lint, and `git diff --check` passed.
-- Full Jest/build/migration checks are run by the pre-push hook.
+- Full pre-push validation passed: 92 suites, 889 tests, lint, production build, and OCR trace.
 - Browser, screen-reader, and authenticated visual checks are unavailable.
 
 ## Review disclosure
