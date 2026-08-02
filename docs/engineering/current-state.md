@@ -254,7 +254,6 @@ Iteration 044 completes budget and goal collection-route log privacy: unexpected
 
 Iteration 045 makes investment availability truthful and recoverable: complete Gold and Mutual Fund histories are committed only after both responses validate, while failures show an accessible retry alert instead of false zero/empty financial states. No server-side financial behavior changed.
 
-Iteration 045 makes investment availability truthful: the page now differentiates loading, verified empty/ready, and unavailable states, atomically validates both history envelopes, suppresses false-zero portfolio summaries on incomplete data, and offers an accessible retry without exposing raw errors.
 
 Iteration 046 closes receipt OCR log leakage: scan failures are classified as timeout, busy, or failed and logs retain only the fixed event plus closed code. Upload safety, response behavior, and review-first prefill remain unchanged.
 

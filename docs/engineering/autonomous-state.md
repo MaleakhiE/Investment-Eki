@@ -2,9 +2,11 @@
 
 Updated: 2026-08-02
 
-## Repository connectivity
+## Repository connectivity and conflict status
 
-PR #38 merged Iteration 043 into `main` at verified merge commit `f5300079f839558c2086aa93ddb941c5fa7ef456`. This checkout initially lacked an `origin`; an HTTPS remote was restored, but the environment proxy returned HTTP 403 while fetching, so the verified remote merge commit is recorded from repository-owner evidence and remains unavailable as a local object.
+PR #38 merged Iteration 043 at `f5300079f839558c2086aa93ddb941c5fa7ef456`. The supplied checkout is a single squashed Iterations 043–047 commit (`bc16542`) directly on pre-merge `32da12b`; replaying it onto current `main` would duplicate Iteration 043 and create add/add documentation conflicts. No local index conflict exists. An `origin` remote was restored, but every fetch/push attempt is rejected by the environment CONNECT proxy with HTTP 403, so the actual remote conflict cannot be inspected or safely resolved here.
+
+Conflict-safe recovery when GitHub is reachable: preserve `bc16542` as a backup; create a fresh branch from verified `origin/main`; confirm the PR #38 merge is ancestral; reconstruct only the distinct Iterations 044–047 code/test paths; re-author shared state/backlog docs against current main; exclude all Iteration 043 files/hunks; validate; then push without force and open correctly based PRs. Do not cherry-pick or rebase the combined squash wholesale.
 
 ## Iteration index and roadmap through 060
 
@@ -16,7 +18,7 @@ PR #38 merged Iteration 043 into `main` at verified merge commit `f5300079f83955
 | 045 | Completed locally | `feat/loop-engineering-45-investment-availability-ux` (stacked on 044 until remote sync) | 044 documentation ancestry | Investments distinguish unavailable data from a genuine empty portfolio and offer retry | Focused: 2 suites/6 tests pass; full: 86 suites/870 tests pass, 3 environment-blocked |
 | 046 | Completed locally | `fix/loop-engineering-46-ocr-log-privacy` (stacked until remote sync) | 045 ancestry; rebase onto merged main | OCR errors retain operational codes without private receipt context | Focused 13-test route suite, TypeScript, lint, diff check pass |
 | 047 | Completed locally | `feat/loop-engineering-47-accessible-analytics-tabs` (stacked until remote sync) | 046 ancestry; rebase onto merged main | Analytics tabs support ARIA relationships and complete keyboard navigation | Focused 2 suites/7 tests, TypeScript, lint, diff check pass |
-| 048 | Blocked pending product contract | Independent | Product contract required | Gold-price estimates disclose source/staleness and never present fallback as a fresh authoritative quote | Route/UI tests + product review |
+| 048 | Blocked before implementation | Fresh branch from verified `origin/main` required | Remote fetch/conflict recovery; gold-price semantics also unresolved | Next safe candidate is truthful dashboard core availability after sync | No implementation claimed |
 | 049 | Planned | Independent | None | Dashboard panels distinguish partial API failure from true zero/empty data | Page integration tests + responsive browser check |
 | 050 | Planned | Fresh evidence required | None defined | Accessible textual/table alternative for analytics charts | Unit + browser accessibility checks |
 | 051 | Planned | Fresh evidence required | None defined | Bounded security/reliability slice selected by score | Focused + full validation |
@@ -44,15 +46,15 @@ PR #38 merged Iteration 043 into `main` at verified merge commit `f5300079f83955
 - `npm run db:verify`: not run because no disposable database configuration is present.
 - Browser/screenshot, authenticated keyboard, responsive, and screen-reader checks: unavailable without a configured runtime.
 
-## Human review order
+## Human review and publication order
 
-1. Review Iteration 043 semantic markup and perform authenticated mobile/desktop keyboard and screen-reader smoke.
-2. Restore/configure `origin` and confirm whether `32da12b` is current `origin/main`; rebase without force-pushing if necessary.
-3. Review 044 and 046 privacy slices before the broader UI reliability work.
-4. Review 045, 047, and 049 with browser evidence.
-5. Resolve the gold-price product contract before 048; do not treat the proposed order as approval of financial quote semantics.
-6. Select 050 only after rescoring evidence from completed preceding iterations.
+1. Restore GitHub connectivity and fetch `origin/main`.
+2. Verify `f5300079f839558c2086aa93ddb941c5fa7ef456` is ancestral to `origin/main`.
+3. Reconstruct 044–047 from their distinct implementation/test paths; exclude Iteration 043.
+4. Re-author shared documentation once, removing duplicate/stale iteration entries.
+5. Run focused/full validation, push without force, open correctly based PRs, and inspect CI.
+6. Reassess Iteration 048 from the fresh base. Prefer the evidenced dashboard core-availability UX; keep gold-price work blocked until provenance/fallback semantics are approved.
 
 ## Exact next action
 
-Publish the stacked Iteration 044 and 045 branches when GitHub connectivity is available, inspect CI, then freshly reassess Iteration 046. Iterations 046–060 are not complete.
+Fetch the actual `origin/main` and reconstruct conflict-free Iterations 044–047 as described above. Iterations 048–060 are not complete and must not be implemented on the stale combined squash.
