@@ -413,3 +413,9 @@ header.
 - Historical problem: failed history requests appeared as Rp0 totals and “No records yet.”
 - Outcome: explicit loading/error/ready states, atomic dual-history validation, generic unavailable messaging, and accessible retry.
 - Residual: per-asset partial availability is a possible later enhancement, but must never present partial totals as complete. Authenticated browser and assistive-technology smoke remain release gates.
+
+## Receipt OCR log privacy (completed in 046)
+
+- Historical problem: the high-caution receipt route logged raw OCR errors.
+- Outcome: closed OCR-specific error classification preserves operational value without messages, stacks, paths, or receipt context.
+- Residual: OCR quotas and production worker observability remain separate product/operations decisions.
