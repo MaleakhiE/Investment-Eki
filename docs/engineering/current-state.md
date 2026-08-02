@@ -247,3 +247,14 @@ staging release gate.
 ## Operational gaps
 
 There is no GitHub Actions workflow, browser E2E stack, axe coverage, enforced coverage threshold, or successful disposable migration replay in this environment.
+
+Iteration 043 associates cashflow transaction-entry labels with their controls, exposes Expense/Income selection through `aria-pressed`, names transaction-history filters, and raises touched compact controls to a 44px minimum height. It changes no API, calculation, authorization, persistence, or OCR behavior.
+
+Iteration 044 completes budget and goal collection-route log privacy: unexpected GET and POST failures retain only fixed event names plus closed database error codes, never raw error messages or financial context. API, authorization, validation, and calculation behavior are unchanged.
+
+Iteration 045 makes investment availability truthful and recoverable: complete Gold and Mutual Fund histories are committed only after both responses validate, while failures show an accessible retry alert instead of false zero/empty financial states. No server-side financial behavior changed.
+
+
+Iteration 046 closes receipt OCR log leakage: scan failures are classified as timeout, busy, or failed and logs retain only the fixed event plus closed code. Upload safety, response behavior, and review-first prefill remain unchanged.
+
+Iteration 047 upgrades analytics view switching to an accessible automatic-activation tab interface with complete ARIA relationships, roving focus, Left/Right/Home/End navigation, 44px targets, visible focus, and mobile-safe containment. Analytics calculations and data behavior are unchanged.
