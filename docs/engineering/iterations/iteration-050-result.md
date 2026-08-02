@@ -9,7 +9,7 @@ Added a responsive semantic table beneath the monthly cashflow chart. It exposes
 - RED focused table test failed before implementation.
 - GREEN focused analytics tests passed: 3 suites, 8 tests.
 - TypeScript, lint, and diff checks passed.
-- Full Jest/build will run in the pre-push hook.
+- Full pre-push validation passed: 93 suites, 890 tests, lint, production build, and OCR trace.
 - Browser and screen-reader rendering remain unavailable.
 
 ## Reviews and impact
