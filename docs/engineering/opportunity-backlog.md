@@ -401,3 +401,15 @@ header.
 - Historical problem: budget and goal collection handlers logged raw caught errors.
 - Outcome: all four GET/POST catches use the closed database error taxonomy; focused route tests prove sentinel private values are absent.
 - Residual: OCR error-log sanitation remains a separate high-caution slice.
+
+## Investment availability and retry UX (completed in 045)
+
+- Historical problem: failed history loads looked like a verified empty portfolio with Rp0 summaries.
+- Outcome: explicit loading/ready/error states, atomic response validation, generic non-private alert, and accessible retry.
+- Residual: per-type partial availability, stale-data presentation, and browser/AT smoke remain separate refinements.
+
+## Investment availability and retry UX (completed in 045)
+
+- Historical problem: failed history requests appeared as Rp0 totals and “No records yet.”
+- Outcome: explicit loading/error/ready states, atomic dual-history validation, generic unavailable messaging, and accessible retry.
+- Residual: per-asset partial availability is a possible later enhancement, but must never present partial totals as complete. Authenticated browser and assistive-technology smoke remain release gates.
