@@ -3,6 +3,7 @@ import { getCurrentUserId } from '@/lib/auth';
 import { responseAPI } from '@/lib/api-response';
 import { createGoal, getGoals, getGoalsSummary } from '@/services/goals.service';
 import { FinancialInputError } from '@/lib/financial-input';
+import { safeDatabaseErrorCode } from '@/lib/error-safety';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     const goals = await getGoals(userId);
     return NextResponse.json(responseAPI(200, 'SUCCESS', 'Goals retrieved', goals));
   } catch (error) {
-    console.error('Get goals error:', error);
+    console.error('Get goals error:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
   }
 }
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof FinancialInputError) {
       return NextResponse.json(responseAPI(400, 'ERROR', error.message, null), { status: 400 });
     }
-    console.error('Create goal error:', error);
+    console.error('Create goal error:', { code: safeDatabaseErrorCode(error) });
     return NextResponse.json(responseAPI(500, 'ERROR', 'Internal server error', null), { status: 500 });
   }
 }

@@ -26,6 +26,12 @@ function busyResponse() {
   );
 }
 
+function ocrErrorCode(error: unknown) {
+  if (error instanceof Error && error.name === 'OcrTimeoutError') return 'OCR_TIMEOUT';
+  if (error instanceof Error && error.name === 'OcrBusyError') return 'OCR_BUSY';
+  return 'OCR_FAILED';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const userId = await getCurrentUserId();
@@ -70,7 +76,7 @@ export async function POST(request: NextRequest) {
       'Receipt scanned successfully',
     ));
   } catch (error) {
-    console.error('Error scanning receipt:', error);
+    console.error('Error scanning receipt:', { code: ocrErrorCode(error) });
     if (error instanceof Error && error.name === 'OcrTimeoutError') {
       return NextResponse.json(
         errorResponse('Receipt scan timed out. Try a clearer or smaller image.', 504),

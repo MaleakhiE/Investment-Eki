@@ -331,20 +331,20 @@ export default function CashflowPage() {
                 {error && <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-xs rounded-lg">{error}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
+                    <div><label htmlFor="transaction-date" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Date</label><input id="transaction-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
                     <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Type</label>
                       <div className="flex gap-1">
-                        <button type="button" onClick={() => { setType('EXPENSE'); setCategory('Food'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Expense</button>
-                        <button type="button" onClick={() => { setType('INCOME'); setCategory('Salary'); }} className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'INCOME' ? 'bg-green-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Income</button>
+                        <button type="button" aria-pressed={type === 'EXPENSE'} onClick={() => { setType('EXPENSE'); setCategory('Food'); }} className={`min-h-11 flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Expense</button>
+                        <button type="button" aria-pressed={type === 'INCOME'} onClick={() => { setType('INCOME'); setCategory('Salary'); }} className={`min-h-11 flex-1 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium ${type === 'INCOME' ? 'bg-green-500 text-white' : 'bg-[#e9f5f2] text-zinc-600'}`}>Income</button>
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Category</label><select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-                    <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Amount</label><CurrencyInput value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
+                    <div><label htmlFor="transaction-category" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Category</label><select id="transaction-category" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm">{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                    <div><label htmlFor="transaction-amount" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Amount</label><CurrencyInput id="transaction-amount" value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
                   </div>
-                  <div><label className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Description</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
-                  <div><div className="mb-1 flex items-center justify-between gap-2"><label className="block text-[10px] sm:text-xs text-zinc-600">Account or wallet</label><a href="/accounts" className="text-[10px] font-semibold text-[#00a88a] sm:text-xs">Manage accounts</a></div><select required value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full min-w-0 px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm"><option value="" disabled>Select an account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {fmt(account.balance)}</option>)}</select>{accounts.length === 0 && <p className="mt-1 text-[10px] text-red-600">Create an account before adding activity.</p>}</div>
+                  <div><label htmlFor="transaction-description" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Description</label><input id="transaction-description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
+                  <div><div className="mb-1 flex items-center justify-between gap-2"><label htmlFor="transaction-account" className="block text-[10px] sm:text-xs text-zinc-600">Account or wallet</label><a href="/accounts" className="text-[10px] font-semibold text-[#00a88a] sm:text-xs">Manage accounts</a></div><select id="transaction-account" required value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full min-w-0 px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm"><option value="" disabled>Select an account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {fmt(account.balance)}</option>)}</select>{accounts.length === 0 && <p className="mt-1 text-[10px] text-red-600">Create an account before adding activity.</p>}</div>
                   {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt image will be saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   <div className="flex gap-2">
@@ -364,15 +364,15 @@ export default function CashflowPage() {
                 {/* Search and Filter */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   <div className="flex-1 min-w-[120px]">
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari..." className="w-full px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg" />
+                    <input aria-label="Search transactions" type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari..." className="min-h-11 w-full px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg" />
                   </div>
-                  <select value={filterType} onChange={(e) => setFilterType(e.target.value as typeof filterType)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
+                  <select aria-label="Filter by transaction type" value={filterType} onChange={(e) => setFilterType(e.target.value as typeof filterType)} className="min-h-11 px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
                     <option value="all">All types</option>
                     <option value="INCOME">Income</option>
                     <option value="EXPENSE">Expense</option>
                     <option value="TRANSFER">Transfer</option>
                   </select>
-                  <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
+                  <select aria-label="Filter by category" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="min-h-11 px-2 py-1.5 text-xs border border-[#dcece8] rounded-lg">
                     <option value="all">All categories</option>
                     {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
