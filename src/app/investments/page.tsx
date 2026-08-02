@@ -6,6 +6,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput, { formatNumber } from '@/components/ui/CurrencyInput';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
+import { parseInvestmentHistories } from './investment-history';
 
 interface InvestmentSnapshot {
   id: string;
@@ -42,7 +43,7 @@ export default function InvestmentsPage() {
   const { showFeedback, confirmAction } = useFeedback();
   const [goldSnapshots, setGoldSnapshots] = useState<InvestmentSnapshot[]>([]);
   const [mfSnapshots, setMfSnapshots] = useState<InvestmentSnapshot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [snapshotStatus, setSnapshotStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
@@ -130,14 +131,22 @@ export default function InvestmentsPage() {
   useEffect(() => { fetchSnapshots(); }, []);
 
   async function fetchSnapshots() {
+    setSnapshotStatus('loading');
     try {
       const [goldRes, mfRes] = await Promise.all([
         fetch('/api/investments/GOLD/history'),
         fetch('/api/investments/MUTUAL_FUND/history')
       ]);
-      if (goldRes.ok) { const d = await goldRes.json(); setGoldSnapshots(d.responseDetails || []); }
-      if (mfRes.ok) { const d = await mfRes.json(); setMfSnapshots(d.responseDetails || []); }
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+      if (!goldRes.ok || !mfRes.ok) throw new Error('Investment history request failed');
+      const [goldData, mfData] = await Promise.all([goldRes.json(), mfRes.json()]);
+      const histories = parseInvestmentHistories(goldData, mfData);
+      if (!histories) throw new Error('Investment history response is invalid');
+      setGoldSnapshots(histories.gold as InvestmentSnapshot[]);
+      setMfSnapshots(histories.mutualFund as InvestmentSnapshot[]);
+      setSnapshotStatus('ready');
+    } catch {
+      setSnapshotStatus('error');
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -252,8 +261,14 @@ export default function InvestmentsPage() {
           <p className="text-sm text-zinc-600">Track your Gold and Mutual Fund investments</p>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>
+        {snapshotStatus === 'loading' ? (
+          <div role="status" className="flex h-64 items-center justify-center text-zinc-600">Loading investment data...</div>
+        ) : snapshotStatus === 'error' ? (
+          <section role="alert" className="card mx-auto max-w-xl rounded-2xl border border-red-200 p-6 text-center">
+            <h3 className="font-semibold text-[#16332f]">Investment data is unavailable</h3>
+            <p className="mt-2 text-sm text-zinc-600">We could not load your complete investment history. Your saved records have not been changed.</p>
+            <button type="button" onClick={() => void fetchSnapshots()} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-5 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Try again</button>
+          </section>
         ) : (
           <div className="space-y-6">
             {/* Summary Cards */}
