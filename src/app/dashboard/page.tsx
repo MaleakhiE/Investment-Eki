@@ -22,6 +22,7 @@ interface GoalProgress { id: string; name: string; target_amount: number; curren
 interface SavingsSuggestion { category: string; current_amount?: number; historical_average?: number; potential_saving?: number; message?: string; }
 interface UpcomingTransaction { id: string; category: string; description: string; amount: number; type: 'INCOME' | 'EXPENSE'; is_active: boolean; next_run: string | null; }
 interface BudgetSummary { id: string; category: string; amount: number; spent: number; remaining: number; percentage: number; isOverBudget: boolean; }
+type ResourceStatus = 'loading' | 'ready' | 'error';
 
 export default function DashboardPage() {
   useSession();
@@ -36,6 +37,9 @@ export default function DashboardPage() {
   const [accounts, setAccounts] = useState<AccountSummary[]>([]);
   const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
   const [budgetStatus, setBudgetStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [summaryStatus, setSummaryStatus] = useState<ResourceStatus>('loading');
+  const [accountsStatus, setAccountsStatus] = useState<ResourceStatus>('loading');
+  const [transactionsStatus, setTransactionsStatus] = useState<ResourceStatus>('loading');
   const [isLoading, setIsLoading] = useState(true);
   const [periodLabel, setPeriodLabel] = useState('');
 
@@ -78,24 +82,31 @@ export default function DashboardPage() {
           fetch('/api/recurring'),
           fetch('/api/accounts'),
           fetch('/api/budgets'),
-        ]);
-        if (sumRes.ok) { const d = await sumRes.json(); setSummary(d.responseDetails); }
-        if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
-        if (trendRes.ok) { const d = await trendRes.json(); setTrend(d.responseDetails || []); }
-        if (invRes.ok) { const d = await invRes.json(); setInvestments(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
-        if (txRes.ok) { const d = await txRes.json(); const txList = d.responseDetails?.transactions; setTransactions(Array.isArray(txList) ? txList : []); }
-        if (goalsRes.ok) { const d = await goalsRes.json(); setGoals(Array.isArray(d.responseDetails) ? d.responseDetails.filter((g: GoalProgress) => !g.is_completed).slice(0, 3) : []); }
-        if (suggestionsRes.ok) { const d = await suggestionsRes.json(); const list = d.responseDetails?.suggestions ?? d.responseDetails; setSuggestions(Array.isArray(list) ? list : []); }
-        if (recurringRes.ok) { const d = await recurringRes.json(); const list = Array.isArray(d.responseDetails) ? d.responseDetails : []; setUpcoming(list.filter((item: UpcomingTransaction) => item.is_active && item.next_run).sort((a: UpcomingTransaction, b: UpcomingTransaction) => a.next_run!.localeCompare(b.next_run!)).slice(0, 5)); }
-        if (accountsRes.ok) { const d = await accountsRes.json(); setAccounts(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
-        if (budgetsRes.ok) {
+        ].map(async (request) => { try { return await request; } catch { return null; } }));
+        if (!sumRes) setSummaryStatus('error');
+        if (!accountsRes) setAccountsStatus('error');
+        if (!txRes) setTransactionsStatus('error');
+        if (sumRes?.ok) {
+          const d = await sumRes.json();
+          const details = d.responseDetails;
+          if (d.responseStatus === 'SUCCESS' && details && typeof details === 'object' && ['total_income', 'total_expense', 'net_cashflow'].every((key) => Number.isFinite(details[key]))) { setSummary(details); setSummaryStatus('ready'); } else setSummaryStatus('error');
+        } else setSummaryStatus('error');
+        if (compRes?.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
+        if (trendRes?.ok) { const d = await trendRes.json(); setTrend(d.responseDetails || []); }
+        if (invRes?.ok) { const d = await invRes.json(); setInvestments(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
+        if (txRes?.ok) { const d = await txRes.json(); const txList = d.responseDetails?.transactions; if (d.responseStatus === 'SUCCESS' && Array.isArray(txList)) { setTransactions(txList); setTransactionsStatus('ready'); } else setTransactionsStatus('error'); } else setTransactionsStatus('error');
+        if (goalsRes?.ok) { const d = await goalsRes.json(); setGoals(Array.isArray(d.responseDetails) ? d.responseDetails.filter((g: GoalProgress) => !g.is_completed).slice(0, 3) : []); }
+        if (suggestionsRes?.ok) { const d = await suggestionsRes.json(); const list = d.responseDetails?.suggestions ?? d.responseDetails; setSuggestions(Array.isArray(list) ? list : []); }
+        if (recurringRes?.ok) { const d = await recurringRes.json(); const list = Array.isArray(d.responseDetails) ? d.responseDetails : []; setUpcoming(list.filter((item: UpcomingTransaction) => item.is_active && item.next_run).sort((a: UpcomingTransaction, b: UpcomingTransaction) => a.next_run!.localeCompare(b.next_run!)).slice(0, 5)); }
+        if (accountsRes?.ok) { const d = await accountsRes.json(); if (d.responseStatus === 'SUCCESS' && Array.isArray(d.responseDetails)) { setAccounts(d.responseDetails); setAccountsStatus('ready'); } else setAccountsStatus('error'); } else setAccountsStatus('error');
+        if (budgetsRes?.ok) {
           const d = await budgetsRes.json();
           setBudgets(Array.isArray(d.responseDetails) ? d.responseDetails : []);
           setBudgetStatus('ready');
         } else {
           setBudgetStatus('error');
         }
-      } catch (e) { console.error(e); setBudgetStatus('error'); } finally { setIsLoading(false); }
+      } catch (e) { console.error(e); setBudgetStatus('error'); setSummaryStatus('error'); setAccountsStatus('error'); setTransactionsStatus('error'); } finally { setIsLoading(false); }
     }
     fetchData();
   }, []);
@@ -164,11 +175,15 @@ export default function DashboardPage() {
                 <span className="text-zinc-400 text-sm">Sisa Uang</span>
                 <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#087f6b] text-xs font-medium">Periode Gajian</span>
               </div>
+              {summaryStatus === 'error' ? (
+                <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                  <p className="font-medium">Monthly summary unavailable</p>
+                  <p className="mt-1">Your dashboard could not verify this period&apos;s totals. Refresh to try again.</p>
+                </div>
+              ) : <>
               <p className={`text-4xl lg:text-5xl font-bold mb-6 ${net >= 0 ? 'gradient-text' : 'text-red-400'}`}>
                 {formatCurrency(net)}
               </p>
-              
-              {/* Income/Expense Cards */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
@@ -182,7 +197,7 @@ export default function DashboardPage() {
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(expense)}</p>
                 </div>
-              </div>
+              </div></>}
               
               {/* Savings Progress */}
               {income > 0 && (
@@ -205,7 +220,7 @@ export default function DashboardPage() {
               <div className="min-w-0"><h2 id="account-balances-title" className="truncate font-semibold text-[#16332f]">Accounts and wallets</h2><p className="text-xs text-zinc-500">Individual available balances</p></div>
               <Link href="/accounts" className="shrink-0 text-xs font-semibold text-[#008f78]">Manage</Link>
             </div>
-            {accounts.length > 0 ? <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">{accounts.map((account) => <div key={account.id} className="w-[min(82vw,280px)] shrink-0 snap-start"><AccountCard account={account} /></div>)}</div> : <Link href="/accounts" className="card block min-w-0 rounded-3xl p-5 text-sm text-zinc-500"><span className="break-words">Create your first bank account, wallet, or cash balance.</span></Link>}
+            {accountsStatus === 'error' ? <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><p className="font-medium">Account data is unavailable</p><Link href="/accounts" className="mt-2 inline-block font-semibold underline">Retry in Accounts</Link></div> : accounts.length > 0 ? <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">{accounts.map((account) => <div key={account.id} className="w-[min(82vw,280px)] shrink-0 snap-start"><AccountCard account={account} /></div>)}</div> : <Link href="/accounts" className="card block min-w-0 rounded-3xl p-5 text-sm text-zinc-500"><span className="break-words">Create your first bank account, wallet, or cash balance.</span></Link>}
           </section>
 
           {/* Quick Actions */}
@@ -336,7 +351,9 @@ export default function DashboardPage() {
               <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">View all</Link>
             </div>
             
-            {transactions.length > 0 ? (
+            {transactionsStatus === 'error' ? (
+              <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><p className="font-medium">Recent transactions are unavailable</p><Link href="/cashflow" className="mt-2 inline-block font-semibold underline">Retry in Activity</Link></div>
+            ) : transactions.length > 0 ? (
               <div className="space-y-3">
                 {transactions.slice(0, 5).map((tx, i) => (
                   <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-[#f5fbf9] hover:bg-[#e9f5f2] transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>

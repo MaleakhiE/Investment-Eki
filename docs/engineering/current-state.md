@@ -1,8 +1,8 @@
 # Investment-Eki current state
 
-Date: 2026-08-01
-Baseline commit: `590b744`
-Iteration branch: `feat/loop-engineering-42-goal-contribution-guidance`
+Date: 2026-08-02
+Baseline commit: `c186053`
+Iteration branch: `feat/iteration-049-dashboard-availability`
 
 ## Product and architecture
 
@@ -52,6 +52,10 @@ The goals page now labels progress indicators for assistive technology, explains
 that monthly contribution guidance assumes equal contributions without growth or
 interest, and shows an explicit `Deadline passed` state for overdue goals while
 preserving server-calculated values.
+
+Dashboard summary, account, and recent-transaction panels now validate successful
+API envelopes and expected shapes independently, showing unavailable states
+instead of presenting failed requests as zero balances or onboarding empties.
 
 Goal create and update boundaries now share finite monetary validation and
 strict goal-field validation. Explicit goal names, categories, priorities, and
