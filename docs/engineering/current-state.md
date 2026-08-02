@@ -247,3 +247,5 @@ staging release gate.
 ## Operational gaps
 
 There is no GitHub Actions workflow, browser E2E stack, axe coverage, enforced coverage threshold, or successful disposable migration replay in this environment.
+
+Iteration 043 associates cashflow transaction-entry labels with their controls, exposes Expense/Income selection through `aria-pressed`, names transaction-history filters, and raises touched compact controls to a 44px minimum height. It changes no API, calculation, authorization, persistence, or OCR behavior.
