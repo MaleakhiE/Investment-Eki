@@ -128,7 +128,8 @@ describe('POST /api/transactions/ocr-scan', () => {
       responseMessage: 'Unable to scan receipt',
       responseDetails: null,
     });
-    expect(consoleError).toHaveBeenCalledWith('Error scanning receipt:', expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith('Error scanning receipt:', { code: 'OCR_FAILED' });
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('worker failed');
     consoleError.mockRestore();
   });
 
@@ -142,6 +143,8 @@ describe('POST /api/transactions/ocr-scan', () => {
 
     expect(response.status).toBe(504);
     expect((await response.json()).responseMessage).toBe('Receipt scan timed out. Try a clearer or smaller image.');
+    expect(consoleError).toHaveBeenCalledWith('Error scanning receipt:', { code: 'OCR_TIMEOUT' });
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('OCR timed out');
     consoleError.mockRestore();
   });
 
@@ -156,6 +159,8 @@ describe('POST /api/transactions/ocr-scan', () => {
     expect(response.status).toBe(429);
     expect(response.headers.get('retry-after')).toBeNull();
     expect((await response.json()).responseMessage).toBe('Another receipt is being scanned. Try again shortly.');
+    expect(consoleError).toHaveBeenCalledWith('Error scanning receipt:', { code: 'OCR_BUSY' });
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('OCR is busy');
     consoleError.mockRestore();
   });
 });

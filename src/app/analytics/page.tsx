@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
+import { ANALYTICS_TABS, nextAnalyticsTab, type AnalyticsTab } from './tab-navigation';
 
 interface Recommendation {
   gold_percentage: number;
@@ -31,7 +32,15 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingRecommendation, setIsRefreshingRecommendation] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'cashflow' | 'investment'>('overview');
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
+
+  function handleTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, tab: AnalyticsTab) {
+    const nextTab = nextAnalyticsTab(tab, event.key);
+    if (!nextTab) return;
+    event.preventDefault();
+    setActiveTab(nextTab);
+    document.getElementById(`analytics-tab-${nextTab}`)?.focus();
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -125,15 +134,6 @@ export default function AnalyticsPage() {
           <p className="text-sm text-zinc-600">Insights & AI recommendations</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-4 bg-white rounded-xl p-1 shadow-sm w-fit">
-          {(['overview', 'cashflow', 'investment'] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? 'bg-[#00d4aa] text-[#16332f]' : 'text-zinc-600 hover:bg-[#e9f5f2]'}`}>
-              {tab === 'overview' ? 'Overview' : tab === 'cashflow' ? 'Cashflow' : 'Investment'}
-            </button>
-          ))}
-        </div>
-
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>
         ) : error && !recommendation ? (
@@ -147,9 +147,21 @@ export default function AnalyticsPage() {
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Tabs */}
+        <div role="tablist" aria-label="Analytics views" className="mb-4 flex max-w-full gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm sm:w-fit">
+          {ANALYTICS_TABS.map(tab => (
+            <button key={tab} id={`analytics-tab-${tab}`} type="button" role="tab" aria-selected={activeTab === tab} aria-controls={`analytics-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1} onKeyDown={(event) => handleTabKeyDown(event, tab)} onClick={() => setActiveTab(tab)} className={`min-h-11 shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2 ${activeTab === tab ? 'bg-[#00d4aa] text-[#16332f]' : 'text-zinc-600 hover:bg-[#e9f5f2]'}`}>
+              {tab === 'overview' ? 'Overview' : tab === 'cashflow' ? 'Cashflow' : 'Investment'}
+            </button>
+          ))}
+        </div>
+
+            {ANALYTICS_TABS.filter((tab) => tab !== activeTab).map((tab) => (
+              <div key={tab} id={`analytics-panel-${tab}`} role="tabpanel" aria-labelledby={`analytics-tab-${tab}`} hidden />
+            ))}
             {/* Overview Tab */}
             {activeTab === 'overview' && (
-              <>
+              <div id="analytics-panel-overview" role="tabpanel" aria-labelledby="analytics-tab-overview" tabIndex={0} className="space-y-4">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="card rounded-xl p-4">
@@ -213,12 +225,12 @@ export default function AnalyticsPage() {
                     <p className="text-xs text-zinc-400 leading-relaxed">{recommendation.reasoning}</p>
                   </div>
                 ) : null}
-              </>
+              </div>
             )}
 
             {/* Cashflow Tab */}
             {activeTab === 'cashflow' && (
-              <>
+              <div id="analytics-panel-cashflow" role="tabpanel" aria-labelledby="analytics-tab-cashflow" tabIndex={0} className="space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Trend Chart */}
                   <div className="card rounded-xl p-5">
@@ -286,12 +298,12 @@ export default function AnalyticsPage() {
                     <p className={`text-lg font-bold ${avgSavings >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(avgSavings)}</p>
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {/* Investment Tab */}
             {activeTab === 'investment' && (
-              <>
+              <div id="analytics-panel-investment" role="tabpanel" aria-labelledby="analytics-tab-investment" tabIndex={0} className="space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Portfolio Summary */}
                   <div className="card rounded-xl p-5">
@@ -373,7 +385,7 @@ export default function AnalyticsPage() {
                     </div>
                   ) : <p className="text-xs text-zinc-500 text-center py-8">No investment data</p>}
                 </div>
-              </>
+              </div>
             )}
 
             {/* Actions */}

@@ -389,3 +389,39 @@ header.
   and the blocked transitive sharp advisory remain.
 - Validation: focused 62-test parser/export/goal matrix, full 68-suite/827-test
   regression, build/OCR trace, Prisma checks, migration status, and diff checks.
+
+## Accessible cashflow entry and filters (completed in 043)
+
+- Historical problem: transaction-entry labels were not programmatically associated, the Expense/Income choice used visual state only, and history filters lacked accessible names.
+- Outcome: stable field associations, pressed-state semantics, named filters, and 44px minimum heights for touched compact controls.
+- Residuals: authenticated keyboard, screen-reader, and responsive browser smoke remain release gates. Analytics semantics and investment error states are separate slices.
+
+## Financial-planning collection log privacy (completed in 044)
+
+- Historical problem: budget and goal collection handlers logged raw caught errors.
+- Outcome: all four GET/POST catches use the closed database error taxonomy; focused route tests prove sentinel private values are absent.
+- Residual: OCR error-log sanitation remains a separate high-caution slice.
+
+## Investment availability and retry UX (completed in 045)
+
+- Historical problem: failed history loads looked like a verified empty portfolio with Rp0 summaries.
+- Outcome: explicit loading/ready/error states, atomic response validation, generic non-private alert, and accessible retry.
+- Residual: per-type partial availability, stale-data presentation, and browser/AT smoke remain separate refinements.
+
+## Investment availability and retry UX (completed in 045)
+
+- Historical problem: failed history requests appeared as Rp0 totals and “No records yet.”
+- Outcome: explicit loading/error/ready states, atomic dual-history validation, generic unavailable messaging, and accessible retry.
+- Residual: per-asset partial availability is a possible later enhancement, but must never present partial totals as complete. Authenticated browser and assistive-technology smoke remain release gates.
+
+## Receipt OCR log privacy (completed in 046)
+
+- Historical problem: the high-caution receipt route logged raw OCR errors.
+- Outcome: closed OCR-specific error classification preserves operational value without messages, stacks, paths, or receipt context.
+- Residual: OCR quotas and production worker observability remain separate product/operations decisions.
+
+## Accessible analytics tabs (completed in 047)
+
+- Historical problem: analytics tabs exposed no programmatic selection, relationships, or group keyboard navigation.
+- Outcome: complete tab semantics, automatic keyboard activation, roving focus, touch targets, and mobile containment.
+- Residual: browser/screen-reader smoke and analytics partial-fetch truthfulness remain separate release/future slices.
