@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -9,7 +9,7 @@ import { readLoopState, writeLoopState } from '../../../scripts/loop-control/sta
 const roots: string[] = [];
 const fail = (line: string): never => { throw new Error(`Unexpected output: ${line}`); };
 
-const validState = (): LoopState => ({
+const validState = (changes: Partial<LoopState> = {}): LoopState => ({
   schemaVersion: 1,
   runId: 'iteration-053-cli-test',
   targetIteration: 70,
@@ -33,6 +33,7 @@ const validState = (): LoopState => ({
   review: null,
   publication: null,
   blocker: null,
+  ...changes,
 });
 
 const createRoot = async (): Promise<string> => {
@@ -40,6 +41,11 @@ const createRoot = async (): Promise<string> => {
   roots.push(root);
   await writeLoopState(root, validState());
   return root;
+};
+
+const writeInput = async (root: string, name: string, value: unknown): Promise<string> => {
+  await writeFile(path.join(root, name), JSON.stringify(value), 'utf8');
+  return name;
 };
 
 const preflight = {
@@ -109,4 +115,75 @@ test('rejects an input path outside the fixture root without reading state', asy
   expect(await main(['preflight', '--input', '../preflight.json'], io)).toBe(2);
   expect(stderr[0]).toContain('Invalid input');
   expect(await readLoopState(fixtureRoot)).toEqual(validState());
+});
+
+test('initializes and reports a custom durable state', async () => {
+  const fixtureRoot = await createRoot();
+  const customState = validState({ runId: 'custom-state' });
+  await writeLoopState(fixtureRoot, customState, 'initial.json');
+  const stdout: string[] = [];
+  const io: CliIo = { cwd: fixtureRoot, stdout: (line) => stdout.push(line), stderr: fail };
+
+  expect(await main(['init', '--input', 'initial.json', '--state', 'control/state.json'], io)).toBe(0);
+  expect(await readLoopState(fixtureRoot, 'control/state.json')).toEqual(customState);
+  expect(await main(['status', '--state', 'control/state.json'], io)).toBe(0);
+  expect(JSON.parse(stdout.at(-1) ?? '')).toMatchObject({ state: { runId: 'custom-state' } });
+});
+
+test('persists the preflight, validation, review, publication, and acceptance commands', async () => {
+  const fixtureRoot = await createRoot();
+  const io: CliIo = { cwd: fixtureRoot, stdout: () => undefined, stderr: fail };
+  const review = { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved independently.' };
+  await writeInput(fixtureRoot, 'preflight.json', preflight);
+  await writeInput(fixtureRoot, 'validation.json', {
+    command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false, summary: 'Passed.', elapsedMinutes: 0,
+  });
+  await writeInput(fixtureRoot, 'review.json', review);
+  await writeInput(fixtureRoot, 'publication.json', {
+    requiredValidationsPassed: true, noUnresolvedIntroducedFailure: true, review,
+  });
+
+  expect(await main(['preflight', '--input', 'preflight.json'], io)).toBe(0);
+  expect((await readLoopState(fixtureRoot)).nextAction).toBe('execute');
+  expect(await main(['record-validation', '--input', 'validation.json'], io)).toBe(0);
+  expect((await readLoopState(fixtureRoot)).nextAction).toBe('review');
+  expect(await main(['record-review', '--input', 'review.json'], io)).toBe(0);
+  expect((await readLoopState(fixtureRoot)).review).toEqual(review);
+  expect(await main(['authorize-publication', '--input', 'publication.json'], io)).toBe(0);
+  const published = await readLoopState(fixtureRoot);
+  await writeLoopState(fixtureRoot, {
+    ...published,
+    publication: { commit: '8ee03c4', pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' },
+  });
+  expect(await main(['accept-iteration'], io)).toBe(0);
+  expect(await readLoopState(fixtureRoot)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
+});
+
+test('persists a requested repair after an introduced repairable validation failure', async () => {
+  const fixtureRoot = await createRoot();
+  const io: CliIo = { cwd: fixtureRoot, stdout: () => undefined, stderr: fail };
+  await writeInput(fixtureRoot, 'failed-validation.json', {
+    command: ['npm', 'test'], required: true, status: 'Failed', classification: 'introduced', repairable: true, summary: 'Failed.', elapsedMinutes: 0,
+  });
+  await writeInput(fixtureRoot, 'repair.json', { strategyHash: 'repair-v1' });
+
+  expect(await main(['record-validation', '--input', 'failed-validation.json'], io)).toBe(0);
+  expect(await main(['request-repair', '--input', 'repair.json'], io)).toBe(0);
+  expect(await readLoopState(fixtureRoot)).toMatchObject({ phase: 'repair', nextAction: 'validate', repairAttempts: 1 });
+});
+
+test('rejects a state symlink outside the fixture root without emitting state', async () => {
+  const fixtureRoot = await createRoot();
+  const externalRoot = await createRoot();
+  const statePath = path.join(fixtureRoot, 'docs/engineering/loop-state.json');
+  const externalStatePath = path.join(externalRoot, 'docs/engineering/loop-state.json');
+  await rm(statePath);
+  await symlink(externalStatePath, statePath);
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const io: CliIo = { cwd: fixtureRoot, stdout: (line) => stdout.push(line), stderr: (line) => stderr.push(line) };
+
+  expect(await main(['status'], io)).toBe(2);
+  expect(stdout).toEqual([]);
+  expect(stderr[0]).toContain('Invalid input');
 });

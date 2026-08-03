@@ -1,4 +1,4 @@
-import { readFile, realpath } from 'node:fs/promises';
+import { lstat, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -97,10 +97,16 @@ const resolveWithinRoot = (root: string, relativePath: string): string => {
   return target;
 };
 
-const readJsonInput = async (root: string, relativePath: string): Promise<unknown> => {
+const resolveExistingPathWithinRoot = async (root: string, relativePath: string): Promise<string> => {
   const target = resolveWithinRoot(root, relativePath);
+  if ((await lstat(target)).isSymbolicLink()) invalid();
   const resolvedTarget = await realpath(target);
   if (!resolvedTarget.startsWith(`${root}${path.sep}`)) invalid();
+  return resolvedTarget;
+};
+
+const readJsonInput = async (root: string, relativePath: string): Promise<unknown> => {
+  const resolvedTarget = await resolveExistingPathWithinRoot(root, relativePath);
   try {
     return JSON.parse(await readFile(resolvedTarget, 'utf8'));
   } catch {
@@ -221,6 +227,7 @@ export const main = async (argv: readonly string[], io: CliIo): Promise<number> 
       return emitDecision(io, decisionFor(state));
     }
 
+    await resolveExistingPathWithinRoot(root, options.state);
     const state = await readLoopState(root, options.state);
     let decision: Decision = decisionFor(state);
     if (command === 'preflight') decision = evaluatePreflight(state, parsePreflight(input));
