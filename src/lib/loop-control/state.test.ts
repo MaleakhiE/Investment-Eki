@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -72,9 +72,40 @@ test.each(['DATABASE_URL=mysql://secret', 'token=abc123'])
     await expect(writeLoopState(root, validState({ blocker }))).rejects.toThrow('Sensitive state value');
   });
 
+test.each([
+  ['s', 'k-', 'a'.repeat(26)].join(''),
+  ['s', 'k-proj-', 'a'.repeat(26)].join(''),
+  ['g', 'hp_', 'a'.repeat(26)].join(''),
+  ['github', '_pat_', 'a'.repeat(26)].join(''),
+  'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.c2lnbmF0dXJl',
+  ['AK', 'IA', 'IOSFODNN7EXAMPLE'].join(''),
+])('rejects common raw secret formats without persisting them', async (blocker) => {
+  const root = await createRoot();
+  await expect(writeLoopState(root, validState({ blocker }))).rejects.toThrow('Sensitive state value');
+});
+
+test.each([
+  ['validation summary', validState({ validations: [{
+    command: ['npm', 'test'], required: true, status: 'Failed', classification: 'introduced', repairable: true, summary: 'failed\nraw output',
+  }] })],
+  ['blocker', validState({ blocker: 'blocked\u001B[31mraw output' })],
+  ['review summary', validState({ review: { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'reviewed\rraw output' } })],
+])('rejects non-redacted %s', (_label, state) => {
+  expect(() => parseLoopState(state)).toThrow('Invalid loop state');
+});
+
 test('rejects paths outside the repository root', async () => {
   const root = await createRoot();
   await expect(writeLoopState(root, validState(), '../loop-state.json')).rejects.toThrow('outside repository root');
+});
+
+test('rejects a repository symlink that would escape writes', async () => {
+  const root = await createRoot();
+  const external = await createRoot();
+  await symlink(external, path.join(root, 'docs'));
+
+  await expect(writeLoopState(root, validState())).rejects.toThrow('outside repository root');
+  await expect(readdir(external)).resolves.toEqual([]);
 });
 
 test('rejects missing and inconsistent required fields', () => {

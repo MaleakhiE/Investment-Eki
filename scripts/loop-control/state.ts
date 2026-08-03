@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type {
@@ -24,7 +24,8 @@ const FAILURE_CLASSIFICATIONS = new Set<FailureClassification>(['introduced', 'p
 const PHASES = new Set<Phase>(['preflight', 'execute', 'validate', 'repair', 'review', 'publish', 'stopped']);
 const NEXT_ACTIONS = new Set<NextAction>(['preflight', 'execute', 'validate', 'repair', 'review', 'publish', 'next-iteration', 'stop']);
 const PULL_REQUEST_STATES = new Set<PublicationEvidence['pullRequestState']>(['OPEN', 'DRAFT', 'MERGED', 'CLOSED']);
-const SENSITIVE_VALUE = /\b(?:database_url|token|secret|password|api[_-]?key|authorization|cookie)\s*[:=]|\b(?:mysql|mariadb|postgres(?:ql)?|mongodb(?:\+srv)?|redis):\/\/|\bbearer\s+/i;
+const SENSITIVE_VALUE = /\b(?:database_url|token|secret|password|api[_-]?key|authorization|cookie)\s*[:=]|\b(?:mysql|mariadb|postgres(?:ql)?|mongodb(?:\+srv)?|redis):\/\/|\bbearer\s+|\bsk-(?:proj-)?[A-Za-z0-9_-]{16,}\b|\bgh(?:p|o|u|s|r)_[A-Za-z0-9_]{16,}\b|\bgithub_pat_[A-Za-z0-9_]{16,}\b|\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/i;
+const DISALLOWED_SUMMARY_CHARACTER = /[\r\n\x1B]|[^\x20-\x7E]/;
 
 const LOOP_STATE_KEYS = [
   'schemaVersion', 'runId', 'targetIteration', 'latestCompletedIteration', 'currentIteration', 'branch', 'baseBranch', 'baseCommit',
@@ -51,6 +52,14 @@ const stringValue = (value: unknown, maximum = MAX_IDENTIFIER_LENGTH): string =>
 };
 
 const nullableString = (value: unknown, maximum = MAX_TEXT_LENGTH): string | null => value === null ? null : stringValue(value, maximum);
+
+const summaryValue = (value: unknown): string => {
+  const summary = stringValue(value, MAX_TEXT_LENGTH);
+  if (DISALLOWED_SUMMARY_CHARACTER.test(summary)) throw invalidState();
+  return summary;
+};
+
+const nullableSummaryValue = (value: unknown): string | null => value === null ? null : summaryValue(value);
 
 const nonNegativeInteger = (value: unknown): number => {
   if (!Number.isSafeInteger(value) || (value as number) < 0) throw invalidState();
@@ -107,7 +116,7 @@ const parseValidation = (value: unknown): ValidationRecord => {
     status: enumValue(value.status, VALIDATION_STATUSES),
     classification: enumValue(value.classification, FAILURE_CLASSIFICATIONS),
     repairable: booleanValue(value.repairable),
-    summary: stringValue(value.summary),
+    summary: summaryValue(value.summary),
   };
 };
 
@@ -119,7 +128,7 @@ const parseReview = (value: unknown): ReviewEvidence | null => {
     independent: booleanValue(value.independent),
     approved: booleanValue(value.approved),
     baseCommitIsAncestor: booleanValue(value.baseCommitIsAncestor),
-    summary: stringValue(value.summary),
+    summary: summaryValue(value.summary),
   };
 };
 
@@ -159,6 +168,40 @@ const resolveWithinRoot = (repoRoot: string, relativePath: string): string => {
     throw new Error('State path is outside repository root');
   }
   return target;
+};
+
+const isWithinRoot = (target: string, root: string): boolean => target === root || target.startsWith(`${root}${path.sep}`);
+
+const assertNoExistingSymlink = async (target: string): Promise<void> => {
+  try {
+    if ((await lstat(target)).isSymbolicLink()) throw new Error('State path is outside repository root');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+};
+
+const prepareWriteTarget = async (repoRoot: string, target: string): Promise<void> => {
+  const root = path.resolve(repoRoot);
+  const parent = path.dirname(target);
+  const relativeParent = path.relative(root, parent);
+  let ancestor = root;
+
+  for (const segment of relativeParent.split(path.sep).filter(Boolean)) {
+    ancestor = path.join(ancestor, segment);
+    try {
+      const metadata = await lstat(ancestor);
+      if (metadata.isSymbolicLink() || !metadata.isDirectory()) throw new Error('State path is outside repository root');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') break;
+      throw error;
+    }
+  }
+
+  await mkdir(parent, { recursive: true });
+  const [realRoot, realParent] = await Promise.all([realpath(root), realpath(parent)]);
+  if (!isWithinRoot(realParent, realRoot)) throw new Error('State path is outside repository root');
+  await assertNoExistingSymlink(target);
+  await assertNoExistingSymlink(`${target}.tmp`);
 };
 
 export const parseLoopState = (value: unknown): LoopState => {
@@ -202,7 +245,7 @@ export const parseLoopState = (value: unknown): LoopState => {
     validations: value.validations.map(parseValidation),
     review: parseReview(value.review),
     publication: parsePublication(value.publication),
-    blocker: nullableString(value.blocker),
+    blocker: nullableSummaryValue(value.blocker),
   };
 };
 
@@ -224,7 +267,7 @@ export const writeLoopState = async (repoRoot: string, state: LoopState, relativ
   const validated = parseLoopState(state);
   const temporary = `${target}.tmp`;
 
-  await mkdir(path.dirname(target), { recursive: true });
+  await prepareWriteTarget(repoRoot, target);
   await writeFile(temporary, `${JSON.stringify(validated, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
   await rename(temporary, target);
 };
