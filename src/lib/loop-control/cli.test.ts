@@ -109,6 +109,18 @@ test.each(['db:deploy', 'db:seed', 'admin:promote', 'smtp:import'])
     expect(JSON.parse(stdout[0])).toMatchObject({ allowed: false });
   });
 
+test.each([
+  ['npm', 'audit', 'fix'],
+  ['npm', 'audit', 'fix', '--force'],
+])('denies mutating audit command %j', async (...command) => {
+  const fixtureRoot = await createRoot();
+  const stdout: string[] = [];
+  const io: CliIo = { cwd: fixtureRoot, stdout: (line) => stdout.push(line), stderr: fail };
+
+  expect(await main(['classify-command', '--', ...command], io)).toBe(2);
+  expect(JSON.parse(stdout[0])).toMatchObject({ allowed: false });
+});
+
 test('rejects an input path outside the fixture root without reading state', async () => {
   const fixtureRoot = await createRoot();
   const stderr: string[] = [];

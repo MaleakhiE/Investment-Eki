@@ -308,6 +308,7 @@ export const classifyCommand = (argv: readonly string[]): CommandClassification 
   const denied = [
     ['npm', 'run', 'db:migrate'], ['npm', 'run', 'db:deploy'], ['npm', 'run', 'db:seed'],
     ['npm', 'run', 'admin:promote'], ['npm', 'run', 'smtp:import'],
+    ['npm', 'audit', 'fix'], ['npm', 'audit', 'fix', '--force'],
     ['npx', 'prisma', 'migrate', 'reset'], ['npx', 'prisma', 'migrate', 'dev'],
     ['npx', 'prisma', 'migrate', 'deploy'], ['npx', 'prisma', 'db', 'seed'],
     ['git', 'push', '--force'], ['git', 'push', '-f'], ['git', 'reset', '--hard'], ['git', 'clean'], ['git', 'merge'],
@@ -315,12 +316,18 @@ export const classifyCommand = (argv: readonly string[]): CommandClassification 
   const allowed = [
     ['npm', 'test'], ['npm', 'run', 'lint'], ['npm', 'run', 'build'],
     ['npm', 'run', 'db:status'], ['npm', 'run', 'db:verify'],
-    ['npm', 'audit'], ['git', 'diff', '--check'],
+    ['git', 'diff', '--check'],
     ['npx', 'jest'], ['npx', 'tsc'], ['npx', 'prisma', 'format'], ['npx', 'prisma', 'validate'],
   ];
   const shell = new Set(['sh', 'bash', 'zsh', 'cmd', 'powershell', 'pwsh']);
   if (shell.has(normalized[0] ?? '') || denied.some((command) => includesSequence(normalized, command))) {
     return { allowed: false, reason: 'Command is outside the engineering-loop allowlist.' };
+  }
+  if (normalized[0] === 'npm' && normalized[1] === 'audit') {
+    const readOnlyAudit = ['npm', 'audit', '--omit=dev', '--audit-level=critical'];
+    return normalized.length === readOnlyAudit.length && includesSequence(normalized, readOnlyAudit)
+      ? { allowed: true, reason: null }
+      : { allowed: false, reason: 'Command is outside the engineering-loop allowlist.' };
   }
   return allowed.some((command) => includesSequence(normalized, command))
     ? { allowed: true, reason: null }

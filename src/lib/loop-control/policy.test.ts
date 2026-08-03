@@ -301,6 +301,8 @@ test('acceptance requires prior publication authorization', () => {
 test.each([
   ['npm', 'run', 'db:deploy'],
   ['npm', 'run', 'admin:promote'],
+  ['npm', 'audit', 'fix'],
+  ['npm', 'audit', 'fix', '--force'],
   ['npx', 'prisma', 'migrate', 'reset'],
   ['git', 'push', '--force'],
 ])('denies %j', (...command) => expect(classifyCommand(command).allowed).toBe(false));
@@ -309,6 +311,13 @@ test.each([
   ['git', 'diff', '--check'],
   ['npm', 'audit', '--omit=dev', '--audit-level=critical'],
 ])('allows required read-only validation %j', (...command) => expect(classifyCommand(command).allowed).toBe(true));
+
+test.each([
+  ['npm', 'audit'],
+  ['npm', 'audit', '--audit-level=critical'],
+  ['npm', 'audit', '--omit=dev', '--audit-level=high'],
+  ['npm', 'audit', '--omit=dev', '--audit-level=critical', '--json'],
+])('rejects non-canonical audit command %j', (...command) => expect(classifyCommand(command).allowed).toBe(false));
 
 test('does not deny a safe argv because an argument merely contains a denied command', () => {
   expect(classifyCommand(['npm', 'test', '--', 'db:deploy']).allowed).toBe(true);
