@@ -1,7 +1,12 @@
 import { lstat, mkdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { isCommitSha, isDirectGitHubPullRequestUrl } from './policy';
+import {
+  ACCEPTANCE_CONTRACT_HASH,
+  hasPassedAcceptanceContract,
+  isCommitSha,
+  isDirectGitHubPullRequestUrl,
+} from './policy';
 
 import type {
   FailureClassification,
@@ -152,13 +157,6 @@ const hasApprovedReview = (state: LoopState): boolean => Boolean(
   state.review?.independent && state.review.approved && state.review.baseCommitIsAncestor,
 );
 
-const hasPassedRequiredValidation = (state: LoopState): boolean => {
-  const latest = new Map<string, ValidationRecord>();
-  state.validations.forEach((validation) => latest.set(JSON.stringify(validation.command), validation));
-  const required = [...latest.values()].filter((validation) => validation.required);
-  return required.length > 0 && required.every((validation) => validation.status === 'Passed') && state.lastFailure === null;
-};
-
 const assertCoherentState = (state: LoopState): void => {
   if (state.publication !== null && !((state.phase === 'publish'
     && (state.terminalState === null || state.terminalState === 'accepted'))
@@ -175,21 +173,21 @@ const assertCoherentState = (state: LoopState): void => {
     if (state.phase === 'repair' && (state.repairAttempts === 0 || state.lastFailure !== 'introduced'
       || state.review !== null || state.publication !== null)) throw invalidState();
     if (state.phase === 'review' && (state.validations.length === 0 || state.publication !== null)) throw invalidState();
-    if (state.phase === 'publish' && (!hasPassedRequiredValidation(state) || !hasApprovedReview(state))) throw invalidState();
+    if (state.phase === 'publish' && (!hasPassedAcceptanceContract(state) || !hasApprovedReview(state))) throw invalidState();
     return;
   }
 
   if (state.terminalState === 'accepted') {
     if (state.phase !== 'publish' || state.nextAction !== 'next-iteration' || state.blocker !== null
       || state.currentIteration >= state.targetIteration || !state.publication || !hasApprovedReview(state)
-      || !hasPassedRequiredValidation(state)) throw invalidState();
+      || !hasPassedAcceptanceContract(state)) throw invalidState();
     return;
   }
 
   if (state.phase !== 'stopped' || state.nextAction !== 'stop') throw invalidState();
   if (state.terminalState === 'completed') {
     if (state.blocker !== null || state.currentIteration < state.targetIteration || !state.publication
-      || !hasApprovedReview(state) || !hasPassedRequiredValidation(state)) throw invalidState();
+      || !hasApprovedReview(state) || !hasPassedAcceptanceContract(state)) throw invalidState();
   } else if (state.blocker === null) throw invalidState();
 };
 
@@ -199,6 +197,12 @@ const assertNoSensitiveValues = (value: unknown): void => {
     return;
   }
   if (Array.isArray(value)) {
+    const splitSecretFlags = new Set(['--password', '--token', '--secret', '--api-key', '--authorization', '--cookie']);
+    value.forEach((entry, index) => {
+      if (typeof entry === 'string' && splitSecretFlags.has(entry.toLowerCase()) && index + 1 < value.length) {
+        throw new Error('Sensitive state value');
+      }
+    });
     value.forEach(assertNoSensitiveValues);
     return;
   }
@@ -291,6 +295,7 @@ export const parseLoopState = (value: unknown): LoopState => {
     publication: parsePublication(value.publication),
     blocker: nullableSummaryValue(value.blocker),
   };
+  if (parsed.acceptanceContractHash !== ACCEPTANCE_CONTRACT_HASH) throw invalidState();
   assertCoherentState(parsed);
   return parsed;
 };

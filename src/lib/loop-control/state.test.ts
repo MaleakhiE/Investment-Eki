@@ -2,7 +2,7 @@ import { mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { DEFAULT_LIMITS, type LoopState } from '../../../scripts/loop-control/policy';
+import { ACCEPTANCE_CONTRACT_HASH, DEFAULT_LIMITS, type LoopState } from '../../../scripts/loop-control/policy';
 import { parseLoopState, readLoopState, withLoopStateLock, writeLoopState } from '../../../scripts/loop-control/state';
 
 const COMMIT_SHA = '8ee03c4f6fb8749bdbabc2a35cb7ad78f53f3ed9';
@@ -23,10 +23,10 @@ const validState = (changes: Partial<LoopState> = {}): LoopState => ({
   nextAction: 'preflight',
   repairAttempts: 0,
   iterationsAcceptedThisRun: 0,
-  startedAt: '2026-08-03T07:00:00.000Z',
-  deadlineAt: '2026-08-03T09:00:00.000Z',
+  startedAt: '2099-08-03T07:00:00.000Z',
+  deadlineAt: '2099-08-03T09:00:00.000Z',
   limits: DEFAULT_LIMITS,
-  acceptanceContractHash: 'contract-v1',
+  acceptanceContractHash: ACCEPTANCE_CONTRACT_HASH,
   lastRepairStrategyHash: null,
   lastFailure: null,
   validations: [],
@@ -73,6 +73,13 @@ test.each(['DATABASE_URL=mysql://secret', 'token=abc123'])
     const root = await createRoot();
     await expect(writeLoopState(root, validState({ blocker }))).rejects.toThrow('Sensitive state value');
   });
+
+test('rejects split flag and value secrets in command argv', () => {
+  expect(() => parseLoopState(validState({ phase: 'review', nextAction: 'review', validations: [{
+    command: ['npm', 'test', '--password', 'plain-secret'], required: false, status: 'Passed',
+    classification: 'introduced', repairable: false, summary: 'Passed.',
+  }] }))).toThrow('Sensitive state value');
+});
 
 test('rejects credential-bearing URLs in durable state', async () => {
   const root = await createRoot();
@@ -121,7 +128,8 @@ test('rejects missing and inconsistent required fields', () => {
 
   expect(() => parseLoopState(missingBranch)).toThrow('Invalid loop state');
   expect(() => parseLoopState(validState({ currentIteration: 52 }))).toThrow('Invalid loop state');
-  expect(() => parseLoopState(validState({ deadlineAt: '2026-08-03T06:00:00.000Z' }))).toThrow('Invalid loop state');
+  expect(() => parseLoopState(validState({ deadlineAt: '2099-08-03T06:00:00.000Z' }))).toThrow('Invalid loop state');
+  expect(() => parseLoopState(validState({ acceptanceContractHash: 'stale-contract' }))).toThrow('Invalid loop state');
 });
 
 test.each([

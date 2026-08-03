@@ -12,9 +12,23 @@ import {
   requestRepair,
   type LoopState,
   type PreflightEvidence,
+  type PublicationReadiness,
 } from '../../../scripts/loop-control/policy';
 
 const COMMIT_SHA = '8ee03c4f6fb8749bdbabc2a35cb7ad78f53f3ed9';
+const ACCEPTANCE_HASH = '77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d';
+const REQUIRED_COMMANDS = [
+  ['npx', 'prisma', 'format'],
+  ['npx', 'prisma', 'validate'],
+  ['npx', 'tsc', '--noEmit'],
+  ['npm', 'run', 'lint'],
+  ['npm', 'test', '--', '--runInBand'],
+  ['npm', 'run', 'build'],
+  ['npm', 'run', 'db:status'],
+  ['npm', 'run', 'db:verify'],
+  ['git', 'diff', '--check'],
+  ['npm', 'audit', '--omit=dev', '--audit-level=critical'],
+] as const;
 
 test('instructions target 070 and require controller gates', () => {
   const agents = readFileSync(path.join(process.cwd(), 'AGENTS.md'), 'utf8');
@@ -39,10 +53,10 @@ const baseState = (): LoopState => ({
   nextAction: 'preflight',
   repairAttempts: 0,
   iterationsAcceptedThisRun: 0,
-  startedAt: '2026-08-03T07:00:00.000Z',
-  deadlineAt: '2026-08-03T09:00:00.000Z',
+  startedAt: '2099-08-03T07:00:00.000Z',
+  deadlineAt: '2099-08-03T09:00:00.000Z',
   limits: DEFAULT_LIMITS,
-  acceptanceContractHash: 'contract-v1',
+  acceptanceContractHash: ACCEPTANCE_HASH,
   lastRepairStrategyHash: null,
   lastFailure: null,
   validations: [],
@@ -76,14 +90,14 @@ const reviewedState = (changes: Partial<LoopState> = {}): LoopState => ({
   ...baseState(),
   phase: 'review',
   nextAction: 'review',
-  validations: [{
-    command: ['npm', 'test'],
+  validations: REQUIRED_COMMANDS.map((command) => ({
+    command: [...command],
     required: true,
     status: 'Passed',
     classification: 'introduced',
     repairable: false,
-    summary: 'Full tests passed.',
-  }],
+    summary: 'Required validation passed.',
+  })),
   review: {
     independent: true,
     approved: true,
@@ -92,6 +106,28 @@ const reviewedState = (changes: Partial<LoopState> = {}): LoopState => ({
   },
   ...changes,
 });
+
+const readyForPublication = (state = reviewedState()): PublicationReadiness => ({
+  requiredValidationsPassed: true,
+  noUnresolvedIntroducedFailure: true,
+  review: state.review,
+});
+
+const authorizationVerification = {
+  currentCommit: COMMIT_SHA,
+  branchMatches: true,
+  headDescendsFromBase: true,
+  checkedAt: '2099-08-03T08:00:00.000Z',
+};
+
+const publicationVerification = {
+  baseCommitIsAncestor: true,
+  commitIsHead: true,
+  branchMatches: true,
+  repositoryMatches: true,
+  livePullRequestMatches: true,
+  checkedAt: '2099-08-03T08:00:00.000Z',
+};
 
 test('iteration 052 continues toward 070', () => {
   const state = baseState();
@@ -141,7 +177,7 @@ test.each([
 });
 
 test('repair continues only below cap with a changed strategy', () => {
-  const failed = recordValidation(baseState(), {
+  const failed = recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
     command: ['npm', 'test', '--', '--runInBand'],
     required: true,
     status: 'Failed',
@@ -158,7 +194,7 @@ test('repair continues only below cap with a changed strategy', () => {
 });
 
 test('a second repair requires another failed validation first', () => {
-  const failed = recordValidation(baseState(), {
+  const failed = recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
     command: ['npm', 'test'], required: true, status: 'Failed', classification: 'introduced', repairable: true,
     summary: 'policy test failed',
   });
@@ -168,7 +204,7 @@ test('a second repair requires another failed validation first', () => {
 });
 
 test('validation timeout exhausts the repair loop', () => {
-  expect(recordValidation(baseState(), {
+  expect(recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
     command: ['npm', 'test'],
     required: true,
     status: 'Passed',
@@ -179,8 +215,8 @@ test('validation timeout exhausts the repair loop', () => {
   }).terminalState).toBe('exhausted');
 });
 
-test('a required environment-blocked validation blocks but an optional one remains recorded', () => {
-  const required = recordValidation(baseState(), {
+test('environment-blocked validations remain recorded for the complete release matrix', () => {
+  const required = recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
     command: ['npm', 'run', 'build'],
     required: true,
     status: 'Blocked by environment',
@@ -188,8 +224,8 @@ test('a required environment-blocked validation blocks but an optional one remai
     repairable: false,
     summary: 'database unavailable',
   });
-  const optional = recordValidation(baseState(), {
-    command: ['npm', 'run', 'db:verify'],
+  const optional = recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
+    command: ['npm', 'test'],
     required: false,
     status: 'Blocked by environment',
     classification: 'environment-related',
@@ -197,15 +233,54 @@ test('a required environment-blocked validation blocks but an optional one remai
     summary: 'database unavailable',
   });
 
-  expect(required.terminalState).toBe('blocked');
+  expect(required).toMatchObject({ terminalState: null, nextAction: 'review' });
+  expect(required.state.validations).toHaveLength(1);
   expect(optional).toMatchObject({ terminalState: null, nextAction: 'review' });
   expect(optional.state.validations).toHaveLength(1);
+  const reviewed = {
+    ...required.state,
+    review: { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved.' },
+  };
+  expect(authorizePublication(reviewed, {
+    requiredValidationsPassed: false,
+    noUnresolvedIntroducedFailure: true,
+    review: reviewed.review,
+  }, authorizationVerification).terminalState).toBe('blocked');
+});
+
+test('record-validation cannot skip preflight or bypass a pending repair', () => {
+  const passed = {
+    command: ['npm', 'test'], required: true, status: 'Passed' as const, classification: 'introduced' as const,
+    repairable: false, summary: 'Passed.',
+  };
+  expect(recordValidation(baseState(), passed).terminalState).toBe('blocked');
+
+  const failed = recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
+    ...passed, status: 'Failed', repairable: true,
+  });
+  expect(failed.nextAction).toBe('repair');
+  expect(recordValidation(failed.state, passed).terminalState).toBe('blocked');
+});
+
+test('late validation invalidates recorded review evidence', () => {
+  const result = recordValidation(reviewedState(), {
+    command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false, summary: 'Passed.',
+  });
+  expect(result.state.review).toBeNull();
+});
+
+test('a required acceptance validation cannot be downgraded by a later optional record', () => {
+  const result = recordValidation(reviewedState(), {
+    command: ['npm', 'run', 'build'], required: false, status: 'Passed', classification: 'introduced',
+    repairable: false, summary: 'Attempted downgrade.',
+  });
+  expect(result.terminalState).toBe('blocked');
 });
 
 test.each(['unknown', 'pre-existing', 'environment-related', 'invalid-command', 'external-service'] as const)(
   'does not automatically repair a %s failure',
   (classification) => {
-    expect(recordValidation(baseState(), {
+    expect(recordValidation({ ...baseState(), phase: 'execute', nextAction: 'execute' }, {
       command: ['npm', 'test'],
       required: true,
       status: 'Failed',
@@ -218,52 +293,65 @@ test.each(['unknown', 'pre-existing', 'environment-related', 'invalid-command', 
 
 test('publication authorization derives readiness from durable validation and review evidence', () => {
   const state = reviewedState();
-  const authorized = authorizePublication(state);
+  const authorized = authorizePublication(state, readyForPublication(state), authorizationVerification);
   expect(authorized).toMatchObject({ terminalState: null, nextAction: 'publish' });
-  expect(authorizePublication(baseState()).terminalState).toBe('blocked');
-  expect(authorizePublication(reviewedState({ validations: [] })).terminalState).toBe('blocked');
-  expect(authorizePublication(reviewedState({ review: null })).terminalState).toBe('blocked');
-  expect(authorizePublication(reviewedState({ review: { ...state.review!, baseCommitIsAncestor: false } })).terminalState).toBe('blocked');
+  expect(authorizePublication(baseState(), readyForPublication(state), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ validations: [] }), readyForPublication(state), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ review: null }), readyForPublication(state), authorizationVerification).terminalState).toBe('blocked');
+  const withoutAncestry = reviewedState({ review: { ...state.review!, baseCommitIsAncestor: false } });
+  expect(authorizePublication(withoutAncestry, readyForPublication(withoutAncestry), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(state, { ...readyForPublication(state), requiredValidationsPassed: false }, authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(state, readyForPublication(state), { ...authorizationVerification, branchMatches: false }).terminalState).toBe('blocked');
+  expect(authorizePublication(state, readyForPublication(state), { ...authorizationVerification, checkedAt: '2100-08-03T08:00:00.000Z' }).terminalState).toBe('exhausted');
+  const incomplete = reviewedState({ validations: reviewedState().validations.slice(0, 1) });
+  expect(authorizePublication(incomplete, { ...readyForPublication(incomplete), requiredValidationsPassed: false }, authorizationVerification).terminalState).toBe('blocked');
 });
 
 test('publication evidence requires an authorized phase, valid identifiers, and verified ancestry', () => {
-  const authorized = authorizePublication(reviewedState()).state;
+  const reviewed = reviewedState();
+  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification).state;
   const publication = {
     commit: COMMIT_SHA,
     pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
     pullRequestState: 'OPEN' as const,
   };
 
-  expect(recordPublication(authorized, publication, true).state.publication).toEqual(publication);
-  expect(recordPublication(authorized, publication, false).terminalState).toBe('blocked');
-  expect(recordPublication(baseState(), publication, true).terminalState).toBe('blocked');
-  expect(recordPublication(authorized, { ...publication, commit: 'abc1234' }, true).terminalState).toBe('blocked');
-  expect(recordPublication(authorized, { ...publication, pullRequestUrl: 'https://alice:secret@github.com/MaleakhiE/Investment-Eki/pull/53' }, true).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, publication, publicationVerification).state.publication).toEqual(publication);
+  expect(recordPublication(authorized, publication, { ...publicationVerification, commitIsHead: false }).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, publication, { ...publicationVerification, repositoryMatches: false }).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, publication, { ...publicationVerification, livePullRequestMatches: false }).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, { ...publication, commit: authorized.baseCommit }, publicationVerification).terminalState).toBe('blocked');
+  expect(recordPublication(baseState(), publication, publicationVerification).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, { ...publication, commit: 'abc1234' }, publicationVerification).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, { ...publication, pullRequestUrl: 'https://alice:secret@github.com/MaleakhiE/Investment-Eki/pull/53' }, publicationVerification).terminalState).toBe('blocked');
 });
 
 test('iteration 070 completes only after recorded publication evidence', () => {
-  const authorized = authorizePublication(reviewedState({ currentIteration: 70 }));
+  const reviewed = reviewedState({ currentIteration: 70 });
+  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification);
   const published = recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
-  }, true).state;
+  }, publicationVerification).state;
 
-  expect(acceptIteration(published).terminalState).toBe('completed');
+  expect(acceptIteration(published, publicationVerification).terminalState).toBe('completed');
 });
 
 test('an accepted non-target iteration continues to the next iteration', () => {
-  const authorized = authorizePublication(reviewedState());
+  const reviewed = reviewedState();
+  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification);
   const published = recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
-  }, true).state;
+  }, publicationVerification).state;
 
-  expect(acceptIteration(published)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
+  expect(acceptIteration(published, publicationVerification)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
 });
 
 test('the terminal guard does not reopen an accepted iteration', () => {
-  const authorized = authorizePublication(reviewedState());
+  const reviewed = reviewedState();
+  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification);
   const accepted = acceptIteration(recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
-  }, true).state);
+  }, publicationVerification).state, publicationVerification);
 
   const result = recordValidation(accepted.state, {
     command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false,
@@ -275,15 +363,17 @@ test('the terminal guard does not reopen an accepted iteration', () => {
 });
 
 test('acceptance requires review, ancestry, and a direct pull-request URL', () => {
-  const authorized = authorizePublication(reviewedState()).state;
+  const reviewed = reviewedState();
+  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification).state;
   const published = {
     ...authorized,
     publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },
   };
 
-  expect(acceptIteration({ ...published, review: null }).terminalState).toBe('blocked');
-  expect(acceptIteration({ ...published, review: { ...published.review!, baseCommitIsAncestor: false } }).terminalState).toBe('blocked');
-  expect(acceptIteration({ ...published, publication: { ...published.publication, pullRequestUrl: '' } }).terminalState).toBe('blocked');
+  expect(acceptIteration({ ...published, review: null }, publicationVerification).terminalState).toBe('blocked');
+  expect(acceptIteration({ ...published, review: { ...published.review!, baseCommitIsAncestor: false } }, publicationVerification).terminalState).toBe('blocked');
+  expect(acceptIteration({ ...published, publication: { ...published.publication, pullRequestUrl: '' } }, publicationVerification).terminalState).toBe('blocked');
+  expect(acceptIteration(published, { ...publicationVerification, commitIsHead: false }).terminalState).toBe('blocked');
 });
 
 test('acceptance requires prior publication authorization', () => {
@@ -295,7 +385,7 @@ test('acceptance requires prior publication authorization', () => {
     publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },
   };
 
-  expect(acceptIteration(state).terminalState).toBe('blocked');
+  expect(acceptIteration(state, publicationVerification).terminalState).toBe('blocked');
 });
 
 test.each([
@@ -305,6 +395,11 @@ test.each([
   ['npm', 'audit', 'fix', '--force'],
   ['npx', 'prisma', 'migrate', 'reset'],
   ['git', 'push', '--force'],
+  ['npm', 'run', 'lint', '--', '--fix'],
+  ['npx', 'tsc', '--build', '--clean'],
+  ['npx', 'prisma', 'format', '--schema', '../outside.prisma'],
+  ['npx', 'jest', '--config', 'attacker.js'],
+  ['npm', 'run', 'db:verify', '--', '--production'],
 ])('denies %j', (...command) => expect(classifyCommand(command).allowed).toBe(false));
 
 test.each([
@@ -320,7 +415,7 @@ test.each([
 ])('rejects non-canonical audit command %j', (...command) => expect(classifyCommand(command).allowed).toBe(false));
 
 test('does not deny a safe argv because an argument merely contains a denied command', () => {
-  expect(classifyCommand(['npm', 'test', '--', 'db:deploy']).allowed).toBe(true);
+  expect(classifyCommand(['npm', 'test', '--', 'db:deploy']).allowed).toBe(false);
 });
 
 test('fails closed for an unrecognized command', () => {
