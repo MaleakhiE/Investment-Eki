@@ -134,7 +134,7 @@ const decide = (
   reason: string | null,
   changes: Partial<LoopState> = {},
 ): Decision => {
-  const stopped = terminalState !== null;
+  const stopped = terminalState !== null && terminalState !== 'accepted';
   const nextState = copyState(state, {
     ...changes,
     phase: stopped ? 'stopped' : changes.phase ?? state.phase,
@@ -146,7 +146,7 @@ const decide = (
   return { state: nextState, terminalState, nextAction: nextState.nextAction, reason };
 };
 
-const stopped = (state: LoopState): Decision | null => state.terminalState === null
+const stopped = (state: LoopState): Decision | null => state.terminalState === null || state.terminalState === 'accepted'
   ? null
   : decide(state, state.terminalState, 'stop', state.blocker ?? 'The loop is already terminal.');
 
@@ -220,7 +220,7 @@ export const requestRepair = (state: LoopState, strategyHash: string): Decision 
   if (!strategyHash.trim() || strategyHash === state.lastRepairStrategyHash) {
     return decide(state, 'blocked', 'stop', 'Repair strategy must be non-empty and changed.');
   }
-  if (state.repairAttempts >= state.limits.maxRepairAttempts - 1) {
+  if (state.repairAttempts >= state.limits.maxRepairAttempts) {
     return decide(state, 'exhausted', 'stop', 'Repair-attempt budget exhausted.');
   }
   return decide(state, null, 'validate', null, {

@@ -129,7 +129,8 @@ test('repair continues only below cap with a changed strategy', () => {
   expect(failed.nextAction).toBe('repair');
   expect(requestRepair(failed.state, 'strategy-a').state.repairAttempts).toBe(1);
   expect(requestRepair({ ...failed.state, lastRepairStrategyHash: 'strategy-a' }, 'strategy-a').terminalState).toBe('blocked');
-  expect(requestRepair({ ...failed.state, repairAttempts: 2 }, 'strategy-c').terminalState).toBe('exhausted');
+  expect(requestRepair({ ...failed.state, repairAttempts: 2 }, 'strategy-c').state.repairAttempts).toBe(3);
+  expect(requestRepair({ ...failed.state, repairAttempts: 3 }, 'strategy-d').terminalState).toBe('exhausted');
 });
 
 test('a second repair requires another failed validation first', () => {
@@ -217,6 +218,20 @@ test('iteration 070 completes only after recorded publication evidence', () => {
   };
 
   expect(acceptIteration(published).terminalState).toBe('completed');
+});
+
+test('an accepted non-target iteration continues to the next iteration', () => {
+  const authorized = authorizePublication({ ...baseState(), phase: 'publish' as const }, readyForPublication());
+  const published = {
+    ...authorized.state,
+    publication: {
+      commit: 'abc1234',
+      pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+      pullRequestState: 'OPEN' as const,
+    },
+  };
+
+  expect(acceptIteration(published)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
 });
 
 test('acceptance requires review, ancestry, and a direct pull-request URL', () => {
