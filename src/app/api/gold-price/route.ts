@@ -52,16 +52,16 @@ async function tryFetchFromAPIs(): Promise<GoldPriceResponse | null> {
   try {
     const result = await fetchFromFrankfurter();
     if (result) return result;
-  } catch (e) {
-    console.error('Frankfurter API error:', e);
+  } catch {
+    console.error('gold_price_upstream_failed');
   }
 
   // Try open.er-api.com (free exchange rate API)
   try {
     const result = await fetchFromExchangeRateAPI();
     if (result) return result;
-  } catch (e) {
-    console.error('ExchangeRate API error:', e);
+  } catch {
+    console.error('gold_price_upstream_failed');
   }
 
   return null;
@@ -145,8 +145,8 @@ export async function GET() {
     return NextResponse.json(
       successResponse(priceData, 'Gold price fetched successfully')
     );
-  } catch (error) {
-    console.error('Error fetching gold price:', error);
+  } catch {
+    console.error('gold_price_fallback_used');
     // Return default price even on error
     return NextResponse.json(
       successResponse({
