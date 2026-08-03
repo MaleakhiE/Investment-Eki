@@ -234,6 +234,26 @@ test('an accepted non-target iteration continues to the next iteration', () => {
   expect(acceptIteration(published)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
 });
 
+test('the terminal guard does not reopen an accepted iteration', () => {
+  const authorized = authorizePublication({ ...baseState(), phase: 'publish' as const }, readyForPublication());
+  const accepted = acceptIteration({
+    ...authorized.state,
+    publication: {
+      commit: 'abc1234',
+      pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+      pullRequestState: 'OPEN' as const,
+    },
+  });
+
+  const result = recordValidation(accepted.state, {
+    command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false,
+    summary: 'must not run after acceptance',
+  });
+
+  expect(result).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
+  expect(result.state).toEqual(accepted.state);
+});
+
 test('acceptance requires review, ancestry, and a direct pull-request URL', () => {
   const authorized = authorizePublication({ ...baseState(), phase: 'publish' as const }, readyForPublication()).state;
   const published = {

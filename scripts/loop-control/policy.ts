@@ -134,7 +134,8 @@ const decide = (
   reason: string | null,
   changes: Partial<LoopState> = {},
 ): Decision => {
-  const stopped = terminalState !== null && terminalState !== 'accepted';
+  const isAcceptedTransition = terminalState === 'accepted' && nextAction === 'next-iteration';
+  const stopped = terminalState !== null && !isAcceptedTransition;
   const nextState = copyState(state, {
     ...changes,
     phase: stopped ? 'stopped' : changes.phase ?? state.phase,
@@ -146,9 +147,14 @@ const decide = (
   return { state: nextState, terminalState, nextAction: nextState.nextAction, reason };
 };
 
-const stopped = (state: LoopState): Decision | null => state.terminalState === null || state.terminalState === 'accepted'
+const stopped = (state: LoopState): Decision | null => state.terminalState === null
   ? null
-  : decide(state, state.terminalState, 'stop', state.blocker ?? 'The loop is already terminal.');
+  : {
+    state: copyState(state),
+    terminalState: state.terminalState,
+    nextAction: state.nextAction,
+    reason: state.blocker,
+  };
 
 const exhausted = (state: LoopState, evidence: PreflightEvidence): string | null => {
   if (state.iterationsAcceptedThisRun >= state.limits.maxIterations) return 'Iteration budget exhausted.';
