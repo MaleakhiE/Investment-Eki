@@ -1,5 +1,7 @@
-import { lstat, mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+
+import { isCommitSha, isDirectGitHubPullRequestUrl } from './policy';
 
 import type {
   FailureClassification,
@@ -23,8 +25,8 @@ const VALIDATION_STATUSES = new Set<ValidationStatus>(['Passed', 'Failed', 'Bloc
 const FAILURE_CLASSIFICATIONS = new Set<FailureClassification>(['introduced', 'pre-existing', 'environment-related', 'invalid-command', 'external-service', 'unknown']);
 const PHASES = new Set<Phase>(['preflight', 'execute', 'validate', 'repair', 'review', 'publish', 'stopped']);
 const NEXT_ACTIONS = new Set<NextAction>(['preflight', 'execute', 'validate', 'repair', 'review', 'publish', 'next-iteration', 'stop']);
-const PULL_REQUEST_STATES = new Set<PublicationEvidence['pullRequestState']>(['OPEN', 'DRAFT', 'MERGED', 'CLOSED']);
-const SENSITIVE_VALUE = /\b(?:database_url|token|secret|password|api[_-]?key|authorization|cookie)\s*[:=]|\b(?:mysql|mariadb|postgres(?:ql)?|mongodb(?:\+srv)?|redis):\/\/|\bbearer\s+|\bsk-(?:proj-)?[A-Za-z0-9_-]{16,}\b|\bgh(?:p|o|u|s|r)_[A-Za-z0-9_]{16,}\b|\bgithub_pat_[A-Za-z0-9_]{16,}\b|\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/i;
+const PULL_REQUEST_STATES = new Set<PublicationEvidence['pullRequestState']>(['OPEN', 'DRAFT']);
+const SENSITIVE_VALUE = /\b(?:database_url|token|secret|password|api[_-]?key|authorization|cookie)\s*[:=]|\b(?:mysql|mariadb|postgres(?:ql)?|mongodb(?:\+srv)?|redis):\/\/|https?:\/\/[^\s/:@]+:[^\s/@]+@|\bbearer\s+|\bsk-(?:proj-)?[A-Za-z0-9_-]{16,}\b|\bgh(?:p|o|u|s|r)_[A-Za-z0-9_]{16,}\b|\bgithub_pat_[A-Za-z0-9_]{16,}\b|\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/i;
 const DISALLOWED_SUMMARY_CHARACTER = /[\r\n\x1B]|[^\x20-\x7E]/;
 
 const LOOP_STATE_KEYS = [
@@ -135,18 +137,60 @@ const parseReview = (value: unknown): ReviewEvidence | null => {
 const parsePublication = (value: unknown): PublicationEvidence | null => {
   if (value === null) return null;
   if (!isRecord(value) || !hasExactKeys(value, PUBLICATION_KEYS)) throw invalidState();
+  const commit = stringValue(value.commit);
   const pullRequestUrl = stringValue(value.pullRequestUrl);
-  try {
-    if (new URL(pullRequestUrl).protocol !== 'https:') throw invalidState();
-  } catch {
-    throw invalidState();
-  }
+  if (!isCommitSha(commit) || !isDirectGitHubPullRequestUrl(pullRequestUrl)) throw invalidState();
 
   return {
-    commit: stringValue(value.commit),
+    commit,
     pullRequestUrl,
     pullRequestState: enumValue(value.pullRequestState, PULL_REQUEST_STATES),
   };
+};
+
+const hasApprovedReview = (state: LoopState): boolean => Boolean(
+  state.review?.independent && state.review.approved && state.review.baseCommitIsAncestor,
+);
+
+const hasPassedRequiredValidation = (state: LoopState): boolean => {
+  const latest = new Map<string, ValidationRecord>();
+  state.validations.forEach((validation) => latest.set(JSON.stringify(validation.command), validation));
+  const required = [...latest.values()].filter((validation) => validation.required);
+  return required.length > 0 && required.every((validation) => validation.status === 'Passed') && state.lastFailure === null;
+};
+
+const assertCoherentState = (state: LoopState): void => {
+  if (state.publication !== null && !((state.phase === 'publish'
+    && (state.terminalState === null || state.terminalState === 'accepted'))
+    || (state.phase === 'stopped' && state.terminalState === 'completed'))) throw invalidState();
+  if (state.terminalState === null) {
+    const expected: Partial<Record<Phase, NextAction>> = {
+      preflight: 'preflight', execute: 'execute', validate: 'repair', repair: 'validate', review: 'review', publish: 'publish',
+    };
+    if (expected[state.phase] !== state.nextAction || state.blocker !== null) throw invalidState();
+    if (['preflight', 'execute'].includes(state.phase) && (state.review !== null || state.publication !== null)) throw invalidState();
+    if (state.phase === 'preflight' && (state.validations.length > 0 || state.lastFailure !== null || state.repairAttempts !== 0)) throw invalidState();
+    if (state.phase === 'validate' && (state.lastFailure !== 'introduced' || state.validations.at(-1)?.status !== 'Failed'
+      || state.validations.at(-1)?.repairable !== true || state.review !== null || state.publication !== null)) throw invalidState();
+    if (state.phase === 'repair' && (state.repairAttempts === 0 || state.lastFailure !== 'introduced'
+      || state.review !== null || state.publication !== null)) throw invalidState();
+    if (state.phase === 'review' && (state.validations.length === 0 || state.publication !== null)) throw invalidState();
+    if (state.phase === 'publish' && (!hasPassedRequiredValidation(state) || !hasApprovedReview(state))) throw invalidState();
+    return;
+  }
+
+  if (state.terminalState === 'accepted') {
+    if (state.phase !== 'publish' || state.nextAction !== 'next-iteration' || state.blocker !== null
+      || state.currentIteration >= state.targetIteration || !state.publication || !hasApprovedReview(state)
+      || !hasPassedRequiredValidation(state)) throw invalidState();
+    return;
+  }
+
+  if (state.phase !== 'stopped' || state.nextAction !== 'stop') throw invalidState();
+  if (state.terminalState === 'completed') {
+    if (state.blocker !== null || state.currentIteration < state.targetIteration || !state.publication
+      || !hasApprovedReview(state) || !hasPassedRequiredValidation(state)) throw invalidState();
+  } else if (state.blocker === null) throw invalidState();
 };
 
 const assertNoSensitiveValues = (value: unknown): void => {
@@ -222,7 +266,7 @@ export const parseLoopState = (value: unknown): LoopState => {
     || Date.parse(deadlineAt) <= Date.parse(startedAt)) throw invalidState();
   if (!Array.isArray(value.validations)) throw invalidState();
 
-  return {
+  const parsed: LoopState = {
     schemaVersion,
     runId: stringValue(value.runId),
     targetIteration,
@@ -247,6 +291,8 @@ export const parseLoopState = (value: unknown): LoopState => {
     publication: parsePublication(value.publication),
     blocker: nullableSummaryValue(value.blocker),
   };
+  assertCoherentState(parsed);
+  return parsed;
 };
 
 export const readLoopState = async (repoRoot: string, relativePath = DEFAULT_STATE_PATH): Promise<LoopState> => {
@@ -270,4 +316,25 @@ export const writeLoopState = async (repoRoot: string, state: LoopState, relativ
   await prepareWriteTarget(repoRoot, target);
   await writeFile(temporary, `${JSON.stringify(validated, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
   await rename(temporary, target);
+};
+
+export const withLoopStateLock = async <T>(
+  repoRoot: string,
+  action: () => Promise<T>,
+  relativePath = DEFAULT_STATE_PATH,
+): Promise<T> => {
+  const target = resolveWithinRoot(repoRoot, relativePath);
+  await prepareWriteTarget(repoRoot, target);
+  const lock = `${target}.lock`;
+  try {
+    await mkdir(lock);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new Error('State update already in progress');
+    throw error;
+  }
+  try {
+    return await action();
+  } finally {
+    await rm(lock, { recursive: true, force: true });
+  }
 };

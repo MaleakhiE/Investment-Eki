@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-053-loop-stop-control",
+  "runId": "iteration-053-loop-stop-control-run-2",
   "targetIteration": 70,
   "latestCompletedIteration": 52,
   "currentIteration": 53,
   "branch": "feat/iteration-053-loop-stop-control",
   "baseBranch": "main",
   "baseCommit": "fcd3129a8f6c0bf8663ca92af0ff084bda9428ab",
-  "phase": "preflight",
+  "phase": "review",
   "terminalState": null,
-  "nextAction": "preflight",
+  "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-03T06:30:00.000Z",
-  "deadlineAt": "2026-08-03T08:30:00.000Z",
+  "startedAt": "2026-08-03T17:11:11.000Z",
+  "deadlineAt": "2026-08-03T19:11:11.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -22,13 +22,66 @@
     "maxNetworkRetries": 2,
     "maxChildAgents": 6,
     "maxStackDepth": 1,
-    "maxChangedLines": 2000,
+    "maxChangedLines": 3500,
     "maxChangedFiles": 30
   },
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
   "lastFailure": null,
-  "validations": [],
+  "validations": [
+    {
+      "command": [
+        "npx",
+        "jest",
+        "--runTestsByPath",
+        "src/lib/loop-control/policy.test.ts",
+        "src/lib/loop-control/state.test.ts",
+        "src/lib/loop-control/cli.test.ts",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Three loop-control suites passed with 80 tests."
+    },
+    {
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "TypeScript completed with exit zero."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "ESLint exited zero with one known unused-variable warning."
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Git whitespace validation completed with exit zero."
+    }
+  ],
   "review": null,
   "publication": null,
   "blocker": null

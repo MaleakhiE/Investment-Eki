@@ -99,12 +99,6 @@ export type PreflightEvidence = Readonly<{
 
 export type ValidationInput = ValidationRecord & Readonly<{ elapsedMinutes?: number }>;
 
-export type PublicationReadiness = Readonly<{
-  requiredValidationsPassed: boolean;
-  noUnresolvedIntroducedFailure: boolean;
-  review: ReviewEvidence | null;
-}>;
-
 export type CommandClassification = Readonly<{ allowed: boolean; reason: string | null }>;
 export type Decision = Readonly<{
   state: LoopState;
@@ -155,6 +149,32 @@ const stopped = (state: LoopState): Decision | null => state.terminalState === n
     nextAction: state.nextAction,
     reason: state.blocker,
   };
+
+export const isCommitSha = (value: string): boolean => /^[0-9a-f]{40}$/i.test(value);
+
+export const isDirectGitHubPullRequestUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'github.com' && url.port === ''
+      && url.username === '' && url.password === '' && url.search === '' && url.hash === ''
+      && /^\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/[1-9]\d*$/.test(url.pathname);
+  } catch {
+    return false;
+  }
+};
+
+const latestValidations = (state: LoopState): readonly ValidationRecord[] => {
+  const latest = new Map<string, ValidationRecord>();
+  state.validations.forEach((validation) => latest.set(JSON.stringify(validation.command), validation));
+  return [...latest.values()];
+};
+
+const durableValidationPassed = (state: LoopState): boolean => {
+  const validations = latestValidations(state);
+  const required = validations.filter((validation) => validation.required);
+  return required.length > 0 && required.every((validation) => validation.status === 'Passed')
+    && state.lastFailure === null;
+};
 
 const exhausted = (state: LoopState, evidence: PreflightEvidence): string | null => {
   if (state.iterationsAcceptedThisRun >= state.limits.maxIterations) return 'Iteration budget exhausted.';
@@ -236,22 +256,42 @@ export const requestRepair = (state: LoopState, strategyHash: string): Decision 
   });
 };
 
-export const authorizePublication = (state: LoopState, readiness: PublicationReadiness): Decision => {
+export const authorizePublication = (state: LoopState): Decision => {
   const prior = stopped(state);
   if (prior) return prior;
-  if (!readiness.requiredValidationsPassed || !readiness.noUnresolvedIntroducedFailure || !readiness.review
-    || !readiness.review.independent || !readiness.review.approved || !readiness.review.baseCommitIsAncestor) {
+  if (state.phase !== 'review' || state.nextAction !== 'review' || !durableValidationPassed(state)
+    || !state.review?.independent || !state.review.approved || !state.review.baseCommitIsAncestor
+    || state.publication !== null) {
     return decide(state, 'blocked', 'stop', 'Publication evidence is incomplete.');
   }
-  return decide(state, null, 'publish', null, { phase: 'publish', review: readiness.review });
+  return decide(state, null, 'publish', null, { phase: 'publish' });
+};
+
+export const recordPublication = (
+  state: LoopState,
+  publication: PublicationEvidence,
+  baseCommitIsAncestor: boolean,
+): Decision => {
+  const prior = stopped(state);
+  if (prior) return prior;
+  if (state.phase !== 'publish' || state.nextAction !== 'publish' || state.publication !== null
+    || !state.review?.independent || !state.review.approved || !state.review.baseCommitIsAncestor
+    || !durableValidationPassed(state) || !baseCommitIsAncestor || !isCommitSha(publication.commit)
+    || !isDirectGitHubPullRequestUrl(publication.pullRequestUrl)
+    || !['OPEN', 'DRAFT'].includes(publication.pullRequestState)) {
+    return decide(state, 'blocked', 'stop', 'Publication record is invalid.');
+  }
+  return decide(state, null, 'publish', null, { publication });
 };
 
 export const acceptIteration = (state: LoopState): Decision => {
   const prior = stopped(state);
   if (prior) return prior;
-  if (state.phase !== 'publish' || state.nextAction !== 'publish' || !state.review?.independent
+  if (state.phase !== 'publish' || state.nextAction !== 'publish' || !durableValidationPassed(state) || !state.review?.independent
     || !state.review.approved || !state.review.baseCommitIsAncestor
-    || !state.publication?.commit || !state.publication.pullRequestUrl.trim()) {
+    || !state.publication || !isCommitSha(state.publication.commit)
+    || !isDirectGitHubPullRequestUrl(state.publication.pullRequestUrl)
+    || !['OPEN', 'DRAFT'].includes(state.publication.pullRequestState)) {
     return decide(state, 'blocked', 'stop', 'Acceptance evidence is incomplete.');
   }
   const terminalState: TerminalState = state.currentIteration >= state.targetIteration ? 'completed' : 'accepted';
@@ -275,6 +315,7 @@ export const classifyCommand = (argv: readonly string[]): CommandClassification 
   const allowed = [
     ['npm', 'test'], ['npm', 'run', 'lint'], ['npm', 'run', 'build'],
     ['npm', 'run', 'db:status'], ['npm', 'run', 'db:verify'],
+    ['npm', 'audit'], ['git', 'diff', '--check'],
     ['npx', 'jest'], ['npx', 'tsc'], ['npx', 'prisma', 'format'], ['npx', 'prisma', 'validate'],
   ];
   const shell = new Set(['sh', 'bash', 'zsh', 'cmd', 'powershell', 'pwsh']);

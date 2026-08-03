@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -6,16 +7,19 @@ import {
   authorizePublication,
   classifyCommand,
   evaluatePreflight,
+  isCommitSha,
+  isDirectGitHubPullRequestUrl,
+  recordPublication,
   recordValidation,
   requestRepair,
   type Decision,
   type LoopState,
   type PreflightEvidence,
-  type PublicationReadiness,
+  type PublicationEvidence,
   type ReviewEvidence,
   type ValidationInput,
 } from './loop-control/policy';
-import { parseLoopState, readLoopState, writeLoopState } from './loop-control/state';
+import { parseLoopState, readLoopState, withLoopStateLock, writeLoopState } from './loop-control/state';
 
 export const EXIT = Object.freeze({ CONTINUE: 0, TERMINAL_SUCCESS: 0, BLOCKED: 1, INVALID_OR_UNSAFE: 2 });
 
@@ -23,19 +27,20 @@ export interface CliIo {
   readonly cwd: string;
   readonly stdout: (line: string) => void;
   readonly stderr: (line: string) => void;
+  readonly isAncestor?: (baseCommit: string, commit: string) => Promise<boolean>;
 }
 
 type Command = 'init' | 'preflight' | 'record-validation' | 'request-repair' | 'record-review'
-  | 'authorize-publication' | 'accept-iteration' | 'status' | 'classify-command';
+  | 'authorize-publication' | 'record-publication' | 'accept-iteration' | 'status' | 'classify-command';
 type Options = Readonly<{ input: string | null; state: string; dryRun: boolean }>;
 
 const DEFAULT_STATE_PATH = 'docs/engineering/loop-state.json';
 const COMMANDS = new Set<Command>([
   'init', 'preflight', 'record-validation', 'request-repair', 'record-review',
-  'authorize-publication', 'accept-iteration', 'status', 'classify-command',
+  'authorize-publication', 'record-publication', 'accept-iteration', 'status', 'classify-command',
 ]);
 const INPUT_COMMANDS = new Set<Command>([
-  'init', 'preflight', 'record-validation', 'request-repair', 'record-review', 'authorize-publication',
+  'init', 'preflight', 'record-validation', 'request-repair', 'record-review', 'record-publication',
 ]);
 const VALIDATION_STATUSES = new Set(['Passed', 'Failed', 'Blocked by environment', 'Not applicable']);
 const FAILURE_CLASSIFICATIONS = new Set(['introduced', 'pre-existing', 'environment-related', 'invalid-command', 'external-service', 'unknown']);
@@ -167,16 +172,29 @@ const parseRepairStrategy = (value: unknown): string => {
   return nonEmptyText(input.strategyHash);
 };
 
-const parsePublicationReadiness = (value: unknown): PublicationReadiness => {
-  const keys = ['requiredValidationsPassed', 'noUnresolvedIntroducedFailure', 'review'] as const;
+const parsePublication = (value: unknown): PublicationEvidence => {
+  const keys = ['commit', 'pullRequestUrl', 'pullRequestState'] as const;
   const input = record(value);
-  if (!exactKeys(input, keys) || (input.review !== null && !isRecord(input.review))) invalid();
+  if (!exactKeys(input, keys)) invalid();
+  const commit = nonEmptyText(input.commit);
+  const pullRequestUrl = nonEmptyText(input.pullRequestUrl);
+  const pullRequestState = nonEmptyText(input.pullRequestState);
+  if (!isCommitSha(commit) || !isDirectGitHubPullRequestUrl(pullRequestUrl)
+    || !['OPEN', 'DRAFT'].includes(pullRequestState)) invalid();
   return {
-    requiredValidationsPassed: boolean(input.requiredValidationsPassed),
-    noUnresolvedIntroducedFailure: boolean(input.noUnresolvedIntroducedFailure),
-    review: input.review === null ? null : parseReview(input.review),
+    commit,
+    pullRequestUrl,
+    pullRequestState: pullRequestState as PublicationEvidence['pullRequestState'],
   };
 };
+
+const gitIsAncestor = (cwd: string, baseCommit: string, commit: string): Promise<boolean> => new Promise((resolve, reject) => {
+  execFile('git', ['merge-base', '--is-ancestor', baseCommit, commit], { cwd }, (error) => {
+    if (!error) resolve(true);
+    else if ((error as NodeJS.ErrnoException & { code?: number }).code === 1) resolve(false);
+    else reject(error);
+  });
+});
 
 const decisionFor = (state: LoopState): Decision => ({
   state,
@@ -223,24 +241,41 @@ export const main = async (argv: readonly string[], io: CliIo): Promise<number> 
 
     if (command === 'init') {
       const state = parseLoopState(input);
-      if (!options.dryRun) await writeLoopState(root, state, options.state);
+      if (state.phase !== 'preflight' || state.terminalState !== null || state.nextAction !== 'preflight'
+        || state.validations.length > 0 || state.review !== null || state.publication !== null || state.blocker !== null) invalid();
+      if (!options.dryRun) {
+        await withLoopStateLock(root, async () => writeLoopState(root, state, options.state), options.state);
+      }
       return emitDecision(io, decisionFor(state));
     }
 
-    await resolveExistingPathWithinRoot(root, options.state);
-    const state = await readLoopState(root, options.state);
-    let decision: Decision = decisionFor(state);
-    if (command === 'preflight') decision = evaluatePreflight(state, parsePreflight(input));
-    else if (command === 'record-validation') decision = recordValidation(state, parseValidation(input));
-    else if (command === 'request-repair') decision = requestRepair(state, parseRepairStrategy(input));
-    else if (command === 'record-review') decision = recordReview(state, parseReview(input));
-    else if (command === 'authorize-publication') decision = authorizePublication(state, parsePublicationReadiness(input));
-    else if (command === 'accept-iteration') decision = acceptIteration(state);
-    else if (command === 'status') decision = decisionFor(state);
-    else invalid();
+    if (command === 'status') {
+      await resolveExistingPathWithinRoot(root, options.state);
+      return emitDecision(io, decisionFor(await readLoopState(root, options.state)));
+    }
 
-    if (!options.dryRun && command !== 'status') await writeLoopState(root, decision.state, options.state);
-    return emitDecision(io, decision);
+    const transition = async (): Promise<number> => {
+      await resolveExistingPathWithinRoot(root, options.state);
+      const state = await readLoopState(root, options.state);
+      let decision: Decision = decisionFor(state);
+      if (command === 'preflight') decision = evaluatePreflight(state, parsePreflight(input));
+      else if (command === 'record-validation') decision = recordValidation(state, parseValidation(input));
+      else if (command === 'request-repair') decision = requestRepair(state, parseRepairStrategy(input));
+      else if (command === 'record-review') decision = recordReview(state, parseReview(input));
+      else if (command === 'authorize-publication') decision = authorizePublication(state);
+      else if (command === 'record-publication') {
+        const publication = parsePublication(input);
+        const ancestor = await (io.isAncestor ?? ((base, commit) => gitIsAncestor(root, base, commit)))(state.baseCommit, publication.commit);
+        if (!ancestor) invalid();
+        decision = recordPublication(state, publication, ancestor);
+      } else if (command === 'accept-iteration') decision = acceptIteration(state);
+      else invalid();
+
+      if (!options.dryRun) await writeLoopState(root, decision.state, options.state);
+      return emitDecision(io, decision);
+    };
+
+    return await (options.dryRun ? transition() : withLoopStateLock(root, transition, options.state));
   } catch {
     io.stderr('Invalid input.');
     return EXIT.INVALID_OR_UNSAFE;

@@ -7,12 +7,14 @@ import {
   authorizePublication,
   classifyCommand,
   evaluatePreflight,
+  recordPublication,
   recordValidation,
   requestRepair,
   type LoopState,
   type PreflightEvidence,
-  type PublicationReadiness,
 } from '../../../scripts/loop-control/policy';
+
+const COMMIT_SHA = '8ee03c4f6fb8749bdbabc2a35cb7ad78f53f3ed9';
 
 test('instructions target 070 and require controller gates', () => {
   const agents = readFileSync(path.join(process.cwd(), 'AGENTS.md'), 'utf8');
@@ -70,15 +72,25 @@ const validPreflight = (): PreflightEvidence => ({
   changedFiles: 0,
 });
 
-const readyForPublication = (): PublicationReadiness => ({
-  requiredValidationsPassed: true,
-  noUnresolvedIntroducedFailure: true,
+const reviewedState = (changes: Partial<LoopState> = {}): LoopState => ({
+  ...baseState(),
+  phase: 'review',
+  nextAction: 'review',
+  validations: [{
+    command: ['npm', 'test'],
+    required: true,
+    status: 'Passed',
+    classification: 'introduced',
+    repairable: false,
+    summary: 'Full tests passed.',
+  }],
   review: {
     independent: true,
     approved: true,
     baseCommitIsAncestor: true,
     summary: 'Independent review approved the focused change.',
   },
+  ...changes,
 });
 
 test('iteration 052 continues toward 070', () => {
@@ -204,58 +216,54 @@ test.each(['unknown', 'pre-existing', 'environment-related', 'invalid-command', 
   },
 );
 
-test('publication authorization records review evidence and requires ancestry', () => {
-  const state = { ...baseState(), phase: 'publish' as const };
-  const authorized = authorizePublication(state, readyForPublication());
-
+test('publication authorization derives readiness from durable validation and review evidence', () => {
+  const state = reviewedState();
+  const authorized = authorizePublication(state);
   expect(authorized).toMatchObject({ terminalState: null, nextAction: 'publish' });
-  expect(authorized.state.review).toEqual(readyForPublication().review);
-  expect(authorizePublication(state, { ...readyForPublication(), review: null }).terminalState).toBe('blocked');
-  expect(authorizePublication(state, {
-    ...readyForPublication(),
-    review: { ...readyForPublication().review!, baseCommitIsAncestor: false },
-  }).terminalState).toBe('blocked');
+  expect(authorizePublication(baseState()).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ validations: [] })).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ review: null })).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ review: { ...state.review!, baseCommitIsAncestor: false } })).terminalState).toBe('blocked');
+});
+
+test('publication evidence requires an authorized phase, valid identifiers, and verified ancestry', () => {
+  const authorized = authorizePublication(reviewedState()).state;
+  const publication = {
+    commit: COMMIT_SHA,
+    pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+    pullRequestState: 'OPEN' as const,
+  };
+
+  expect(recordPublication(authorized, publication, true).state.publication).toEqual(publication);
+  expect(recordPublication(authorized, publication, false).terminalState).toBe('blocked');
+  expect(recordPublication(baseState(), publication, true).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, { ...publication, commit: 'abc1234' }, true).terminalState).toBe('blocked');
+  expect(recordPublication(authorized, { ...publication, pullRequestUrl: 'https://alice:secret@github.com/MaleakhiE/Investment-Eki/pull/53' }, true).terminalState).toBe('blocked');
 });
 
 test('iteration 070 completes only after recorded publication evidence', () => {
-  const state = { ...baseState(), currentIteration: 70, phase: 'publish' as const };
-  const authorized = authorizePublication(state, readyForPublication());
-  const published = {
-    ...authorized.state,
-    publication: {
-      commit: 'abc1234',
-      pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
-      pullRequestState: 'OPEN' as const,
-    },
-  };
+  const authorized = authorizePublication(reviewedState({ currentIteration: 70 }));
+  const published = recordPublication(authorized.state, {
+    commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
+  }, true).state;
 
   expect(acceptIteration(published).terminalState).toBe('completed');
 });
 
 test('an accepted non-target iteration continues to the next iteration', () => {
-  const authorized = authorizePublication({ ...baseState(), phase: 'publish' as const }, readyForPublication());
-  const published = {
-    ...authorized.state,
-    publication: {
-      commit: 'abc1234',
-      pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
-      pullRequestState: 'OPEN' as const,
-    },
-  };
+  const authorized = authorizePublication(reviewedState());
+  const published = recordPublication(authorized.state, {
+    commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
+  }, true).state;
 
   expect(acceptIteration(published)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
 });
 
 test('the terminal guard does not reopen an accepted iteration', () => {
-  const authorized = authorizePublication({ ...baseState(), phase: 'publish' as const }, readyForPublication());
-  const accepted = acceptIteration({
-    ...authorized.state,
-    publication: {
-      commit: 'abc1234',
-      pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
-      pullRequestState: 'OPEN' as const,
-    },
-  });
+  const authorized = authorizePublication(reviewedState());
+  const accepted = acceptIteration(recordPublication(authorized.state, {
+    commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
+  }, true).state);
 
   const result = recordValidation(accepted.state, {
     command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false,
@@ -267,10 +275,10 @@ test('the terminal guard does not reopen an accepted iteration', () => {
 });
 
 test('acceptance requires review, ancestry, and a direct pull-request URL', () => {
-  const authorized = authorizePublication({ ...baseState(), phase: 'publish' as const }, readyForPublication()).state;
+  const authorized = authorizePublication(reviewedState()).state;
   const published = {
     ...authorized,
-    publication: { commit: 'abc1234', pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },
+    publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },
   };
 
   expect(acceptIteration({ ...published, review: null }).terminalState).toBe('blocked');
@@ -282,8 +290,9 @@ test('acceptance requires prior publication authorization', () => {
   const state = {
     ...baseState(),
     phase: 'publish' as const,
-    review: readyForPublication().review,
-    publication: { commit: 'abc1234', pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },
+    nextAction: 'publish' as const,
+    review: reviewedState().review,
+    publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },
   };
 
   expect(acceptIteration(state).terminalState).toBe('blocked');
@@ -295,6 +304,11 @@ test.each([
   ['npx', 'prisma', 'migrate', 'reset'],
   ['git', 'push', '--force'],
 ])('denies %j', (...command) => expect(classifyCommand(command).allowed).toBe(false));
+
+test.each([
+  ['git', 'diff', '--check'],
+  ['npm', 'audit', '--omit=dev', '--audit-level=critical'],
+])('allows required read-only validation %j', (...command) => expect(classifyCommand(command).allowed).toBe(true));
 
 test('does not deny a safe argv because an argument merely contains a denied command', () => {
   expect(classifyCommand(['npm', 'test', '--', 'db:deploy']).allowed).toBe(true);

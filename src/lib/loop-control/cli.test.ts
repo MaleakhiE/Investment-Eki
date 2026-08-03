@@ -6,6 +6,8 @@ import { main, type CliIo } from '../../../scripts/loop-control';
 import { DEFAULT_LIMITS, type LoopState } from '../../../scripts/loop-control/policy';
 import { readLoopState, writeLoopState } from '../../../scripts/loop-control/state';
 
+const COMMIT_SHA = '8ee03c4f6fb8749bdbabc2a35cb7ad78f53f3ed9';
+
 const roots: string[] = [];
 const fail = (line: string): never => { throw new Error(`Unexpected output: ${line}`); };
 
@@ -130,9 +132,35 @@ test('initializes and reports a custom durable state', async () => {
   expect(JSON.parse(stdout.at(-1) ?? '')).toMatchObject({ state: { runId: 'custom-state' } });
 });
 
+test('init rejects a coherent but non-pristine accepted state', async () => {
+  const fixtureRoot = await createRoot();
+  const accepted = validState({
+    phase: 'publish', terminalState: 'accepted', nextAction: 'next-iteration',
+    validations: [{ command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false, summary: 'Passed.' }],
+    review: { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved.' },
+    publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' },
+  });
+  await writeLoopState(fixtureRoot, accepted, 'accepted.json');
+  const stderr: string[] = [];
+  const io: CliIo = { cwd: fixtureRoot, stdout: fail, stderr: (line) => stderr.push(line) };
+
+  expect(await main(['init', '--input', 'accepted.json', '--state', 'replacement.json'], io)).toBe(2);
+  expect(stderr).toEqual(['Invalid input.']);
+});
+
+test('authorize-publication cannot skip preflight and durable evidence', async () => {
+  const fixtureRoot = await createRoot();
+  const stdout: string[] = [];
+  const io: CliIo = { cwd: fixtureRoot, stdout: (line) => stdout.push(line), stderr: fail };
+
+  expect(await main(['authorize-publication'], io)).toBe(1);
+  expect(JSON.parse(stdout[0])).toMatchObject({ terminalState: 'blocked', nextAction: 'stop' });
+  expect(await readLoopState(fixtureRoot)).toMatchObject({ terminalState: 'blocked', publication: null });
+});
+
 test('persists the preflight, validation, review, publication, and acceptance commands', async () => {
   const fixtureRoot = await createRoot();
-  const io: CliIo = { cwd: fixtureRoot, stdout: () => undefined, stderr: fail };
+  const io: CliIo = { cwd: fixtureRoot, stdout: () => undefined, stderr: fail, isAncestor: async () => true };
   const review = { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved independently.' };
   await writeInput(fixtureRoot, 'preflight.json', preflight);
   await writeInput(fixtureRoot, 'validation.json', {
@@ -140,7 +168,7 @@ test('persists the preflight, validation, review, publication, and acceptance co
   });
   await writeInput(fixtureRoot, 'review.json', review);
   await writeInput(fixtureRoot, 'publication.json', {
-    requiredValidationsPassed: true, noUnresolvedIntroducedFailure: true, review,
+    commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
   });
 
   expect(await main(['preflight', '--input', 'preflight.json'], io)).toBe(0);
@@ -149,14 +177,40 @@ test('persists the preflight, validation, review, publication, and acceptance co
   expect((await readLoopState(fixtureRoot)).nextAction).toBe('review');
   expect(await main(['record-review', '--input', 'review.json'], io)).toBe(0);
   expect((await readLoopState(fixtureRoot)).review).toEqual(review);
-  expect(await main(['authorize-publication', '--input', 'publication.json'], io)).toBe(0);
-  const published = await readLoopState(fixtureRoot);
-  await writeLoopState(fixtureRoot, {
-    ...published,
-    publication: { commit: '8ee03c4', pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' },
-  });
+  expect(await main(['authorize-publication'], io)).toBe(0);
+  expect(await main(['record-publication', '--input', 'publication.json'], io)).toBe(0);
   expect(await main(['accept-iteration'], io)).toBe(0);
   expect(await readLoopState(fixtureRoot)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
+});
+
+test('rejects publication without verified commit ancestry', async () => {
+  const fixtureRoot = await createRoot();
+  await writeLoopState(fixtureRoot, validState({
+    phase: 'publish', nextAction: 'publish',
+    validations: [{ command: ['npm', 'test'], required: true, status: 'Passed', classification: 'introduced', repairable: false, summary: 'Passed.' }],
+    review: { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved.' },
+  }));
+  await writeInput(fixtureRoot, 'publication.json', {
+    commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
+  });
+  const io: CliIo = { cwd: fixtureRoot, stdout: () => undefined, stderr: () => undefined, isAncestor: async () => false };
+
+  expect(await main(['record-publication', '--input', 'publication.json'], io)).toBe(2);
+  expect((await readLoopState(fixtureRoot)).publication).toBeNull();
+});
+
+test('serializes concurrent state transitions without losing the winning decision', async () => {
+  const fixtureRoot = await createRoot();
+  await writeInput(fixtureRoot, 'preflight.json', preflight);
+  const io: CliIo = { cwd: fixtureRoot, stdout: () => undefined, stderr: () => undefined };
+
+  const exits = await Promise.all([
+    main(['preflight', '--input', 'preflight.json'], io),
+    main(['preflight', '--input', 'preflight.json'], io),
+  ]);
+
+  expect(exits.sort()).toEqual([0, 2]);
+  expect(await readLoopState(fixtureRoot)).toMatchObject({ phase: 'execute', nextAction: 'execute' });
 });
 
 test('persists a requested repair after an introduced repairable validation failure', async () => {
