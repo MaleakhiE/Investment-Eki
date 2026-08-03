@@ -11,8 +11,8 @@ Base branch and commit: `main` / `origin/main` at `fcd3129a8f6c0bf8663ca92af0ff0
 Pull request: none discovered. `gh pr list --repo MaleakhiE/Investment-Eki --head feat/iteration-053-loop-stop-control --state all` returned `[]`, and no matching remote branch exists.
 Pull-request state: not published; publication has not been authorized or recorded.
 Validation status: controller suites pass (3 suites / 97 tests), TypeScript passes, lint exits zero with one known warning, diff check passes, and critical-threshold audit exits zero. Prisma validation, full Jest completion, production build completion, database status, and isolated migration replay are accurately recorded as `Blocked by environment`.
-Remaining blockers: `DATABASE_URL` or equivalent disposable local database configuration is absent; the Docker daemon is unavailable. Required latest validations are therefore not all passed, so the publication gate must fail closed.
-Next recommended iteration: finish Iteration 053 with disposable local database/Docker prerequisites and repeat the blocked checks. After acceptance, consider Iteration 054 to remove import-time database configuration from test/build module loading without weakening runtime validation.
+Remaining blockers: final re-review found one High because the authorized HEAD SHA is not persisted across authorization, publication, and acceptance. `DATABASE_URL` or equivalent disposable local database configuration is also absent, and the Docker daemon is unavailable. The durable review is unapproved and required latest validations are not all passed, so publication must fail closed.
+Next recommended iteration: in a separately authorized repair run, persist the authorized/reviewed commit and require exact equality at publication and acceptance, with an A-to-B HEAD-change regression. Then provide disposable local database/Docker prerequisites and repeat the blocked checks.
 Portfolio distribution: not recalculated by this documentation/control slice; it adds no product, financial, UX, or database capability.
 Stacked pull-request dependencies: none. This branch starts at verified `origin/main` commit `fcd3129`.
 
@@ -22,8 +22,8 @@ Stacked pull-request dependencies: none. This branch starts at verified `origin/
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for owner-authorized run `iteration-053-loop-stop-control-run-2`, target 070, latest completed 052, current 053, phase `review`, terminal state `null`, next action `review`, review `null`, and publication `null`. All matrix results were written through the CLI. Recording round-5 validation invalidated the earlier review as designed. The temporary run-2 ceiling is 3,500 changed lines; current complete base-to-worktree change remains within it.
+`docs/engineering/loop-state.json` is schema version 1 for owner-authorized run `iteration-053-loop-stop-control-run-2`, target 070, latest completed 052, current 053, phase `review`, terminal state `null`, next action `review`, review `approved: false`, and publication `null`. All matrix and final-review results were written through the CLI. The temporary run-2 ceiling is 3,500 changed lines; commit `abbc9b5` remains within it.
 
 ## Exact next action
 
-Complete the single final scoped re-review, record its exact result, create a repository-local readiness input matching durable state, then run `authorize-publication --input <readiness.json> --dry-run`. Expected result is blocked while required database-dependent validations remain unavailable. Do not push, create a PR, or invent a PR URL.
+Stop this run as blocked. Do not run publication authorization, push, create a PR, or invent a PR URL. The next executable action requires separate owner authorization: persist the authorized HEAD in durable state and reject publication/acceptance unless the live HEAD exactly matches it.

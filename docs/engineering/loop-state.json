@@ -232,7 +232,12 @@
       "summary": "Round five controller regression suite passed with 97 tests."
     }
   ],
-  "review": null,
+  "review": {
+    "independent": true,
+    "approved": false,
+    "baseCommitIsAncestor": true,
+    "summary": "Final round-five security re-review found one High: authorized HEAD is not persisted, so a later HEAD can be published without renewed validation and review."
+  },
   "publication": null,
   "blocker": null
 }

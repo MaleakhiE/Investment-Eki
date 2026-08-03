@@ -8,7 +8,7 @@ Reliability, security governance, and developer experience.
 
 Iteration 053 now provides an executable, repository-local loop controller with bounded preflight, validation, repair, review, publication, and acceptance transitions. Independent review found publication bypasses, forged-state acceptance, missing publication recording, concurrent lost updates, command-prefix escapes, mutable acceptance evidence, and publication identity gaps. Five focused repair rounds addressed those defects and expanded the controller suites from 66 to 97 tests.
 
-Publication is not authorized. Five required release checks are blocked by missing local database configuration or an unavailable Docker daemon. The controller records the complete matrix and fails the publication gate closed instead of misreporting those checks as passed.
+Publication is not authorized. Five required release checks are blocked by missing local database configuration or an unavailable Docker daemon, and final round-5 re-review found one unresolved High: authorization verifies HEAD A without persisting it, so publication can later verify and accept a different HEAD B. The controller currently fails closed on the environment-blocked matrix and the recorded unapproved review, but the implementation is not release-ready.
 
 ## User or operational problem
 
@@ -46,7 +46,7 @@ The root cause was a structurally validated state format without a complete exec
 - Passed: instructions target Iteration 070 and require controller phase gates.
 - Passed: unsafe operational commands and mutating audit commands are denied.
 - Passed: publication authorization compares its readiness snapshot with the frozen durable acceptance matrix and independent-review evidence.
-- Passed: publication evidence is recorded only after live current-branch, current-HEAD, base-ancestry, origin-repository, and GitHub pull-request checks.
+- Incomplete: each publication transition performs live current-branch, current-HEAD, base-ancestry, origin-repository, and GitHub pull-request checks, but the authorized HEAD is not persisted and compared across transitions.
 - Passed: forged cross-field state and forged completion evidence are rejected.
 - Passed: concurrent state transitions fail closed without lost updates.
 - Passed: controller suites, TypeScript, lint, and diff checks complete successfully.
@@ -118,7 +118,7 @@ All ten results were recorded through `record-validation`. No environment-blocke
 
 Initial security, QA, and release reviewers all requested changes. They confirmed the publication bypass, missing CLI publication transition, forged cross-field state, concurrent lost update, weak commit/URL evidence, credential-bearing URL persistence, and incomplete release evidence. Subsequent review found the audit prefix regression and the final acceptance/publication boundary gaps; repair rounds 2–5 addressed them.
 
-A single final scoped re-review of the complete round-5 diff is the remaining review evidence before publication authorization. The prior approval was invalidated when round-5 validation was recorded; durable review is currently null. No review is fabricated.
+The single permitted final scoped re-review returned `REQUEST_CHANGES` with one High. It reproduced authorization at HEAD A followed by successful publication and acceptance at HEAD B because the authorized SHA is not persisted across transitions. All other scoped round-5 findings were confirmed fixed. The exact negative result is recorded durably with `approved: false`; no review approval is fabricated, and no sixth repair round was opened.
 
 ## Product, UX, and accessibility impact
 
@@ -170,17 +170,17 @@ Product/runtime compatibility is unchanged. The CLI retains repository-local rea
 
 | Category | Score |
 | --- | ---: |
-| Acceptance criteria | 18/20 |
+| Acceptance criteria | 14/20 |
 | Automated test confidence | 9/15 |
 | Financial correctness | 15/15 |
-| Security and privacy | 14/15 |
+| Security and privacy | 7/15 |
 | UX and accessibility | 15/15 |
-| Maintainability | 9/10 |
+| Maintainability | 8/10 |
 | Performance | 5/5 |
 | Documentation and operations | 4/5 |
-| **Total** | **89/100** |
+| **Total** | **77/100** |
 
-The score is above the repair threshold but does not override the controller. Required environment-blocked validation prevents publication authorization.
+The score is below the repair threshold and does not override the final-round stop rule. The unresolved High, unapproved review, and required environment-blocked validation independently prevent publication.
 
 ## Visual validation
 
@@ -199,12 +199,13 @@ Revert the Iteration 053 commits in reverse order. The feature is repository-loc
 - Missing database configuration blocks Prisma validation, three Jest suites, build page-data collection, and database status.
 - Docker daemon unavailability blocks isolated migration replay.
 - Two high-severity `sharp`/Next.js advisories remain; the available forced update is breaking and requires a separate compatibility iteration.
+- High: publication authorization does not persist the verified HEAD SHA, so later publication/acceptance can use a different HEAD without renewed validation and review.
 - Repository filesystem integrity and GitHub CLI authentication remain operational trust boundaries, not cryptographic capabilities.
 - `next-iteration` remains a handoff signal; the next run initializes the incremented counters.
 
 ## Follow-up work and next iteration
 
-First complete Iteration 053 release validation with disposable local prerequisites, rerun the five blocked commands, repeat independent review if code changes, and re-run publication authorization. After acceptance, the evidence-backed Iteration 054 candidate is to remove import-time database configuration from test/build module loading without weakening runtime startup validation.
+Before any release attempt, add an immutable authorized/reviewed commit field to durable state, write it during authorization, require exact equality during publication and acceptance, and add the HEAD-A-to-HEAD-B rejection regression. That work requires a separately authorized repair run because round 5 was final. Then complete the five environment-blocked checks with disposable local prerequisites and repeat independent review.
 
 ## Pull-request reference
 
