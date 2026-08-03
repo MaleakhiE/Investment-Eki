@@ -106,7 +106,7 @@ export default function DashboardPage() {
         } else {
           setBudgetStatus('error');
         }
-      } catch (e) { console.error(e); setBudgetStatus('error'); setSummaryStatus('error'); setAccountsStatus('error'); setTransactionsStatus('error'); } finally { setIsLoading(false); }
+      } catch { console.error('dashboard_data_fetch_failed'); setBudgetStatus('error'); setSummaryStatus('error'); setAccountsStatus('error'); setTransactionsStatus('error'); } finally { setIsLoading(false); }
     }
     fetchData();
   }, []);
