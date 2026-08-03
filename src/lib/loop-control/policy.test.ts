@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import {
   DEFAULT_LIMITS,
   acceptIteration,
@@ -10,6 +13,15 @@ import {
   type PreflightEvidence,
   type PublicationReadiness,
 } from '../../../scripts/loop-control/policy';
+
+test('instructions target 070 and require controller gates', () => {
+  const agents = readFileSync(path.join(process.cwd(), 'AGENTS.md'), 'utf8');
+
+  expect(agents).not.toMatch(/Completion Condition[\s\S]*Iteration 050/);
+  expect(agents).toContain('npm run loop:control');
+  expect(agents).toContain('authorize-publication');
+  expect(agents).toContain('unsafe');
+});
 
 const baseState = (): LoopState => ({
   schemaVersion: 1,

@@ -62,6 +62,17 @@ The state document must include:
 
 Update it before ending any run.
 
+## Executable Loop Control
+
+Use `npm run loop:control` as the durable decision record for autonomous work.
+
+1. Record `preflight` before edits.
+2. Record each validation with `record-validation`; use `request-repair` only for an eligible repair decision.
+3. Run `authorize-publication` before any external publication, including commit, push, or pull-request creation.
+4. Run `accept-iteration` before continuing to the next iteration.
+
+An `unsafe` terminal state prevents commit, push, and pull-request creation even if normal pre-stop steps would otherwise allow publication. Stop and record the blocker instead of bypassing the controller.
+
 ## Repository Synchronization
 
 Before starting a new iteration, inspect:
@@ -109,7 +120,7 @@ An iteration may deliver:
 * An observability improvement
 * Critical missing test coverage
 
-Do not create artificial iterations solely to reach Iteration 050.
+Do not create artificial iterations solely to reach Iteration 070.
 
 Do not combine unrelated changes into one iteration.
 
@@ -815,7 +826,7 @@ Before stopping:
 
 ## Completion Condition
 
-Continue until Iteration 050 is implemented, validated, documented, committed, pushed, and represented by a review-ready or accurately blocked pull request.
+Continue until Iteration 070 is implemented, validated, documented, committed, pushed, and represented by a review-ready or accurately blocked pull request.
 
 Do not claim completion when fewer than all required iterations are complete.
 
