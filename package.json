@@ -12,6 +12,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "loop:control": "tsx scripts/loop-control.ts",
     "db:migrate": "node scripts/prisma-with-url.js migrate dev",
     "db:seed": "node scripts/prisma-with-url.js db seed",
     "db:studio": "node scripts/prisma-with-url.js studio",

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "runId": "iteration-053-loop-stop-control-run-2",
+  "targetIteration": 70,
+  "latestCompletedIteration": 52,
+  "currentIteration": 53,
+  "branch": "feat/iteration-053-loop-stop-control",
+  "baseBranch": "main",
+  "baseCommit": "fcd3129a8f6c0bf8663ca92af0ff084bda9428ab",
+  "phase": "review",
+  "terminalState": null,
+  "nextAction": "review",
+  "repairAttempts": 0,
+  "iterationsAcceptedThisRun": 0,
+  "startedAt": "2026-08-03T17:11:11.000Z",
+  "deadlineAt": "2026-08-03T19:11:11.000Z",
+  "limits": {
+    "maxRepairAttempts": 3,
+    "maxIterations": 18,
+    "maxElapsedMinutes": 120,
+    "validationTimeoutMinutes": 30,
+    "maxNetworkRetries": 2,
+    "maxChildAgents": 6,
+    "maxStackDepth": 1,
+    "maxChangedLines": 3500,
+    "maxChangedFiles": 30
+  },
+  "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
+  "lastRepairStrategyHash": null,
+  "lastFailure": null,
+  "validations": [
+    {
+      "command": [
+        "npx",
+        "jest",
+        "--runTestsByPath",
+        "src/lib/loop-control/policy.test.ts",
+        "src/lib/loop-control/state.test.ts",
+        "src/lib/loop-control/cli.test.ts",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Round five controller regression suite passed with 97 tests."
+    }
+  ],
+  "review": {
+    "independent": true,
+    "approved": false,
+    "baseCommitIsAncestor": true,
+    "summary": "Final round-five security re-review found one High: authorized HEAD is not persisted, so a later HEAD can be published without renewed validation and review."
+  },
+  "authorizedCommit": "8f0ba5d257ef31c9d127986c2ae458861de88da8",
+  "publication": null,
+  "blocker": null
+}

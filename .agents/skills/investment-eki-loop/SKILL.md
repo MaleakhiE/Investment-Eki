@@ -65,6 +65,8 @@ Score the result using `references/quality-score.md`. A result below 85 requires
 
 ## 7. Report and stop safely
 
+Use the loop-control CLI as the phase boundary: record `preflight` before edits, `record-validation` and (only when eligible) `request-repair` while repairing, `authorize-publication` before external publication, and `accept-iteration` before continuing. An `unsafe` decision stops commit, push, and pull-request work. Keep this as the execution gate; the controller owns its detailed policy.
+
 Write `docs/engineering/iterations/iteration-NNN-result.md` with selected opportunity, changes, files, tests, exact validation, reviews, accessibility, performance, remaining risks, score, and next recommendation.
 
 Create logical conventional commits and a draft pull request only when authorized by the task. Never merge or force-push.
