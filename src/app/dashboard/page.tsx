@@ -172,8 +172,8 @@ export default function DashboardPage() {
             
             <div className="relative">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-zinc-400 text-sm">Sisa Uang</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#087f6b] text-xs font-medium">Periode Gajian</span>
+                <span className="text-zinc-400 text-sm">Cashflow periode ini</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#087f6b] text-xs font-medium">Net balance</span>
               </div>
               {summaryStatus === 'error' ? (
                 <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
@@ -181,9 +181,10 @@ export default function DashboardPage() {
                   <p className="mt-1">Your dashboard could not verify this period&apos;s totals. Refresh to try again.</p>
                 </div>
               ) : <>
-              <p className={`text-4xl lg:text-5xl font-bold mb-6 ${net >= 0 ? 'gradient-text' : 'text-red-400'}`}>
+              <p className={`text-4xl lg:text-5xl font-bold mb-1 ${net >= 0 ? 'gradient-text' : 'text-red-400'}`}>
                 {formatCurrency(net)}
               </p>
+              <p className="text-xs text-zinc-500 mb-6">{periodLabel || 'Periode gajian aktif'}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
@@ -477,12 +478,15 @@ export default function DashboardPage() {
           {/* Empty state for new users */}
           {!isLoading && transactions.length === 0 && currentVal === 0 && (
             <div className="card rounded-3xl p-8 text-center animate-fade-in">
-              <div className="w-20 h-20 rounded-full bg-[#00d4aa]/10 flex items-center justify-center mx-auto mb-4">
+              <div className="mx-auto mb-4 w-20 h-20 rounded-full bg-[#00d4aa]/10 border border-[#00d4aa]/30 flex items-center justify-center">
+                <svg className="w-10 h-10 text-[#00a88a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
               </div>
               <h3 className="text-xl font-bold text-[#16332f] mb-2">Mulai Perjalanan Finansialmu!</h3>
-              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto">Add your first transaction and start managing your money with clarity</p>
-              <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-black font-semibold hover:opacity-90 transition-opacity">
-                Add transaction Pertama
+              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto leading-relaxed">Add your first transaction and start managing your money with clarity</p>
+              <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-[#16332f] font-semibold text-sm hover:opacity-90 transition-opacity shadow-md shadow-[#00d4aa]/20">
+                Add your first transaction
               </Link>
             </div>
           )}

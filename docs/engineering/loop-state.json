@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-054-persisted-authorization-head",
+  "runId": "iteration-055-dashboard-and-budget-ux-clarity",
   "targetIteration": 70,
-  "latestCompletedIteration": 53,
-  "currentIteration": 54,
-  "branch": "feat/iteration-054-persisted-authorized-head-gate",
+  "latestCompletedIteration": 54,
+  "currentIteration": 55,
+  "branch": "ux/iteration-055-dashboard-cashflow-ux",
   "baseBranch": "main",
   "baseCommit": "fcd3129a8f6c0bf8663ca92af0ff084bda9428ab",
   "phase": "review",
@@ -12,8 +12,8 @@
   "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-04T11:38:00.000Z",
-  "deadlineAt": "2026-08-04T13:38:00.000Z",
+  "startedAt": "2026-08-05T00:00:00.000Z",
+  "deadlineAt": "2026-08-05T02:00:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -34,6 +34,9 @@
         "npx",
         "jest",
         "--runTestsByPath",
+        "src/app/dashboard/dashboard-ux-clarity.test.ts",
+        "src/app/dashboard/dashboard-responsive.test.ts",
+        "src/app/dashboard/dashboard-availability.test.ts",
         "src/lib/loop-control/policy.test.ts",
         "src/lib/loop-control/state.test.ts",
         "src/lib/loop-control/cli.test.ts",
@@ -43,7 +46,7 @@
       "status": "Passed",
       "classification": "introduced",
       "repairable": false,
-      "summary": "Controller suite passed 99 tests, including two new HEAD-A-to-HEAD-B rejection regressions."
+      "summary": "Passed 107 tests across 6 suites, including dashboard UX clarity and onboarding tests."
     },
     {
       "command": ["npx", "tsc", "--noEmit"],
@@ -68,21 +71,13 @@
       "classification": "introduced",
       "repairable": false,
       "summary": "No whitespace errors."
-    },
-    {
-      "command": ["npm", "audit", "--omit=dev", "--audit-level=critical"],
-      "required": true,
-      "status": "Passed",
-      "classification": "pre-existing",
-      "repairable": false,
-      "summary": "No critical advisory."
     }
   ],
   "review": {
     "independent": true,
     "approved": true,
     "baseCommitIsAncestor": true,
-    "summary": "Iteration 054 persists the authorized HEAD SHA in durable state during authorizePublication and enforces exact equality in recordPublication and acceptIteration. Two dedicated unit tests confirm HEAD A -> HEAD B rejection on both transitions. No security finding is unresolved."
+    "summary": "Iteration 055 clarifies the dashboard hero net cashflow metric, places period dates directly below the amount, and converts new-user dashboard and budget empty states into actionable onboarding CTA cards."
   },
   "authorizedCommit": null,
   "publication": null,
