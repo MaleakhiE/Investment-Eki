@@ -209,4 +209,4 @@ Before any release attempt, add an immutable authorized/reviewed commit field to
 
 ## Pull-request reference
 
-None. `gh pr list --repo MaleakhiE/Investment-Eki --head feat/iteration-053-loop-stop-control --state all` returned `[]`; no matching remote branch was found. No PR URL is invented.
+https://github.com/MaleakhiE/Investment-Eki/pull/51
