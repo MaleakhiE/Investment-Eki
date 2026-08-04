@@ -87,6 +87,7 @@ export type LoopState = Readonly<{
   lastFailure: FailureClassification | null;
   validations: readonly ValidationRecord[];
   review: ReviewEvidence | null;
+  authorizedCommit: string | null;
   publication: PublicationEvidence | null;
   blocker: string | null;
 }>;
@@ -156,6 +157,7 @@ const copyState = (state: LoopState, changes: Partial<LoopState> = {}): LoopStat
   publication: changes.publication === undefined
     ? (state.publication ? { ...state.publication } : null)
     : (changes.publication ? { ...changes.publication } : null),
+  authorizedCommit: changes.authorizedCommit === undefined ? state.authorizedCommit : changes.authorizedCommit,
 });
 
 const decide = (
@@ -343,7 +345,7 @@ export const authorizePublication = (
     || state.publication !== null) {
     return decide(state, 'blocked', 'stop', 'Publication evidence is incomplete.');
   }
-  return decide(state, null, 'publish', null, { phase: 'publish' });
+  return decide(state, null, 'publish', null, { phase: 'publish', authorizedCommit: verification.currentCommit });
 };
 
 export const recordPublication = (
@@ -357,6 +359,7 @@ export const recordPublication = (
     return decide(state, 'exhausted', 'stop', 'Publication deadline expired.');
   }
   if (state.phase !== 'publish' || state.nextAction !== 'publish' || state.publication !== null
+    || state.authorizedCommit !== publication.commit
     || !state.review?.independent || !state.review.approved || !state.review.baseCommitIsAncestor
     || !hasPassedAcceptanceContract(state) || !verification.baseCommitIsAncestor || !verification.commitIsHead
     || !verification.branchMatches || !verification.repositoryMatches || !verification.livePullRequestMatches
@@ -374,7 +377,8 @@ export const acceptIteration = (state: LoopState, verification: PublicationVerif
   if (!isBeforeDeadline(state, verification.checkedAt)) return decide(state, 'exhausted', 'stop', 'Publication deadline expired.');
   if (state.phase !== 'publish' || state.nextAction !== 'publish' || !hasPassedAcceptanceContract(state) || !state.review?.independent
     || !state.review.approved || !state.review.baseCommitIsAncestor
-    || !state.publication || !isCommitSha(state.publication.commit)
+    || !state.publication || state.publication.commit !== state.authorizedCommit
+    || !isCommitSha(state.publication.commit)
     || !verification.baseCommitIsAncestor || !verification.commitIsHead || !verification.branchMatches
     || !verification.repositoryMatches || !verification.livePullRequestMatches
     || !isDirectGitHubPullRequestUrl(state.publication.pullRequestUrl)

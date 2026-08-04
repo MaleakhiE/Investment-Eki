@@ -49,6 +49,7 @@ const validState = (changes: Partial<LoopState> = {}): LoopState => ({
   lastFailure: null,
   validations: [],
   review: null,
+  authorizedCommit: null,
   publication: null,
   blocker: null,
   ...changes,
@@ -175,6 +176,7 @@ test('init rejects a coherent but non-pristine accepted state', async () => {
     phase: 'publish', terminalState: 'accepted', nextAction: 'next-iteration',
     validations: passedValidations(),
     review: { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved.' },
+    authorizedCommit: COMMIT_SHA,
     publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' },
   });
   await writeLoopState(fixtureRoot, accepted, 'accepted.json');
@@ -244,6 +246,7 @@ test('rejects publication without verified commit ancestry', async () => {
     phase: 'publish', nextAction: 'publish',
     validations: passedValidations(),
     review: { independent: true, approved: true, baseCommitIsAncestor: true, summary: 'Approved.' },
+    authorizedCommit: COMMIT_SHA,
   }));
   await writeInput(fixtureRoot, 'publication.json', {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',

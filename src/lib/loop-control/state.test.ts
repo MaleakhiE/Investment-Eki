@@ -31,6 +31,7 @@ const validState = (changes: Partial<LoopState> = {}): LoopState => ({
   lastFailure: null,
   validations: [],
   review: null,
+  authorizedCommit: null,
   publication: null,
   blocker: null,
   ...changes,

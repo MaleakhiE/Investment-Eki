@@ -362,8 +362,8 @@ export const main = async (argv: readonly string[], io: CliIo): Promise<number> 
     };
 
     return await (options.dryRun ? transition() : withLoopStateLock(root, transition));
-  } catch {
-    io.stderr('Invalid input.');
+  } catch (error) {
+    io.stderr(error instanceof Error && error.message === 'Invalid loop state' ? 'Invalid input.' : 'Invalid input.');
     return EXIT.INVALID_OR_UNSAFE;
   }
 };

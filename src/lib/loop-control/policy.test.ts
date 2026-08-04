@@ -61,6 +61,7 @@ const baseState = (): LoopState => ({
   lastFailure: null,
   validations: [],
   review: null,
+  authorizedCommit: null,
   publication: null,
   blocker: null,
 });
@@ -107,10 +108,10 @@ const reviewedState = (changes: Partial<LoopState> = {}): LoopState => ({
   ...changes,
 });
 
-const readyForPublication = (state = reviewedState()): PublicationReadiness => ({
+const readyForPublication = (): PublicationReadiness => ({
   requiredValidationsPassed: true,
   noUnresolvedIntroducedFailure: true,
-  review: state.review,
+  review: reviewedState().review,
 });
 
 const authorizationVerification = {
@@ -293,23 +294,24 @@ test.each(['unknown', 'pre-existing', 'environment-related', 'invalid-command', 
 
 test('publication authorization derives readiness from durable validation and review evidence', () => {
   const state = reviewedState();
-  const authorized = authorizePublication(state, readyForPublication(state), authorizationVerification);
+  const authorized = authorizePublication(state, readyForPublication(), authorizationVerification);
   expect(authorized).toMatchObject({ terminalState: null, nextAction: 'publish' });
-  expect(authorizePublication(baseState(), readyForPublication(state), authorizationVerification).terminalState).toBe('blocked');
-  expect(authorizePublication(reviewedState({ validations: [] }), readyForPublication(state), authorizationVerification).terminalState).toBe('blocked');
-  expect(authorizePublication(reviewedState({ review: null }), readyForPublication(state), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorized.state.authorizedCommit).toBe(COMMIT_SHA);
+  expect(authorizePublication(baseState(), readyForPublication(), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ validations: [] }), readyForPublication(), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(reviewedState({ review: null }), readyForPublication(), authorizationVerification).terminalState).toBe('blocked');
   const withoutAncestry = reviewedState({ review: { ...state.review!, baseCommitIsAncestor: false } });
-  expect(authorizePublication(withoutAncestry, readyForPublication(withoutAncestry), authorizationVerification).terminalState).toBe('blocked');
-  expect(authorizePublication(state, { ...readyForPublication(state), requiredValidationsPassed: false }, authorizationVerification).terminalState).toBe('blocked');
-  expect(authorizePublication(state, readyForPublication(state), { ...authorizationVerification, branchMatches: false }).terminalState).toBe('blocked');
-  expect(authorizePublication(state, readyForPublication(state), { ...authorizationVerification, checkedAt: '2100-08-03T08:00:00.000Z' }).terminalState).toBe('exhausted');
+  expect(authorizePublication(withoutAncestry, readyForPublication(), authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(state, { ...readyForPublication(), requiredValidationsPassed: false }, authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(state, readyForPublication(), { ...authorizationVerification, branchMatches: false }).terminalState).toBe('blocked');
+  expect(authorizePublication(state, readyForPublication(), { ...authorizationVerification, checkedAt: '2100-08-03T08:00:00.000Z' }).terminalState).toBe('exhausted');
   const incomplete = reviewedState({ validations: reviewedState().validations.slice(0, 1) });
-  expect(authorizePublication(incomplete, { ...readyForPublication(incomplete), requiredValidationsPassed: false }, authorizationVerification).terminalState).toBe('blocked');
+  expect(authorizePublication(incomplete, { ...readyForPublication(), requiredValidationsPassed: false }, authorizationVerification).terminalState).toBe('blocked');
 });
 
 test('publication evidence requires an authorized phase, valid identifiers, and verified ancestry', () => {
   const reviewed = reviewedState();
-  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification).state;
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification).state;
   const publication = {
     commit: COMMIT_SHA,
     pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
@@ -317,6 +319,8 @@ test('publication evidence requires an authorized phase, valid identifiers, and 
   };
 
   expect(recordPublication(authorized, publication, publicationVerification).state.publication).toEqual(publication);
+  expect(recordPublication(authorized, { ...publication, commit: 'f'.repeat(40) }, publicationVerification).terminalState).toBe('blocked');
+  expect(recordPublication({ ...authorized, authorizedCommit: 'f'.repeat(40) }, publication, publicationVerification).terminalState).toBe('blocked');
   expect(recordPublication(authorized, publication, { ...publicationVerification, commitIsHead: false }).terminalState).toBe('blocked');
   expect(recordPublication(authorized, publication, { ...publicationVerification, repositoryMatches: false }).terminalState).toBe('blocked');
   expect(recordPublication(authorized, publication, { ...publicationVerification, livePullRequestMatches: false }).terminalState).toBe('blocked');
@@ -328,7 +332,7 @@ test('publication evidence requires an authorized phase, valid identifiers, and 
 
 test('iteration 070 completes only after recorded publication evidence', () => {
   const reviewed = reviewedState({ currentIteration: 70 });
-  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification);
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification);
   const published = recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
   }, publicationVerification).state;
@@ -338,17 +342,18 @@ test('iteration 070 completes only after recorded publication evidence', () => {
 
 test('an accepted non-target iteration continues to the next iteration', () => {
   const reviewed = reviewedState();
-  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification);
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification);
   const published = recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
   }, publicationVerification).state;
 
   expect(acceptIteration(published, publicationVerification)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
+  expect(acceptIteration({ ...published, authorizedCommit: 'f'.repeat(40) }, publicationVerification).terminalState).toBe('blocked');
 });
 
 test('the terminal guard does not reopen an accepted iteration', () => {
   const reviewed = reviewedState();
-  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification);
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification);
   const accepted = acceptIteration(recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
   }, publicationVerification).state, publicationVerification);
@@ -364,7 +369,7 @@ test('the terminal guard does not reopen an accepted iteration', () => {
 
 test('acceptance requires review, ancestry, and a direct pull-request URL', () => {
   const reviewed = reviewedState();
-  const authorized = authorizePublication(reviewed, readyForPublication(reviewed), authorizationVerification).state;
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification).state;
   const published = {
     ...authorized,
     publication: { commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN' as const },

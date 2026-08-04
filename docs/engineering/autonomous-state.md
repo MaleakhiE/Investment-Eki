@@ -8,12 +8,12 @@ Latest completed iteration: 052 (merged into `origin/main` through the iteration
 Current iteration: 053 — executable loop stop control.
 Current branch: `feat/iteration-053-loop-stop-control`.
 Base branch and commit: `main` / `origin/main` at `fcd3129a8f6c0bf8663ca92af0ff084bda9428ab`; it is an ancestor of the current branch.
-Pull request: none discovered. `gh pr list --repo MaleakhiE/Investment-Eki --head feat/iteration-053-loop-stop-control --state all` returned `[]`, and no matching remote branch exists.
-Pull-request state: not published; publication has not been authorized or recorded.
+Pull request: none discovered. `gh pr list --repo MaleakhiE/Investment-Eki --head feat/iteration-053-loop-stop-control --state all` returned `[]`.
+Pull-request state: blocked; final re-review found one High-severity authorization gap.
 Validation status: controller suites pass (3 suites / 97 tests), TypeScript passes, lint exits zero with one known warning, diff check passes, and critical-threshold audit exits zero. Prisma validation, full Jest completion, production build completion, database status, and isolated migration replay are accurately recorded as `Blocked by environment`.
 Remaining blockers: final re-review found one High because the authorized HEAD SHA is not persisted across authorization, publication, and acceptance. `DATABASE_URL` or equivalent disposable local database configuration is also absent, and the Docker daemon is unavailable. The durable review is unapproved and required latest validations are not all passed, so publication must fail closed.
 Next recommended iteration: in a separately authorized repair run, persist the authorized/reviewed commit and require exact equality at publication and acceptance, with an A-to-B HEAD-change regression. Then provide disposable local database/Docker prerequisites and repeat the blocked checks.
-Portfolio distribution: not recalculated by this documentation/control slice; it adds no product, financial, UX, or database capability.
+Portfolio distribution: not recalculated; iteration 053 adds no product, financial, UX, or database capability.
 Stacked pull-request dependencies: none. This branch starts at verified `origin/main` commit `fcd3129`.
 
 ## Reconciliation evidence

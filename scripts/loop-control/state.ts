@@ -37,7 +37,7 @@ const DISALLOWED_SUMMARY_CHARACTER = /[\r\n\x1B]|[^\x20-\x7E]/;
 const LOOP_STATE_KEYS = [
   'schemaVersion', 'runId', 'targetIteration', 'latestCompletedIteration', 'currentIteration', 'branch', 'baseBranch', 'baseCommit',
   'phase', 'terminalState', 'nextAction', 'repairAttempts', 'iterationsAcceptedThisRun', 'startedAt', 'deadlineAt', 'limits',
-  'acceptanceContractHash', 'lastRepairStrategyHash', 'lastFailure', 'validations', 'review', 'publication', 'blocker',
+  'acceptanceContractHash', 'lastRepairStrategyHash', 'lastFailure', 'validations', 'review', 'authorizedCommit', 'publication', 'blocker',
 ] as const;
 const LIMIT_KEYS = ['maxRepairAttempts', 'maxIterations', 'maxElapsedMinutes', 'validationTimeoutMinutes', 'maxNetworkRetries', 'maxChildAgents', 'maxStackDepth', 'maxChangedLines', 'maxChangedFiles'] as const;
 const VALIDATION_KEYS = ['command', 'required', 'status', 'classification', 'repairable', 'summary'] as const;
@@ -166,27 +166,28 @@ const assertCoherentState = (state: LoopState): void => {
       preflight: 'preflight', execute: 'execute', validate: 'repair', repair: 'validate', review: 'review', publish: 'publish',
     };
     if (expected[state.phase] !== state.nextAction || state.blocker !== null) throw invalidState();
-    if (['preflight', 'execute'].includes(state.phase) && (state.review !== null || state.publication !== null)) throw invalidState();
+    if (['preflight', 'execute'].includes(state.phase) && (state.review !== null || state.authorizedCommit !== null || state.publication !== null)) throw invalidState();
     if (state.phase === 'preflight' && (state.validations.length > 0 || state.lastFailure !== null || state.repairAttempts !== 0)) throw invalidState();
     if (state.phase === 'validate' && (state.lastFailure !== 'introduced' || state.validations.at(-1)?.status !== 'Failed'
-      || state.validations.at(-1)?.repairable !== true || state.review !== null || state.publication !== null)) throw invalidState();
+      || state.validations.at(-1)?.repairable !== true || state.review !== null || state.authorizedCommit !== null || state.publication !== null)) throw invalidState();
     if (state.phase === 'repair' && (state.repairAttempts === 0 || state.lastFailure !== 'introduced'
-      || state.review !== null || state.publication !== null)) throw invalidState();
-    if (state.phase === 'review' && (state.validations.length === 0 || state.publication !== null)) throw invalidState();
-    if (state.phase === 'publish' && (!hasPassedAcceptanceContract(state) || !hasApprovedReview(state))) throw invalidState();
+      || state.review !== null || state.authorizedCommit !== null || state.publication !== null)) throw invalidState();
+    if (state.phase === 'review' && (state.validations.length === 0 || state.authorizedCommit !== null || state.publication !== null)) throw invalidState();
+    if (state.phase === 'publish' && (!hasPassedAcceptanceContract(state) || !hasApprovedReview(state) || state.authorizedCommit === null)) throw invalidState();
     return;
   }
 
   if (state.terminalState === 'accepted') {
     if (state.phase !== 'publish' || state.nextAction !== 'next-iteration' || state.blocker !== null
-      || state.currentIteration >= state.targetIteration || !state.publication || !hasApprovedReview(state)
-      || !hasPassedAcceptanceContract(state)) throw invalidState();
+      || state.currentIteration >= state.targetIteration || !state.publication || state.authorizedCommit !== state.publication.commit
+      || !hasApprovedReview(state) || !hasPassedAcceptanceContract(state)) throw invalidState();
     return;
   }
 
   if (state.phase !== 'stopped' || state.nextAction !== 'stop') throw invalidState();
   if (state.terminalState === 'completed') {
     if (state.blocker !== null || state.currentIteration < state.targetIteration || !state.publication
+      || state.authorizedCommit !== state.publication.commit
       || !hasApprovedReview(state) || !hasPassedAcceptanceContract(state)) throw invalidState();
   } else if (state.blocker === null) throw invalidState();
 };
@@ -292,6 +293,7 @@ export const parseLoopState = (value: unknown): LoopState => {
     lastFailure: nullableEnumValue(value.lastFailure, FAILURE_CLASSIFICATIONS),
     validations: value.validations.map(parseValidation),
     review: parseReview(value.review),
+    authorizedCommit: nullableString(value.authorizedCommit),
     publication: parsePublication(value.publication),
     blocker: nullableSummaryValue(value.blocker),
   };
