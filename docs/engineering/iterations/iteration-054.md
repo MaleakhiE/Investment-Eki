@@ -82,4 +82,4 @@ Not applicable; no product UI was touched.
 
 ## Pull-request reference
 
-(Will be recorded after PR creation)
+https://github.com/MaleakhiE/Investment-Eki/pull/52

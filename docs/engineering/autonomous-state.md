@@ -8,7 +8,7 @@ Latest completed iteration: 053 — executable loop stop control.
 Current iteration: 054 — persisted authorized-HEAD gate.
 Current branch: `feat/iteration-054-persisted-authorized-head-gate`.
 Base branch and commit: `main` / `origin/main` at `fcd3129a8f6c0bf8663ca92af0ff084bda9428ab`; it is an ancestor of the current branch.
-Pull request: (being created).
+Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/52.
 Pull-request state: open.
 Validation status: controller suites pass (3 suites / 99 tests), TypeScript passes, lint exits zero with one known warning, diff check passes, and critical-threshold audit exits zero. Prisma validation, full Jest completion, production build, database status, and isolated migration replay are Blocked by environment.
 Remaining blockers: all required release gates Blocked by environment. Next action accepts this iteration.
