@@ -330,6 +330,43 @@ test('publication evidence requires an authorized phase, valid identifiers, and 
   expect(recordPublication(authorized, { ...publication, pullRequestUrl: 'https://alice:secret@github.com/MaleakhiE/Investment-Eki/pull/53' }, publicationVerification).terminalState).toBe('blocked');
 });
 
+test('publication record requires live HEAD SHA matches authorized HEAD SHA', () => {
+  const reviewed = reviewedState();
+  const authorizedAtHeadA = authorizePublication(reviewed, readyForPublication(), authorizationVerification).state;
+  const publicationAtHeadA = {
+    commit: COMMIT_SHA,
+    pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+    pullRequestState: 'OPEN' as const,
+  };
+
+  // Publication at the same HEAD SHA succeeds.
+  expect(recordPublication(authorizedAtHeadA, publicationAtHeadA, publicationVerification).state.publication).toEqual(publicationAtHeadA);
+
+  // Attempting publication at a different HEAD is blocked.
+  const publicationAtHeadB = { ...publicationAtHeadA, commit: 'b'.repeat(40) };
+  expect(recordPublication(authorizedAtHeadA, publicationAtHeadB, publicationVerification).terminalState).toBe('blocked');
+});
+
+test('acceptance requires publication commit equals the previously authorized HEAD', () => {
+  const reviewed = reviewedState();
+  const authorizedAtHeadA = authorizePublication(reviewed, readyForPublication(), authorizationVerification).state;
+  const publishedAtHeadA = recordPublication(authorizedAtHeadA, {
+    commit: COMMIT_SHA,
+    pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+    pullRequestState: 'OPEN',
+  }, publicationVerification).state;
+
+  expect(acceptIteration(publishedAtHeadA, publicationVerification).terminalState).toBe('accepted');
+  const publishedAtHeadB = {
+    ...publishedAtHeadA,
+    publication: {
+      ...publishedAtHeadA.publication!,
+      commit: 'b'.repeat(40),
+    },
+  };
+  expect(acceptIteration(publishedAtHeadB, publicationVerification).terminalState).toBe('blocked');
+});
+
 test('iteration 070 completes only after recorded publication evidence', () => {
   const reviewed = reviewedState({ currentIteration: 70 });
   const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification);

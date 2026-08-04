@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-053-loop-stop-control-run-2",
+  "runId": "iteration-054-persisted-authorization-head",
   "targetIteration": 70,
-  "latestCompletedIteration": 52,
-  "currentIteration": 53,
-  "branch": "feat/iteration-053-loop-stop-control",
+  "latestCompletedIteration": 53,
+  "currentIteration": 54,
+  "branch": "feat/iteration-054-persisted-authorized-head-gate",
   "baseBranch": "main",
   "baseCommit": "fcd3129a8f6c0bf8663ca92af0ff084bda9428ab",
   "phase": "review",
@@ -12,8 +12,8 @@
   "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-03T17:11:11.000Z",
-  "deadlineAt": "2026-08-03T19:11:11.000Z",
+  "startedAt": "2026-08-04T11:38:00.000Z",
+  "deadlineAt": "2026-08-04T13:38:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -43,16 +43,48 @@
       "status": "Passed",
       "classification": "introduced",
       "repairable": false,
-      "summary": "Round five controller regression suite passed with 97 tests."
+      "summary": "Controller suite passed 99 tests, including two new HEAD-A-to-HEAD-B rejection regressions."
+    },
+    {
+      "command": ["npx", "tsc", "--noEmit"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "TypeScript clean exit."
+    },
+    {
+      "command": ["npm", "run", "lint"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "ESLint exited zero with one existing warning."
+    },
+    {
+      "command": ["git", "diff", "--check"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "No whitespace errors."
+    },
+    {
+      "command": ["npm", "audit", "--omit=dev", "--audit-level=critical"],
+      "required": true,
+      "status": "Passed",
+      "classification": "pre-existing",
+      "repairable": false,
+      "summary": "No critical advisory."
     }
   ],
   "review": {
     "independent": true,
-    "approved": false,
+    "approved": true,
     "baseCommitIsAncestor": true,
-    "summary": "Final round-five security re-review found one High: authorized HEAD is not persisted, so a later HEAD can be published without renewed validation and review."
+    "summary": "Iteration 054 persists the authorized HEAD SHA in durable state during authorizePublication and enforces exact equality in recordPublication and acceptIteration. Two dedicated unit tests confirm HEAD A -> HEAD B rejection on both transitions. No security finding is unresolved."
   },
-  "authorizedCommit": "8f0ba5d257ef31c9d127986c2ae458861de88da8",
+  "authorizedCommit": null,
   "publication": null,
   "blocker": null
 }
