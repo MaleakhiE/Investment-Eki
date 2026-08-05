@@ -176,7 +176,18 @@ export default function BudgetPage() {
             <div className="card rounded-xl p-5">
               <h3 className="font-semibold text-[#16332f] mb-4">Budgets by category</h3>
               {budgets.length === 0 ? (
-                <p className="text-sm text-zinc-500 text-center py-8">No budgets set. Click &quot;Create budget&quot; to start!</p>
+                <div className="text-center py-10">
+                  <div className="mx-auto mb-4 w-20 h-20 rounded-3xl bg-[#00d4aa]/10 border border-[#00d4aa]/30 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-[#00a88a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-[#16332f] mb-2">No budgets set</h3>
+                  <p className="text-sm text-zinc-500 mb-4 max-w-sm mx-auto leading-relaxed">Create spending limits to keep your finances on track. Budgets help you stay within your planned categories.</p>
+                  <button onClick={() => setShowForm(true)} data-dialog-initial-focus className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-[#16332f] font-semibold text-sm hover:opacity-90 transition-opacity shadow-md shadow-[#00d4aa]/20">
+                    Create your first budget
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {budgets.sort((a, b) => b.percentage - a.percentage).map(budget => (
