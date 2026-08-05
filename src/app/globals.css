@@ -45,6 +45,8 @@ body { min-width: 320px; }
 .app-bottom-nav { position: fixed; inset: auto 0 0; z-index: 35; min-height: calc(70px + env(safe-area-inset-bottom, 0px)); padding: 8px 8px env(safe-area-inset-bottom, 0px); display: grid; grid-template-columns: repeat(4,1fr); background: rgba(255,255,255,.94); backdrop-filter: blur(20px); border-top: 1px solid var(--border); }
 .app-bottom-link { min-width: 0; min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 16px; background: transparent; color: #78908a; font-size: 10px; font-weight: 650; }
 .app-bottom-link.is-active { background: var(--mint); color: var(--accent-dark); }
+.app-more-button { cursor: pointer; }
+.app-more-button[aria-expanded="true"] { box-shadow: inset 0 0 0 1px rgba(8,127,107,.16); }
 .app-nav-link { min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 15px; color: var(--muted); font-size: 13px; font-weight: 650; transition: .18s ease; }
 .app-nav-link:hover, .app-nav-link.is-active { background: var(--mint); color: var(--accent-dark); }
 .app-nav-section { margin: 22px 12px 8px; color: #8aa09b; font-size: 10px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
@@ -53,6 +55,7 @@ body { min-width: 320px; }
 .app-sheet-handle { width: 42px; height: 5px; margin: 0 auto 18px; border-radius: 99px; background: #d7e1de; }
 .app-sheet-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .app-sheet-heading h2 { margin-top: 2px; font-size: 25px; }
+.app-sheet-subtitle { max-width: 280px; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .app-sheet-close { min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 14px; background: white; color: var(--muted); }
 .feedback-modal-layer { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(10,29,25,.52); backdrop-filter: blur(5px); animation: modal-backdrop-in .18s ease-out; }
 .feedback-modal { width: min(100%, 420px); padding: 26px; border: 1px solid var(--border); border-top: 5px solid var(--accent); border-radius: 26px; background: white; box-shadow: 0 24px 70px rgba(10,29,25,.24); outline: none; animation: modal-card-in .22s ease-out; }

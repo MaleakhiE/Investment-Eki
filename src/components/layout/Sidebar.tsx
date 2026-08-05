@@ -52,12 +52,12 @@ export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenu
 
     <nav className="app-bottom-nav" aria-label="Mobile navigation">
       {primaryNavigation.map((item) => item.href === '#more'
-        ? <button key={item.label} type="button" onClick={() => setMoreOpen(true)} className={`app-bottom-link ${moreOpen ? 'is-active' : ''}`}><AppIcon name={item.icon}/><span>{item.label}</span></button>
-        : <Link key={item.href} href={item.href} className={`app-bottom-link ${item.match(pathname) ? 'is-active' : ''}`}><AppIcon name={item.icon}/><span>{item.label}</span></Link>)}
+        ? (<button key={item.label} type="button" onClick={() => setMoreOpen(true)} className={`app-bottom-link app-more-button ${moreOpen ? 'is-active' : ''}`} aria-expanded={moreOpen} aria-controls="more-menu"><AppIcon name={item.icon}/><span>{item.label}</span></button>)
+        : (<Link key={item.href} href={item.href} className={`app-bottom-link ${item.match(pathname) ? 'is-active' : ''}`}><AppIcon name={item.icon}/><span>{item.label}</span></Link>))}
     </nav>
 
     <AccessibleDialog open={moreOpen} labelledBy="more-title" onClose={() => setMoreOpen(false)}>
-      <section className="app-sheet self-end"><div className="app-sheet-handle"/><div className="app-sheet-heading"><div><p className="app-eyebrow">Navigation</p><h2 id="more-title">More</h2></div><button type="button" data-dialog-initial-focus onClick={() => setMoreOpen(false)} className="app-sheet-close">Close</button></div><div className="app-more-grid">{extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setMoreOpen(false)}/>)}</div><button type="button" onClick={() => void handleSignOut()} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button></section>
+      <section id="more-menu" className="app-sheet self-end" aria-label="More navigation actions"><div className="app-sheet-handle"/><div className="app-sheet-heading"><div><p className="app-eyebrow">Navigation</p><h2 id="more-title">More</h2><p className="app-sheet-subtitle">Open budgets, goals, analytics, accounts, and settings from one place.</p></div><button type="button" data-dialog-initial-focus onClick={() => setMoreOpen(false)} className="app-sheet-close">Close</button></div><div className="app-more-grid" aria-label="More navigation links">{extraItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setMoreOpen(false)}/>)}</div><button type="button" onClick={() => void handleSignOut()} className="app-nav-link app-signout"><AppIcon name="logout"/><span>Sign out</span></button></section>
     </AccessibleDialog>
   </>;
 }
