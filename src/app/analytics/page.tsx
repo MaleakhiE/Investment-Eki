@@ -208,7 +208,7 @@ export default function AnalyticsPage() {
                         <p className="text-xs text-amber-400">{recommendation.warnings[0]}</p>
                       </div>
                     )}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                       <div className="bg-[#f5fbf9] rounded-lg p-3 text-center">
                         <p className="text-xs text-zinc-500">Investable</p>
                         <p className="text-lg font-bold text-[#16332f]">{formatCompact(recommendation.investable_amount)}</p>
@@ -374,9 +374,9 @@ export default function AnalyticsPage() {
                 <div className="card rounded-xl p-5">
                   <h3 className="font-semibold text-[#16332f] text-sm mb-4">Asset Allocation</h3>
                   {totalPortfolio > 0 ? (
-                    <div className="flex items-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-6">
                       <div className="relative w-32 h-32">
-                        <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                        <svg viewBox="0 0 100 100" aria-hidden="true" className="w-full h-full transform -rotate-90">
                           <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F59E0B" strokeWidth="20" strokeDasharray={`${(goldVal / totalPortfolio) * 251} 251`} />
                           <circle cx="50" cy="50" r="40" fill="transparent" stroke="#3B82F6" strokeWidth="20" strokeDasharray={`${(mfVal / totalPortfolio) * 251} 251`} strokeDashoffset={`${-(goldVal / totalPortfolio) * 251}`} />
                         </svg>
