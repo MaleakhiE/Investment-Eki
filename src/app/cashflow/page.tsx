@@ -7,11 +7,8 @@ import CurrencyInput from '@/components/ui/CurrencyInput';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { AccountTransferLabel, type AccountSummary } from '@/components/accounts/AccountCard';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
-import {
-  getOcrProgressMessage,
-  OCR_REQUEST_TIMEOUT_MS,
-  prepareReceiptForOcr,
-} from '@/lib/receipt-image-client';
+import { getOcrProgressMessage, OCR_REQUEST_TIMEOUT_MS, prepareReceiptForOcr } from '@/lib/receipt-image-client';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Transaction {
   id: string;
@@ -218,9 +215,9 @@ export default function CashflowPage() {
     }
   };
 
-  const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
+  const fmt = (v: number) => formatCurrency(v, 'IDR');
   const fmtC = (v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
-  const fmtD = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  const fmtD = formatDate;
   const cats = type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const income = summary?.total_income || 0;
   const expense = summary?.total_expense || 0;

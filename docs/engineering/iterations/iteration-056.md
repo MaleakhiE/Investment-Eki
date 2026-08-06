@@ -135,4 +135,4 @@ Broaden the descriptive subtitle pattern to other modal sheets (e.g., account se
 
 ## Pull-request reference
 
-Pending.
+https://github.com/MaleakhiE/Investment-Eki/pull/54
