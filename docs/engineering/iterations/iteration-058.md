@@ -71,4 +71,4 @@ Financial analytics → responsive recommendation grid & asset allocation layout
 
 ## Pull-request reference
 
-Pending.
+https://github.com/MaleakhiE/Investment-Eki/pull/56
