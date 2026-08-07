@@ -203,17 +203,35 @@ export default function GoalsPage() {
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
       <main className="app-page goals-page lg:ml-64 p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-[#16332f]">Financial Goals</h2>
             <p className="text-sm text-zinc-600">Track your savings targets</p>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">New Goal</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="w-full rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-medium text-[#16332f] hover:bg-[#00a88a] sm:w-auto">New Goal</button>
         </div>
 
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
 
-        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>
+        ) : goals.length === 0 ? (
+          <div className="card rounded-2xl border border-dashed border-[#dcece8] bg-white/80 p-6 sm:p-8 text-center shadow-sm max-w-xl mx-auto my-8" role="status" aria-live="polite">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f5fbf9] text-2xl" aria-hidden="true">🎯</div>
+            <h3 className="text-lg font-semibold text-[#16332f]">Set your first financial goal</h3>
+            <p className="mt-2 text-sm text-zinc-600 leading-relaxed">
+              Define target amounts and deadlines for your emergency fund, vacation, or major purchases. Track your monthly progress in one place.
+            </p>
+            <div className="mt-6">
+              <button
+                onClick={() => { resetForm(); setShowForm(true); }}
+                className="w-full rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-medium text-[#16332f] hover:bg-[#00a88a] sm:w-auto"
+              >
+                New Goal
+              </button>
+            </div>
+          </div>
+        ) : (
           <div className="space-y-4">
             {/* Summary */}
             {summary && (
@@ -242,53 +260,6 @@ export default function GoalsPage() {
                 </div>
               </div>
             )}
-
-            {/* Form Modal */}
-            <AccessibleDialog open={showForm} labelledBy="goal-dialog-title" onClose={() => setShowForm(false)}>
-                <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                  <h3 id="goal-dialog-title" className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
-                  <form onSubmit={handleSubmit} className="space-y-3">
-                    <div>
-                      <label htmlFor="goal-name" className="block text-xs text-zinc-400 mb-1">Goal name</label>
-                      <input id="goal-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Six-month emergency fund" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label htmlFor="goal-target" className="block text-xs text-zinc-400 mb-1">Target</label>
-                        <CurrencyInput id="goal-target" value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
-                      </div>
-                      <div>
-                        <label htmlFor="goal-current" className="block text-xs text-zinc-400 mb-1">Current</label>
-                        <CurrencyInput id="goal-current" value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label htmlFor="goal-category" className="block text-xs text-zinc-400 mb-1">Category</label>
-                        <select id="goal-category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
-                          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label htmlFor="goal-priority" className="block text-xs text-zinc-400 mb-1">Priority</label>
-                        <select id="goal-priority" value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
-                          <option value={1}>High</option>
-                          <option value={2}>Medium</option>
-                          <option value={3}>Low</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label htmlFor="goal-deadline" className="block text-xs text-zinc-400 mb-1">Deadline (optional)</label>
-                      <input id="goal-deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
-                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
-                    </div>
-                  </form>
-                </div>
-            </AccessibleDialog>
 
             {/* Active Goals */}
             <div className="card rounded-xl p-5">
@@ -397,6 +368,53 @@ export default function GoalsPage() {
             )}
           </div>
         )}
+
+        {/* Form Modal */}
+        <AccessibleDialog open={showForm} labelledBy="goal-dialog-title" onClose={() => setShowForm(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <h3 id="goal-dialog-title" className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <label htmlFor="goal-name" className="block text-xs text-zinc-400 mb-1">Goal name</label>
+                <input id="goal-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Six-month emergency fund" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="goal-target" className="block text-xs text-zinc-400 mb-1">Target</label>
+                  <CurrencyInput id="goal-target" value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                </div>
+                <div>
+                  <label htmlFor="goal-current" className="block text-xs text-zinc-400 mb-1">Current</label>
+                  <CurrencyInput id="goal-current" value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="goal-category" className="block text-xs text-zinc-400 mb-1">Category</label>
+                  <select id="goal-category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
+                    {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="goal-priority" className="block text-xs text-zinc-400 mb-1">Priority</label>
+                  <select id="goal-priority" value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
+                    <option value={1}>High</option>
+                    <option value={2}>Medium</option>
+                    <option value={3}>Low</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="goal-deadline" className="block text-xs text-zinc-400 mb-1">Deadline (optional)</label>
+                <input id="goal-deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
+                <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </AccessibleDialog>
       </main>
     </div>
   );
