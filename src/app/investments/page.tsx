@@ -423,7 +423,11 @@ export default function InvestmentsPage() {
                   <h3 className="font-semibold text-[#16332f]">Gold (Emas)</h3>
                 </div>
                 {goldSnapshots.length === 0 ? (
-                  <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
+                  <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-6 text-center" role="status" aria-live="polite">
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg" aria-hidden="true">🪙</div>
+                    <p className="text-sm font-semibold text-[#16332f]">Belum ada riwayat emas</p>
+                    <p className="mt-1 text-xs text-zinc-500">Catat snapshot bulanan untuk memantau nilai dan keuntungan investasi emas Anda.</p>
+                  </div>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {goldSnapshots.map((s) => (
@@ -457,7 +461,11 @@ export default function InvestmentsPage() {
                   <h3 className="font-semibold text-[#16332f]">Mutual Fund (Reksa Dana)</h3>
                 </div>
                 {mfSnapshots.length === 0 ? (
-                  <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
+                  <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-6 text-center" role="status" aria-live="polite">
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-lg" aria-hidden="true">📊</div>
+                    <p className="text-sm font-semibold text-[#16332f]">Belum ada riwayat reksa dana</p>
+                    <p className="mt-1 text-xs text-zinc-500">Catat snapshot bulanan untuk memantau NAB dan kinerja portofolio reksa dana Anda</p>
+                 </div>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {mfSnapshots.map((s) => (

@@ -17,4 +17,11 @@ describe('investment history availability UX', () => {
     expect(source).toContain('onClick={() => void fetchSnapshots()}');
     expect(source).toContain('Try again');
   });
+
+  it('renders accessible onboarding cards when investment history is empty', () => {
+    expect(source).toContain('Belum ada riwayat emas');
+    expect(source).toContain('Belum ada riwayat reksa dana');
+    expect(source).toContain('role="status"');
+    expect(source).toContain('aria-live="polite"');
+  });
 });
