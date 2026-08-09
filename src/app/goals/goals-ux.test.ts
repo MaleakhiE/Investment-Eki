@@ -10,4 +10,11 @@ describe('goal contribution guidance', () => {
     expect(source).toContain('role="progressbar"');
     expect(source).toContain('aria-valuenow');
   });
+
+  it('keeps the no-goal state actionable and announced', () => {
+    expect(source).toContain('role="status"');
+    expect(source).toContain('No financial goals yet');
+    expect(source).toContain('Create your first goal');
+    expect(source).toContain('setShowForm(true)');
+  });
 });
