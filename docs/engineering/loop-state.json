@@ -7,9 +7,9 @@
   "branch": "fix/iteration-061-session-hallmark-provenance",
   "baseBranch": "main",
   "baseCommit": "99d2a98e8b2903329b95d3066f230498e527b8a5",
-  "phase": "review",
+  "phase": "publish",
   "terminalState": null,
-  "nextAction": "review",
+  "nextAction": "publish",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-10T00:00:00.000Z",
@@ -158,7 +158,7 @@
     "baseCommitIsAncestor": true,
     "summary": "Independent reviewer approved the updated diff after confirming historical migration checksum risk was removed and session-version normalization rejects malformed coercions. Compatibility-mode migration replay limitation is documented."
   },
-  "authorizedCommit": null,
+  "authorizedCommit": "435573e16dd381eace9e7aa88d246b3ea691a5b4",
   "publication": null,
   "blocker": null
 }
