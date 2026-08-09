@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-061-session-hallmark-provenance",
+  "runId": "iteration-061-session-hallmark-provenance-retry",
   "targetIteration": 70,
   "latestCompletedIteration": 60,
   "currentIteration": 61,
   "branch": "fix/iteration-061-session-hallmark-provenance",
   "baseBranch": "main",
   "baseCommit": "99d2a98e8b2903329b95d3066f230498e527b8a5",
-  "phase": "publish",
+  "phase": "execute",
   "terminalState": null,
-  "nextAction": "publish",
+  "nextAction": "execute",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-10T00:00:00.000Z",
@@ -28,137 +28,9 @@
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
   "lastFailure": null,
-  "validations": [
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "format"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma schema formatting completed successfully."
-    },
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "validate"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma schema validation completed successfully."
-    },
-    {
-      "command": [
-        "npx",
-        "tsc",
-        "--noEmit"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "TypeScript type checking completed successfully."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "lint"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "ESLint completed with one pre-existing warning and no errors."
-    },
-    {
-      "command": [
-        "npm",
-        "test",
-        "--",
-        "--runInBand"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Full Jest suite completed successfully: 102 suites and 1017 tests."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "build"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Next.js production build and OCR trace verification completed successfully."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "db:status"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Database status reports all migrations applied."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "db:verify"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Disposable MySQL 8.4 migration replay completed successfully."
-    },
-    {
-      "command": [
-        "git",
-        "diff",
-        "--check"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Git diff whitespace check completed successfully."
-    },
-    {
-      "command": [
-        "npm",
-        "audit",
-        "--omit=dev",
-        "--audit-level=critical"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "No critical production dependency vulnerabilities were reported; non-critical advisories remain."
-    }
-  ],
-  "review": {
-    "independent": true,
-    "approved": true,
-    "baseCommitIsAncestor": true,
-    "summary": "Independent reviewer approved the updated diff after confirming historical migration checksum risk was removed and session-version normalization rejects malformed coercions. Compatibility-mode migration replay limitation is documented."
-  },
-  "authorizedCommit": "435573e16dd381eace9e7aa88d246b3ea691a5b4",
+  "validations": [],
+  "review": null,
+  "authorizedCommit": null,
   "publication": null,
   "blocker": null
 }
