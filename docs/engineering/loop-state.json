@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-057-financial-formatting-consistency",
+  "runId": "iteration-059-goals-empty-state",
   "targetIteration": 70,
-  "latestCompletedIteration": 56,
-  "currentIteration": 57,
-  "branch": "ux/iteration-057-financial-formatting-consistency",
+  "latestCompletedIteration": 58,
+  "currentIteration": 59,
+  "branch": "ux/iteration-059-goals-empty-state-reconciled",
   "baseBranch": "main",
-  "baseCommit": "82e5ea9ad2ca324a7c25fb5698b04c80f69879cf",
-  "phase": "review",
-  "terminalState": null,
-  "nextAction": "review",
+  "baseCommit": "feff0107db92387c6bcbb76a4daee61357bcf799",
+  "phase": "stopped",
+  "terminalState": "blocked",
+  "nextAction": "stop",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-05T02:00:00.000Z",
-  "deadlineAt": "2026-08-05T04:00:00.000Z",
+  "startedAt": "2026-08-09T00:00:00.000Z",
+  "deadlineAt": "2026-08-09T02:00:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -22,66 +22,64 @@
     "maxNetworkRetries": 2,
     "maxChildAgents": 6,
     "maxStackDepth": 1,
-    "maxChangedLines": 3500,
+    "maxChangedLines": 2000,
     "maxChangedFiles": 30
   },
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
-  "lastFailure": null,
+  "lastFailure": "pre-existing",
   "validations": [
     {
       "command": [
         "npx",
-        "jest",
-        "--runTestsByPath",
-        "src/lib/format.test.ts",
-        "src/lib/loop-control/policy.test.ts",
-        "src/lib/loop-control/state.test.ts",
-        "src/lib/loop-control/cli.test.ts",
-        "src/app/dashboard/dashboard-ux-clarity.test.ts",
-        "src/app/dashboard/dashboard-responsive.test.ts",
-        "src/app/dashboard/dashboard-availability.test.ts",
-        "src/components/layout/sidebar-mobile-nav.test.ts",
-        "--runInBand"
+        "prisma",
+        "format"
       ],
       "required": true,
       "status": "Passed",
-      "classification": "introduced",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "Passed 112 tests across 8 suites, including the new format-helper regression test."
+      "summary": "Prisma schema formatting completed successfully."
     },
     {
-      "command": ["npx", "tsc", "--noEmit"],
+      "command": [
+        "npx",
+        "prisma",
+        "validate"
+      ],
       "required": true,
       "status": "Passed",
-      "classification": "introduced",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "TypeScript clean exit."
+      "summary": "Prisma schema validation completed successfully."
     },
     {
-      "command": ["npm", "run", "lint"],
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit"
+      ],
       "required": true,
       "status": "Passed",
-      "classification": "introduced",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "ESLint exited zero with one existing warning."
+      "summary": "TypeScript type checking completed successfully."
     },
     {
-      "command": ["git", "diff", "--check"],
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
       "required": true,
-      "status": "Passed",
-      "classification": "introduced",
+      "status": "Failed",
+      "classification": "pre-existing",
       "repairable": false,
-      "summary": "No whitespace errors."
+      "summary": "ESLint scanned generated files in an existing worktree and reported pre-existing generated-code violations."
     }
   ],
-  "review": {
-    "independent": true,
-    "approved": true,
-    "baseCommitIsAncestor": true,
-    "summary": "Iteration 057 adds a shared financial formatting utility and routes the cashflow page through it so currency and date output are consistently derived from one module."
-  },
+  "review": null,
   "authorizedCommit": null,
   "publication": null,
-  "blocker": null
+  "blocker": "Validation failure cannot be repaired automatically."
 }

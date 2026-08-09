@@ -294,7 +294,18 @@ export default function GoalsPage() {
             <div className="card rounded-xl p-5">
               <h3 className="font-semibold text-[#16332f] mb-4">Active Goals ({activeGoals.length})</h3>
               {activeGoals.length === 0 ? (
-                <p className="text-sm text-zinc-500 text-center py-8">No active goals. Create one to start tracking!</p>
+                <div role="status" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-6 text-center">
+                  <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">🎯</div>
+                  <h4 className="font-semibold text-[#16332f]">No financial goals yet</h4>
+                  <p className="mx-auto mt-1 max-w-sm text-sm text-zinc-500">Set a target to make your progress visible and keep your next milestone in sight.</p>
+                  <button
+                    type="button"
+                    onClick={() => { resetForm(); setShowForm(true); }}
+                    className="mt-4 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-medium text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2"
+                  >
+                    Create your first goal
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {activeGoals.map(goal => {
