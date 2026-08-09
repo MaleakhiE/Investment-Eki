@@ -1,42 +1,46 @@
 # Autonomous engineering state
 
-Last updated: 2026-08-09
+Last updated: 2026-08-10
 
 ## Current run
 
-Latest completed iteration: 058 — analytics mobile responsiveness and accessibility (PR #56, merged into `main` at `feff0107db92387c6bcbb76a4daee61357bcf799`).
-Current iteration: 059 — goals empty-state guidance.
-Current branch: `ux/iteration-059-goals-empty-state-reconciled`.
-Base branch and commit: `main` / `feff0107db92387c6bcbb76a4daee61357bcf799`.
-Pull request: none; publication was blocked before authorization.
+Latest completed iteration: 059 — goals empty-state guidance (PR #57, merged into `main` at `31d93ed51dcbf8ceea67c053dcd4a2e1202246cb`).
+Current iteration: 060 — investment history empty-state onboarding.
+Current branch: `ux/iteration-060-investment-empty-states-reconciled`.
+Base branch and commit: `main` / `31d93ed51dcbf8ceea67c053dcd4a2e1202246cb`.
+Pull request: none; loop-control blocked authorization before publication.
 Pull-request state: none.
 
 **Validation status:**
-- Prisma format: passed (no intentional schema change)
-- Prisma validate: passed
+- Focused investment availability tests: passed (3 tests)
+- Prisma format/validate: passed
 - TypeScript: passed
-- Focused goals UX test: passed (2 tests)
-- Lint: passes after adding `.worktrees/**` to the existing ESLint global ignores (one pre-existing warning remains)
-- Remaining required validations: not run after loop-controller terminal block
+- ESLint: passed with one pre-existing warning
+- Jest: passed (102 suites, 1,005 tests)
+- Build: passed, including OCR trace verification
+- Database status: passed
+- Database migration replay: blocked by pre-existing MySQL 8.4 `only_full_group_by` failure in migration `20260717000000_add_financial_accounts_and_transfers`
+- Diff check: passed
+- Critical-threshold audit: passed; existing moderate/high advisories remain
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-059-goals-empty-state`, target 070, latest completed 058, current 059, base `feff0107db92387c6bcbb76a4daee61357bcf799`, and terminal state `blocked`. The controller recorded the lint failure as pre-existing and rejected automatic repair/publication.
+`docs/engineering/loop-state.json` is schema version 1 for run `iteration-060-investment-empty-states-retry`, target 070, latest completed 059, current 060, and terminal state `blocked`. Required publication remains unavailable because `npm run db:verify` is blocked by the pre-existing migration replay defect and independent review was unavailable.
 
 ## Exact next action
 
-On the next scheduled invocation, preserve this branch's implementation and ESLint scope fix, start a fresh loop-control run for Iteration 059, and rerun the required validations before review/publication. The prior controller run remains terminal `blocked` and must not be edited in place.
+On the next scheduled invocation, preserve the Iteration 060 implementation, investigate the pre-existing migration replay compatibility defect without editing historical migrations blindly, then start a fresh loop-control run for Iteration 060 and rerun the full acceptance contract before publication.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully on 2026-08-09. GitHub confirms PR #56 is merged and there are no open pull requests. `origin/main` resolves to `feff0107db92387c6bcbb76a4daee61357bcf799`.
+`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #57 merged into `main` at `31d93ed`; no new PR was created for Iteration 060.
 
 ## Stacked pull-request dependencies
 
-- Iterations 053–058 are merged into `main` through PR #56.
-- Iteration 059 is independent and is based directly on the merged main commit.
-- Existing remote branches for earlier unpublished 059/060 experiments were not reused because they contained unrelated churn and stale state.
+- Iterations 053–059 are merged into `main` through PR #57.
+- Iteration 060 is independent and is based directly on the merged 059 commit.
+- The prior unpublished Iteration 060 branch was not reused because it was based on pre-059 `main` and contained stale loop documentation.
 
 ## Portfolio distribution
 
-Iterations 055–058 delivered user-facing UX/accessibility work. Iteration 059 continues that product-focused cadence with a small actionable empty state; no backend or financial-calculation behavior changed.
+Iterations 055–060 continue the user-facing UX/accessibility cadence. Iteration 060 changes only onboarding presentation and local navigation; no investment calculations or persistence behavior changed.

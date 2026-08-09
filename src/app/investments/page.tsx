@@ -305,8 +305,8 @@ export default function InvestmentsPage() {
 
             {/* Form */}
             <div className="card rounded-2xl p-6">
-              <h3 className="font-semibold text-[#16332f] mb-4">Add/Update Snapshot</h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <h3 id="investment-snapshot-form-title" tabIndex={-1} className="font-semibold text-[#16332f] mb-4">Add/Update Snapshot</h3>
+              <form id="investment-snapshot-form" onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-1">Type</label>
@@ -423,7 +423,11 @@ export default function InvestmentsPage() {
                   <h3 className="font-semibold text-[#16332f]">Gold (Emas)</h3>
                 </div>
                 {goldSnapshots.length === 0 ? (
-                  <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
+                  <div role="status" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-5 text-center">
+                    <h4 className="font-semibold text-[#16332f]">No gold snapshots yet</h4>
+                    <p className="mt-1 text-sm text-zinc-600">Add a monthly record to start tracking your gold progress.</p>
+                    <button type="button" onClick={() => { setSelectedType('GOLD'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Add your first gold snapshot</button>
+                  </div>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {goldSnapshots.map((s) => (
@@ -457,7 +461,11 @@ export default function InvestmentsPage() {
                   <h3 className="font-semibold text-[#16332f]">Mutual Fund (Reksa Dana)</h3>
                 </div>
                 {mfSnapshots.length === 0 ? (
-                  <p className="text-center py-6 text-zinc-600 text-sm">No records yet</p>
+                  <div role="status" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-5 text-center">
+                    <h4 className="font-semibold text-[#16332f]">No mutual fund snapshots yet</h4>
+                    <p className="mt-1 text-sm text-zinc-600">Add a monthly record to start tracking your mutual fund progress.</p>
+                    <button type="button" onClick={() => { setSelectedType('MUTUAL_FUND'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Add your first mutual fund snapshot</button>
+                  </div>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {mfSnapshots.map((s) => (
