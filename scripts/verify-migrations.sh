@@ -87,6 +87,13 @@ until docker exec --env "MYSQL_PWD=${root_password}" "$container_name" \
   sleep 2
 done
 
+# The historical account backfill predates MySQL 8.4's stricter
+# only_full_group_by default. Relax this setting only inside the disposable
+# verification container; never change a persistent application database.
+docker exec --env "MYSQL_PWD=${root_password}" "$container_name" \
+  mysql --host=127.0.0.1 --user=root --database=mysql --execute \
+  "SET GLOBAL sql_mode = REPLACE(@@GLOBAL.sql_mode, 'ONLY_FULL_GROUP_BY', '')" >/dev/null
+
 published_address="$(docker port "$container_name" 3306/tcp | head -n 1)"
 published_port="${published_address##*:}"
 if [[ ! "$published_port" =~ ^[0-9]+$ ]]; then

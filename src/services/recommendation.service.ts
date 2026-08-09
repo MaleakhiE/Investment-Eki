@@ -325,7 +325,7 @@ export function calculateInvestableAmount(health: FinancialHealth): number {
 
 
 /**
- * Generate reasoning text in Bahasa Indonesia explaining the allocation recommendation
+ * Generate descriptive scenario text in Bahasa Indonesia.
  * 
  * Requirements: 11.4
  */
@@ -339,15 +339,15 @@ export function generateReasoningText(
 
   // Introduction based on risk profile
   if (riskProfile === 'conservative') {
-    parts.push('Berdasarkan analisis keuangan Anda, kami merekomendasikan strategi investasi konservatif.');
+    parts.push('Berdasarkan data yang tersedia, skenario konservatif ini dapat membantu Anda menilai pilihan alokasi.');
   } else if (riskProfile === 'aggressive') {
-    parts.push('Berdasarkan analisis keuangan Anda, kami merekomendasikan strategi investasi agresif untuk pertumbuhan optimal.');
+    parts.push('Berdasarkan data yang tersedia, skenario agresif ini dapat membantu Anda menilai pilihan alokasi dan risikonya.');
   } else {
-    parts.push('Berdasarkan analisis keuangan Anda, kami merekomendasikan strategi investasi moderat yang seimbang.');
+    parts.push('Berdasarkan data yang tersedia, skenario moderat ini dapat membantu Anda menilai pilihan alokasi.');
   }
 
   // Explain allocation
-  parts.push(`Alokasi yang disarankan adalah ${allocation.gold_percentage}% untuk Emas dan ${allocation.mutual_fund_percentage}% untuk Reksa Dana.`);
+  parts.push(`Skenario ini menggunakan ${allocation.gold_percentage}% untuk Emas dan ${allocation.mutual_fund_percentage}% untuk Reksa Dana.`);
 
   // Explain factors considered
   const factors: string[] = [];
@@ -447,7 +447,7 @@ export async function getInvestmentRecommendation(userId: bigint): Promise<Alloc
   // Generate reasoning text
   const reasoning = shouldInvest
     ? generateReasoningText(health, balance, { gold_percentage, mutual_fund_percentage }, risk_profile)
-    : 'Arus kas rata-rata Anda negatif. Kami menyarankan untuk fokus membangun dana darurat terlebih dahulu sebelum berinvestasi. Dana darurat idealnya mencakup 3-6 bulan pengeluaran bulanan Anda.';
+    : 'Arus kas rata-rata Anda negatif. Skenario ini menempatkan prioritas pada dana darurat sebelum investasi. Gunakan ini sebagai konteks, bukan instruksi personal atau jaminan hasil.';
   
   return {
     gold_percentage,

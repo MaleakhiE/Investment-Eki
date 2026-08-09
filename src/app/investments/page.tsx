@@ -238,6 +238,11 @@ export default function InvestmentsPage() {
     return new Date(parseInt(y), parseInt(mn) - 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
   };
 
+  const formatSourceTimestamp = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 'Timestamp unavailable' : parsed.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+  };
+
   const previewGL = (parseFloat(currentValue) || 0) - (parseFloat(investedAmount) || 0);
   const previewReturn = parseFloat(investedAmount) > 0 ? ((previewGL / parseFloat(investedAmount)) * 100).toFixed(1) : '0';
   const inputClass = "w-full py-2 rounded-xl border border-[#dcece8] bg-white text-[#16332f] focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
@@ -260,6 +265,18 @@ export default function InvestmentsPage() {
           <h2 className="text-2xl font-bold text-[#16332f]">Investments</h2>
           <p className="text-sm text-zinc-600">Track your Gold and Mutual Fund investments</p>
         </div>
+
+        <section className="investment-provenance" aria-labelledby="investment-provenance-title">
+          <div>
+            <p className="app-eyebrow">Data provenance</p>
+            <h3 id="investment-provenance-title">Know what each number represents.</h3>
+            <p>Snapshots stay user-entered. Live market context is shown with its provider and update time so stale data is visible.</p>
+          </div>
+          <dl>
+            <div><dt>Gold price</dt><dd>{goldPriceData ? `${goldPriceData.source} · ${formatSourceTimestamp(goldPriceData.updated_at)}` : 'Unavailable until refreshed'}</dd></div>
+            <div><dt>Mutual funds</dt><dd>{mfSnapshots.length > 0 ? 'Manual snapshot · provider recorded per entry' : 'No snapshots recorded'}</dd></div>
+          </dl>
+        </section>
 
         {snapshotStatus === 'loading' ? (
           <div role="status" className="flex h-64 items-center justify-center text-zinc-600">Loading investment data...</div>

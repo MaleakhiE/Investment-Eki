@@ -1,7 +1,17 @@
 const user = { findUnique: jest.fn() };
 jest.mock('@/lib/prisma', () => ({ prisma: { user } }));
 
-import { isSessionVersionCurrent, resolveInternalUserId } from './auth-session';
+import { isSessionVersionCurrent, normalizeSessionVersion, resolveInternalUserId } from './auth-session';
+
+describe('normalizeSessionVersion', () => {
+  it.each([1, '1', 42, '42'])('normalizes persisted JWT value %p', (value) => {
+    expect(normalizeSessionVersion(value)).toBe(Number(value));
+  });
+
+  it.each([0, -1, 1.2, '', ' 3', '3 ', '1.2', '1e3', true, ['3'], {}, null, undefined, 'not-a-version'])('rejects invalid value %p', (value) => {
+    expect(normalizeSessionVersion(value)).toBeNull();
+  });
+});
 
 const publicUserId = '3d594650-3436-4aa2-bb39-9fc9f5bc521d';
 
@@ -11,6 +21,7 @@ describe('session version validation', () => {
   it('accepts a token only while its version matches the user record', async () => {
     user.findUnique.mockResolvedValue({ id: BigInt(7), public_id: publicUserId, session_version: 3 });
     await expect(isSessionVersionCurrent(publicUserId, 3)).resolves.toBe(true);
+    await expect(isSessionVersionCurrent(publicUserId, '3')).resolves.toBe(true);
     await expect(isSessionVersionCurrent(publicUserId, 2)).resolves.toBe(false);
     expect(user.findUnique).toHaveBeenCalledWith({
       where: { public_id: publicUserId },

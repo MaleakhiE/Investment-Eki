@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
       <main className="app-page analytics-page lg:ml-64 p-4 lg:p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#16332f]">Analytics</h2>
-          <p className="text-sm text-zinc-600">Insights & AI recommendations</p>
+          <p className="text-sm text-zinc-600">Insights & scenario analysis</p>
         </div>
 
         {isLoading ? (
@@ -185,15 +185,15 @@ export default function AnalyticsPage() {
                 {/* AI Recommendation */}
                 {!settings?.ai_recommendation_enabled ? (
                   <div className="card rounded-xl p-6 text-center">
-                    <h3 className="font-semibold text-[#16332f] mb-1 text-sm">AI Recommendation Disabled</h3>
-                    <p className="text-zinc-600 text-xs mb-3">Enable for personalized investment advice</p>
+                        <h3 className="font-semibold text-[#16332f] mb-1 text-sm">Scenario analysis disabled</h3>
+                        <p className="text-zinc-600 text-xs mb-3">Enable to review descriptive allocation scenarios</p>
                     <Link href="/settings" className="text-xs text-[#00d4aa] hover:underline">Enable in Settings</Link>
                   </div>
                 ) : recommendation ? (
                   <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-xl shadow-sm p-5 border border-blue-500/20">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="font-semibold text-[#16332f] text-sm">AI Recommendation</h3>
+                        <h3 className="font-semibold text-[#16332f] text-sm">Allocation scenario</h3>
                         <p className="text-xs text-zinc-500 mt-0.5">Based on your financial data</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -223,6 +223,7 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">{recommendation.reasoning}</p>
+                    <p className="mt-3 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-zinc-500">Descriptive analysis only. Review the assumptions, fees, and your own circumstances before acting; this is not financial advice.</p>
                   </div>
                 ) : null}
               </div>

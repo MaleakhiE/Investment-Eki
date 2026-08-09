@@ -40,6 +40,7 @@ export default function Sidebar(props: { mobileMenuOpen?: boolean; setMobileMenu
   return <>
     <aside className="app-sidebar">
       <Link href="/dashboard" className="app-brand"><span className="app-brand-mark">F</span><span><strong>FinTrack</strong><small>Personal finance</small></span></Link>
+      <div className="app-sidebar-intro"><span>Workspace</span><strong>Plan with context</strong></div>
       <nav aria-label="Primary navigation" className="app-sidebar-nav">
         {primaryNavigation.slice(0, 3).map((item) => <NavLink key={item.href} item={item} pathname={pathname}/>)}
         <p className="app-nav-section">Plan and insights</p>
