@@ -17,4 +17,15 @@ describe('investment history availability UX', () => {
     expect(source).toContain('onClick={() => void fetchSnapshots()}');
     expect(source).toContain('Try again');
   });
+
+  it('keeps empty investment histories actionable', () => {
+    expect(source).toContain('No gold snapshots yet');
+    expect(source).toContain('No mutual fund snapshots yet');
+    expect(source).toContain('Add your first gold snapshot');
+    expect(source).toContain('Add your first mutual fund snapshot');
+    expect(source).toContain('role="status"');
+    expect(source).toContain('investment-snapshot-form');
+    expect(source).toContain('investment-snapshot-form-title');
+    expect(source).toContain('focus({ preventScroll: true })');
+  });
 });
