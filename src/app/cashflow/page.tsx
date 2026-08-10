@@ -9,6 +9,7 @@ import { AccountTransferLabel, type AccountSummary } from '@/components/accounts
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { getOcrProgressMessage, OCR_REQUEST_TIMEOUT_MS, prepareReceiptForOcr } from '@/lib/receipt-image-client';
 import { formatCurrency, formatDate } from '@/lib/format';
+import TransactionImportPreview from '@/components/transactions/TransactionImportPreview';
 
 interface Transaction {
   id: string;
@@ -261,6 +262,7 @@ export default function CashflowPage() {
           <h2 className="text-xl sm:text-2xl font-bold text-[#16332f]">Transactions</h2>
           <p className="text-xs sm:text-sm text-zinc-600">Track income and expenses</p>
         </div>
+        <div className="mb-4"><TransactionImportPreview /></div>
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-3 gap-2 sm:gap-4">

@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-065-transaction-import-preview",
+  "runId": "iteration-064-transaction-import-reconciliation",
   "targetIteration": 70,
-  "latestCompletedIteration": 64,
-  "currentIteration": 65,
-  "branch": "ux/iteration-065-transaction-import-preview",
+  "latestCompletedIteration": 63,
+  "currentIteration": 64,
+  "branch": "feat/iteration-064-transaction-import-reconciliation",
   "baseBranch": "main",
-  "baseCommit": "c81e2cfc77f8cb8ebe04160babb8f5404f0853d9",
+  "baseCommit": "0c700e008e9ab2d983a474d68eafad2750146018",
   "phase": "review",
   "terminalState": null,
   "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T11:40:00.000Z",
-  "deadlineAt": "2026-08-10T15:40:00.000Z",
+  "startedAt": "2026-08-10T10:45:00.000Z",
+  "deadlineAt": "2026-08-10T14:45:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -88,7 +88,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Full Jest suite passed: 108 suites, 1038 tests."
+      "summary": "Full Jest suite passed: 107 suites, 1037 tests."
     },
     {
       "command": [
@@ -121,10 +121,10 @@
         "db:verify"
       ],
       "required": true,
-      "status": "Passed",
-      "classification": "unknown",
+      "status": "Blocked by environment",
+      "classification": "environment-related",
       "repairable": false,
-      "summary": "Disposable MySQL 8.4 migration replay passed."
+      "summary": "Disposable migration replay blocked because the Docker daemon is unavailable."
     },
     {
       "command": [
@@ -152,12 +152,7 @@
       "summary": "Audit passed at the critical threshold; existing high/moderate advisories remain."
     }
   ],
-  "review": {
-    "independent": false,
-    "approved": true,
-    "baseCommitIsAncestor": true,
-    "summary": "Dedicated specialist subagents were unavailable. The orchestrator completed separate architecture, security, reliability, product/UX, accessibility, and adversarial diff-review passes. The preview remains read-only, authenticated, bounded, and semantically accessible."
-  },
+  "review": null,
   "authorizedCommit": null,
   "publication": null,
   "blocker": null
