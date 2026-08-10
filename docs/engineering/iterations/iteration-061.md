@@ -103,6 +103,8 @@ Existing routes, API envelopes, internal BIGINT keys, public UUID session identi
 
 ## Validation commands and results
 
+- GitGuardian Security Checks: blocked by an external false positive matching required 40-character Git commit references in `docs/engineering/loop-state.json` and its audit archive; no credential or token was detected. Other required checks passed.
+
 - `npx jest --runTestsByPath src/lib/auth-session.test.ts src/lib/auth.config.test.ts src/components/layout/Sidebar.test.ts src/app/investments/investments-availability.test.ts --runInBand` — Passed (60 tests)
 - `npm test -- --runInBand` — Passed (102 suites, 1,017 tests)
 - `npx tsc --noEmit` — Passed
@@ -137,4 +139,4 @@ Run browser-level auth navigation checks, then continue with CSV/e-statement imp
 
 ## Pull-request reference
 
-Pending publication after final review and loop-control authorization.
+[PR #59](https://github.com/MaleakhiE/Investment-Eki/pull/59) — open, not merged.

@@ -8,8 +8,8 @@ Latest completed iteration: 060 — investment history empty-state onboarding (P
 Current iteration: 061 — session continuity, trusted shell, and investment provenance.
 Current branch: `fix/iteration-061-session-hallmark-provenance`.
 Base branch and commit: `main` / `99d2a98e8b2903329b95d3066f230498e527b8a5`.
-Pull request: pending publication.
-Pull-request state: none.
+Pull request: [PR #59](https://github.com/MaleakhiE/Investment-Eki/pull/59).
+Pull-request state: OPEN; not merged.
 
 **Validation status:**
 - Focused auth/layout/investment tests: passed (60 tests)
@@ -19,14 +19,15 @@ Pull-request state: none.
 - Build: passed, including OCR trace verification
 - Database migration replay: passed against MySQL 8.4 after making the backfill deterministic
 - Diff check: passed
+- GitGuardian: blocked by an external false positive on durable loop-state Git commit IDs; no credential or token was detected
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-061-session-hallmark-provenance`, target 070, latest completed 060, current 061, and active execution phase. The prior blocked 060 state is preserved at `docs/engineering/loop-archive/iteration-060-blocked.json`; GitHub now confirms PR #58 merged.
+`docs/engineering/loop-state.json` is schema version 1 for run `iteration-061-session-hallmark-provenance-retry`, target 070, latest completed 060, current 061, accepted with PR #59 open at reviewed HEAD `1c0582de016c6efc833d3ff5c541b92798b676f8`. The prior blocked 060 state is preserved at `docs/engineering/loop-archive/iteration-060-blocked.json`.
 
 ## Exact next action
 
-Finish independent review, authorize the exact reviewed HEAD, push `fix/iteration-061-session-hallmark-provenance`, and create one open PR against `main` without merging.
+Do not merge PR #59 automatically. The next action is to dismiss or allowlist the GitGuardian false positive for the controller's documented Git commit references, then re-run the check; do not weaken loop-state authorization or remove exact HEAD evidence.
 
 ## Reconciliation evidence
 
