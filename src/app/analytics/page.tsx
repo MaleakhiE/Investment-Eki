@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
+import { DecisionContext } from '@/components/finance/DecisionContext';
+import { parseCashflowTrend, summarizeCashflowTrend } from '@/components/finance/chart-summary';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { ANALYTICS_TABS, nextAnalyticsTab, type AnalyticsTab } from './tab-navigation';
 
@@ -59,7 +61,7 @@ export default function AnalyticsPage() {
             else { const recData = await recRes.json(); setError(recData.responseMessage || 'Failed'); }
           }
         }
-        if (trendRes.ok) { const d = await trendRes.json(); setTrend(d.responseDetails || []); }
+        if (trendRes.ok) { const d = await trendRes.json(); setTrend(d.responseStatus === 'SUCCESS' ? (parseCashflowTrend(d.responseDetails) || []) : []); }
         if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
       } catch { setError('Failed to load'); } finally { setIsLoading(false); }
     }
@@ -238,6 +240,7 @@ export default function AnalyticsPage() {
                     <h3 className="font-semibold text-[#16332f] text-sm mb-4">Monthly Trend</h3>
                     {trend.length > 0 ? (
                       <>
+                        <p id="cashflow-trend-summary" className="sr-only">{summarizeCashflowTrend(trend, formatCurrency)}</p>
                         <div className="flex items-end gap-1 h-40">
                           {trend.map((t, i) => (
                             <div key={i} className="flex-1 flex flex-col items-center">
@@ -249,12 +252,18 @@ export default function AnalyticsPage() {
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-center gap-4 mt-3 text-xs">
+                        <div role="group" className="flex justify-center gap-4 mt-3 text-xs" aria-label="Chart legend">
                           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-green-400"></span>Income</span>
                           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-400"></span>Expense</span>
                         </div>
                       </>
                     ) : <p className="text-xs text-zinc-500 text-center py-8">No data</p>}
+                    <DecisionContext
+                      title="Cashflow trend"
+                      state={trend.length > 0 ? 'verified' : 'unavailable'}
+                      source="FinTrack ledger"
+                      description={trend.length > 0 ? 'Calculated from saved transactions; no live provider feed is used.' : 'The ledger did not return enough data to verify this trend.'}
+                    />
                     {trend.length > 0 && (
                       <div className="mt-5 overflow-x-auto rounded-lg border border-[#dcece8]">
                         <table className="min-w-full text-left text-xs text-zinc-600">

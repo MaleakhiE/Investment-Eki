@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "runId": "iteration-062-guided-investment-snapshot",
+  "targetIteration": 70,
+  "latestCompletedIteration": 61,
+  "currentIteration": 62,
+  "branch": "ux/iteration-062-guided-investment-snapshot",
+  "baseBranch": "main",
+  "baseCommit": "32abdd96bffdd0a337a2cdd4e7b0260e6600d6c1",
+  "phase": "review",
+  "terminalState": null,
+  "nextAction": "review",
+  "repairAttempts": 0,
+  "iterationsAcceptedThisRun": 0,
+  "startedAt": "2026-08-10T07:09:28.000Z",
+  "deadlineAt": "2026-08-10T11:09:28.000Z",
+  "limits": {
+    "maxRepairAttempts": 3,
+    "maxIterations": 18,
+    "maxElapsedMinutes": 240,
+    "validationTimeoutMinutes": 30,
+    "maxNetworkRetries": 2,
+    "maxChildAgents": 6,
+    "maxStackDepth": 1,
+    "maxChangedLines": 2000,
+    "maxChangedFiles": 30
+  },
+  "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
+  "lastRepairStrategyHash": null,
+  "lastFailure": null,
+  "validations": [
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "format"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma formatter exited successfully; no schema behavior change retained."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "validate"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma schema validated against an isolated disposable MySQL URL."
+    },
+    {
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "TypeScript completed without errors."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "pre-existing",
+      "repairable": false,
+      "summary": "ESLint exited zero with one pre-existing unused-variable warning."
+    },
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Jest passed 103 suites and 1028 tests."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "environment-related",
+      "repairable": false,
+      "summary": "Production build and OCR trace passed with safe local build-only environment values."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:status"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "environment-related",
+      "repairable": false,
+      "summary": "Migration status passed against an isolated disposable MySQL database."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:verify"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "All nine migrations replayed successfully in disposable MySQL 8.4."
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "No whitespace errors."
+    },
+    {
+      "command": [
+        "npm",
+        "audit",
+        "--omit=dev",
+        "--audit-level=critical"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "pre-existing",
+      "repairable": false,
+      "summary": "No critical production dependency vulnerability; existing high and moderate advisories remain outside this UI iteration."
+    }
+  ],
+  "review": {
+    "independent": true,
+    "approved": true,
+    "baseCommitIsAncestor": true,
+    "summary": "Fresh independent review found four issues; all were repaired and re-reviewed. No High or Medium correctness, financial presentation, security, accessibility, responsive UX, regression, or test-gap blockers remain."
+  },
+  "authorizedCommit": null,
+  "publication": null,
+  "blocker": null
+}

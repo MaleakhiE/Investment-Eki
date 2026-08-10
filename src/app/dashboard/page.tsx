@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
 import { AccountCard, type AccountSummary } from '@/components/accounts/AccountCard';
+import { DecisionContext } from '@/components/finance/DecisionContext';
 
 interface MonthlySummary {
   total_income: number;
@@ -293,6 +294,12 @@ export default function DashboardPage() {
 
             <section className="card rounded-3xl p-5">
               <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Upcoming transactions</h2></div>
+              <DecisionContext
+                title="Recurring plan readiness"
+                state={upcoming.length > 0 ? 'verified' : 'manual'}
+                source="Saved recurring rules"
+                description="This is a planning view only. It does not place investment orders or connect to a provider."
+              />
               {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{item.type === 'INCOME' ? 'Income' : 'Expenses'} · {new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">No active recurring transactions.</p>}
             </section>
           </div>

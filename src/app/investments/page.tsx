@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput, { formatNumber } from '@/components/ui/CurrencyInput';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import { DecisionContext } from '@/components/finance/DecisionContext';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { parseInvestmentHistories } from './investment-history';
 import { getInvestmentReturnPresentation } from './investment-presentation';
@@ -356,17 +357,15 @@ export default function InvestmentsPage() {
                         <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} label="Use gold calculator" />
                       </div>
                     </div>
-                    <div className="mb-4 flex flex-col gap-2 rounded-xl border border-[#ead9a8] bg-[#fff2c8] p-3 sm:flex-row sm:items-center sm:justify-between">
-                      {goldPriceData ? (
-                        <>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium text-[#6c551d]">Sumber nilai</span>
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${goldPriceData.source.includes('offline') ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#dcfce7] text-[#166534]'}`}>{goldPriceData.source}</span>
-                        </div>
-                        <span className="font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram · {formatSourceTimestamp(goldPriceData.updated_at)}</span>
-                        </>
-                      ) : <span className="text-sm text-[#6c551d]">Sumber nilai belum tersedia. Coba muat ulang harga.</span>}
-                    </div>
+                    <DecisionContext
+                      title="Sumber nilai emas"
+                      state={goldPriceData ? 'verified' : 'unavailable'}
+                      source={goldPriceData?.source || 'Gold price provider'}
+                      observedAt={goldPriceData ? formatSourceTimestamp(goldPriceData.updated_at) : undefined}
+                      description={goldPriceData ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : 'A current gold price could not be verified. Enter a value manually or try again.'}
+                    >
+                      {goldPriceData && <p className="mt-3 font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram</p>}
+                    </DecisionContext>
                     {useGoldCalc && (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>

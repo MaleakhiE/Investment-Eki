@@ -19,6 +19,8 @@ import { InvestmentType } from '@/lib/validation';
  */
 export interface CashflowTrend {
   month: string;
+  income: number;
+  expense: number;
   net_cashflow: number;
 }
 
@@ -159,6 +161,8 @@ export async function getCashflowTrend(userId: bigint): Promise<CashflowTrend[]>
 
   return cashflows.map((record) => ({
     month: record.month,
+    income: decryptNumber(record.income),
+    expense: decryptNumber(record.total_expense),
     net_cashflow: decryptNumber(record.net_cashflow),
   }));
 }
