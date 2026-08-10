@@ -16,6 +16,17 @@ interface Preview {
   duplicateRows: number[];
 }
 
+export async function requestTransactionPreview(csv: string, fetcher: typeof fetch = fetch): Promise<Preview> {
+  const response = await fetcher('/api/transactions/import/preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csv }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.responseDetails?.errors?.join(', ') || data.responseMessage || 'Unable to preview CSV');
+  return data.responseDetails;
+}
+
 export default function TransactionImportPreview() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -27,14 +38,7 @@ export default function TransactionImportPreview() {
     setMessage('');
     setPreview(null);
     try {
-      const response = await fetch('/api/transactions/import/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ csv: await file.text() }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.responseDetails?.errors?.join(', ') || data.responseMessage || 'Unable to preview CSV');
-      setPreview(data.responseDetails);
+      setPreview(await requestTransactionPreview(await file.text()));
       setStatus('idle');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to preview CSV');
@@ -49,7 +53,7 @@ export default function TransactionImportPreview() {
           <h3 id="transaction-import-title" className="font-semibold text-[#16332f]">Review a CSV import</h3>
           <p className="mt-1 max-w-2xl text-xs text-zinc-600">Preview manual statement rows and duplicates before anything is saved. CSV must include date, type, category, description, and amount columns.</p>
         </div>
-        <label className="cursor-pointer rounded-lg border border-[#00a88a] bg-white px-3 py-2 text-xs font-semibold text-[#087f6b] hover:bg-[#f5fffc]">
+        <label className="cursor-pointer rounded-lg border border-[#00a88a] bg-white px-3 py-2 text-xs font-semibold text-[#087f6b] hover:bg-[#f5fffc] focus-within:ring-2 focus-within:ring-[#087f6b] focus-within:ring-offset-2">
           {status === 'loading' ? 'Reading CSV…' : 'Choose CSV'}
           <input aria-label="Choose transaction CSV" type="file" accept=".csv,text/csv" disabled={status === 'loading'} onChange={(event) => { void handleFile(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
         </label>
