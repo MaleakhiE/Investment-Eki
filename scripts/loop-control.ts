@@ -12,6 +12,7 @@ import {
   recordPublication,
   recordValidation,
   requestRepair,
+  reconcileMergedPublication,
   type Decision,
   type AuthorizationVerification,
   type LoopState,
@@ -35,16 +36,16 @@ export interface CliIo {
 }
 
 type Command = 'init' | 'preflight' | 'record-validation' | 'request-repair' | 'record-review'
-  | 'authorize-publication' | 'record-publication' | 'accept-iteration' | 'status' | 'classify-command';
+  | 'authorize-publication' | 'record-publication' | 'reconcile-publication' | 'accept-iteration' | 'status' | 'classify-command';
 type Options = Readonly<{ input: string | null; dryRun: boolean }>;
 
 const DEFAULT_STATE_PATH = 'docs/engineering/loop-state.json';
 const COMMANDS = new Set<Command>([
   'init', 'preflight', 'record-validation', 'request-repair', 'record-review',
-  'authorize-publication', 'record-publication', 'accept-iteration', 'status', 'classify-command',
+  'authorize-publication', 'record-publication', 'reconcile-publication', 'accept-iteration', 'status', 'classify-command',
 ]);
 const INPUT_COMMANDS = new Set<Command>([
-  'init', 'preflight', 'record-validation', 'request-repair', 'record-review', 'authorize-publication', 'record-publication',
+  'init', 'preflight', 'record-validation', 'request-repair', 'record-review', 'authorize-publication', 'record-publication', 'reconcile-publication',
 ]);
 const VALIDATION_STATUSES = new Set(['Passed', 'Failed', 'Blocked by environment', 'Not applicable']);
 const FAILURE_CLASSIFICATIONS = new Set(['introduced', 'pre-existing', 'environment-related', 'invalid-command', 'external-service', 'unknown']);
@@ -182,7 +183,7 @@ const parsePublication = (value: unknown): PublicationEvidence => {
   const pullRequestUrl = nonEmptyText(input.pullRequestUrl);
   const pullRequestState = nonEmptyText(input.pullRequestState);
   if (!isCommitSha(commit) || !isDirectGitHubPullRequestUrl(pullRequestUrl)
-    || !['OPEN', 'DRAFT'].includes(pullRequestState)) invalid();
+    || !['OPEN', 'DRAFT', 'MERGED'].includes(pullRequestState)) invalid();
   return {
     commit,
     pullRequestUrl,
@@ -247,9 +248,11 @@ const verifyPublicationLive = async (
     'pr', 'view', publication.pullRequestUrl, '--repo', slug,
     '--json', 'url,state,isDraft,headRefName,headRefOid,baseRefName',
   ])) as Record<string, unknown>;
-  const expectedState = publication.pullRequestState === 'DRAFT'
-    ? live.state === 'OPEN' && live.isDraft === true
-    : live.state === 'OPEN' && live.isDraft === false;
+  const expectedState = publication.pullRequestState === 'MERGED'
+    ? live.state === 'MERGED'
+    : publication.pullRequestState === 'DRAFT'
+      ? live.state === 'OPEN' && live.isDraft === true
+      : live.state === 'OPEN' && live.isDraft === false;
   const livePullRequestMatches = live.url === publication.pullRequestUrl && expectedState
     && live.headRefName === state.branch && live.headRefOid === publication.commit && live.baseRefName === state.baseBranch;
   return {
@@ -349,6 +352,10 @@ export const main = async (argv: readonly string[], io: CliIo): Promise<number> 
         const publication = parsePublication(input);
         const verification = await (io.verifyPublication ?? ((current, evidence) => verifyPublicationLive(root, current, evidence)))(state, publication);
         decision = recordPublication(state, publication, verification);
+      } else if (command === 'reconcile-publication') {
+        const publication = parsePublication(input);
+        const verification = await (io.verifyPublication ?? ((current, evidence) => verifyPublicationLive(root, current, evidence)))(state, publication);
+        decision = reconcileMergedPublication(state, publication, verification);
       } else if (command === 'accept-iteration') {
         const publication = state.publication;
         if (publication === null) throw new Error('Invalid input');

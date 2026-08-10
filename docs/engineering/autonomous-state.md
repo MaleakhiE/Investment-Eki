@@ -5,15 +5,15 @@ Last updated: 2026-08-10
 ## Current run
 
 Latest completed iteration: 064 — duplicate-aware transaction import preview (PR #62, merged into `main` at `c81e2cfc77f8cb8ebe04160babb8f5404f0853d9`).
-Current iteration: 065 — accessible transaction import preview.
-Current branch: `ux/iteration-065-transaction-import-preview`.
-Base branch and commit: `main` / `c81e2cfc77f8cb8ebe04160babb8f5404f0853d9`.
-Pull request: not created.
-Pull-request state: blocked pending independent review; fallback review completed.
+Current iteration: 066 — merged-publication reconciliation.
+Current branch: `fix/iteration-066-merged-publication-reconciliation`.
+Base branch and commit: `main` / `4aeb434cb1092558bd85b96803d1a9deeaaaeec7`.
+Pull request: not created yet.
+Pull-request state: implementation complete locally; awaiting independent review and authorization.
 
 **Validation status:**
-- Focused finance tests: passed (3 suites, 6 tests)
-- Jest: passed (105 suites, 1,033 tests)
+- Focused preview tests: passed (1 suite, 3 tests)
+- Jest: passed (108 suites, 1,040 tests)
 - TypeScript: passed
 - ESLint: passed with one pre-existing warning
 - Build/OCR trace: passed with safe local build-only environment values
@@ -23,11 +23,11 @@ Pull-request state: blocked pending independent review; fallback review complete
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-065-transaction-import-preview`, target 070, latest completed 064, current 065, in execute. Iteration 064 merged-run state is archived at `docs/engineering/loop-archive/iteration-064-merged-state.json`.
+`docs/engineering/loop-state.json` still records Iteration 065 in publish with PR #63 as OPEN because the controller currently accepts only OPEN/DRAFT publication evidence. GitHub truth is authoritative: PR #63 merged at `4aeb434cb1092558bd85b96803d1a9deeaaaeec7`. Iteration 064 merged-run state is archived at `docs/engineering/loop-archive/iteration-064-merged-state.json`.
 
 ## Exact next action
 
-Obtain independent review for Iteration 065, then rerun authorization and publish one PR against `main`; do not merge automatically.
+Iteration 065 is accepted and merged. Iteration 066 adds the supported controller recovery transition and must be reviewed, authorized, and published before Iteration 067.
 
 ## Reconciliation evidence
 

@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-065-transaction-import-preview",
+  "runId": "iteration-066-merged-publication-reconciliation",
   "targetIteration": 70,
-  "latestCompletedIteration": 64,
-  "currentIteration": 65,
-  "branch": "ux/iteration-065-transaction-import-preview",
+  "latestCompletedIteration": 65,
+  "currentIteration": 66,
+  "branch": "fix/iteration-066-merged-publication-reconciliation",
   "baseBranch": "main",
-  "baseCommit": "c81e2cfc77f8cb8ebe04160babb8f5404f0853d9",
-  "phase": "review",
+  "baseCommit": "4aeb434cb1092558bd85b96803d1a9deeaaaeec7",
+  "phase": "execute",
   "terminalState": null,
-  "nextAction": "review",
+  "nextAction": "execute",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T11:40:00.000Z",
-  "deadlineAt": "2026-08-10T15:40:00.000Z",
+  "startedAt": "2026-08-10T16:00:00.000Z",
+  "deadlineAt": "2026-08-10T20:00:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -28,136 +28,8 @@
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
   "lastFailure": null,
-  "validations": [
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "format"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma format completed without schema changes."
-    },
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "validate"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma schema validation passed."
-    },
-    {
-      "command": [
-        "npx",
-        "tsc",
-        "--noEmit"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "TypeScript completed without errors after the production build regenerated Next.js types."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "lint"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "ESLint passed with one pre-existing unused-variable warning."
-    },
-    {
-      "command": [
-        "npm",
-        "test",
-        "--",
-        "--runInBand"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Full Jest suite passed: 108 suites, 1038 tests."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "build"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Production build and OCR trace verification passed."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "db:status"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Configured database migration status is up to date."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "db:verify"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Disposable MySQL 8.4 migration replay passed."
-    },
-    {
-      "command": [
-        "git",
-        "diff",
-        "--check"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Git diff whitespace check passed."
-    },
-    {
-      "command": [
-        "npm",
-        "audit",
-        "--omit=dev",
-        "--audit-level=critical"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Audit passed at the critical threshold; existing high/moderate advisories remain."
-    }
-  ],
-  "review": {
-    "independent": false,
-    "approved": true,
-    "baseCommitIsAncestor": true,
-    "summary": "Dedicated specialist subagents were unavailable. The orchestrator completed separate architecture, security, reliability, product/UX, accessibility, and adversarial diff-review passes. The preview remains read-only, authenticated, bounded, and semantically accessible."
-  },
+  "validations": [],
+  "review": null,
   "authorizedCommit": null,
   "publication": null,
   "blocker": null

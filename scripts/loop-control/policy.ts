@@ -371,6 +371,23 @@ export const recordPublication = (
   return decide(state, null, 'publish', null, { publication });
 };
 
+export const reconcileMergedPublication = (
+  state: LoopState,
+  publication: PublicationEvidence,
+  verification: PublicationVerification,
+): Decision => {
+  const prior = stopped(state);
+  if (prior) return prior;
+  if (state.phase !== 'publish' || state.nextAction !== 'publish' || !state.publication
+    || state.publication.commit !== publication.commit || state.publication.pullRequestUrl !== publication.pullRequestUrl
+    || publication.pullRequestState !== 'MERGED' || state.authorizedCommit !== publication.commit
+    || !verification.baseCommitIsAncestor || !verification.commitIsHead || !verification.branchMatches
+    || !verification.repositoryMatches || !verification.livePullRequestMatches) {
+    return decide(state, 'blocked', 'stop', 'Merged publication reconciliation is invalid.');
+  }
+  return decide(state, null, 'publish', null, { publication });
+};
+
 export const acceptIteration = (state: LoopState, verification: PublicationVerification): Decision => {
   const prior = stopped(state);
   if (prior) return prior;
@@ -382,7 +399,7 @@ export const acceptIteration = (state: LoopState, verification: PublicationVerif
     || !verification.baseCommitIsAncestor || !verification.commitIsHead || !verification.branchMatches
     || !verification.repositoryMatches || !verification.livePullRequestMatches
     || !isDirectGitHubPullRequestUrl(state.publication.pullRequestUrl)
-    || !['OPEN', 'DRAFT'].includes(state.publication.pullRequestState)) {
+    || !['OPEN', 'DRAFT', 'MERGED'].includes(state.publication.pullRequestState)) {
     return decide(state, 'blocked', 'stop', 'Acceptance evidence is incomplete.');
   }
   const terminalState: TerminalState = state.currentIteration >= state.targetIteration ? 'completed' : 'accepted';
