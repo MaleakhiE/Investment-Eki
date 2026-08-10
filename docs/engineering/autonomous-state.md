@@ -4,12 +4,12 @@ Last updated: 2026-08-10
 
 ## Current run
 
-Latest completed iteration: 062 — guided investment snapshot workspace (PR #60, merged into `main` at `7ca5fffb85016f93e28f1bde78a6e1de2ae38ee3`).
-Current iteration: 063 — shared decision context and accessible financial evidence.
-Current branch: `ux/iteration-063-decision-context`.
-Base branch and commit: `main` / `7ca5fffb85016f93e28f1bde78a6e1de2ae38ee3`.
+Latest completed iteration: 063 — shared decision context and accessible financial evidence (PR #61, merged into `main` at `0c700e008e9ab2d983a474d68eafad2750146018`).
+Current iteration: 064 — duplicate-aware transaction import preview.
+Current branch: `feat/iteration-064-transaction-import-reconciliation`.
+Base branch and commit: `main` / `0c700e008e9ab2d983a474d68eafad2750146018`.
 Pull request: not created.
-Pull-request state: blocked by loop controller after publication-readiness evidence mismatch.
+Pull-request state: blocked by environment: Docker daemon unavailable for disposable migration replay.
 
 **Validation status:**
 - Focused finance tests: passed (3 suites, 6 tests)
@@ -23,21 +23,21 @@ Pull-request state: blocked by loop controller after publication-readiness evide
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-063-decision-context`, target 070, latest completed 062, current 063, in review. Iteration 062 evidence is archived at `docs/engineering/loop-archive/iteration-062-prepublication.json`.
+`docs/engineering/loop-state.json` is schema version 1 for run `iteration-064-transaction-import-reconciliation`, target 070, latest completed 063, current 064, in execute. Iteration 063 merged-run state is archived at `docs/engineering/loop-archive/iteration-063-merged-state.json`.
 
 ## Exact next action
 
-Start a fresh governed Iteration 063 retry with the exact recorded review summary, rerun the acceptance contract, and authorize publication only after the controller accepts matching evidence. Do not merge automatically.
+Run `npm run db:verify` in a Docker-enabled environment, then complete independent review and publication authorization. Do not merge automatically.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #60 merged into `main` at `7ca5fff`; Iteration 063 branches directly from that merge.
+`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #61 merged into `main` at `0c700e0`; Iteration 064 branches directly from that merge.
 
 ## Stacked pull-request dependencies
 
-- Iterations 053–062 are merged into `main` through PR #60.
-- Iteration 063 is based directly on the verified Iteration 062 merge commit.
+- Iterations 053–063 are merged into `main` through PR #61.
+- Iteration 064 is based directly on the verified Iteration 063 merge commit.
 
 ## Portfolio distribution
 
-Iteration 063 is a product-trust and accessibility slice. It adds no trade execution, credential aggregation, schema change, or new stored monetary calculation.
+Iteration 064 is a product and reliability slice. It adds a read-only, authenticated CSV preview without persistence, provider credentials, or schema changes.
