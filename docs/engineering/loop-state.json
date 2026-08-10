@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-062-guided-investment-snapshot",
+  "runId": "iteration-063-decision-context",
   "targetIteration": 70,
-  "latestCompletedIteration": 61,
-  "currentIteration": 62,
-  "branch": "ux/iteration-062-guided-investment-snapshot",
+  "latestCompletedIteration": 62,
+  "currentIteration": 63,
+  "branch": "ux/iteration-063-decision-context",
   "baseBranch": "main",
-  "baseCommit": "32abdd96bffdd0a337a2cdd4e7b0260e6600d6c1",
-  "phase": "review",
-  "terminalState": null,
-  "nextAction": "review",
+  "baseCommit": "7ca5fffb85016f93e28f1bde78a6e1de2ae38ee3",
+  "phase": "stopped",
+  "terminalState": "blocked",
+  "nextAction": "stop",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T07:09:28.000Z",
-  "deadlineAt": "2026-08-10T11:09:28.000Z",
+  "startedAt": "2026-08-10T09:09:26.000Z",
+  "deadlineAt": "2026-08-10T13:09:26.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -39,7 +39,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Prisma formatter exited successfully; no schema behavior change retained."
+      "summary": "Prisma format completed without schema changes."
     },
     {
       "command": [
@@ -51,7 +51,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Prisma schema validated against an isolated disposable MySQL URL."
+      "summary": "Prisma schema validation passed."
     },
     {
       "command": [
@@ -73,9 +73,9 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "pre-existing",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "ESLint exited zero with one pre-existing unused-variable warning."
+      "summary": "ESLint passed with one pre-existing unused-variable warning."
     },
     {
       "command": [
@@ -88,7 +88,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Jest passed 103 suites and 1028 tests."
+      "summary": "Full Jest passed: 104 suites and 1031 tests."
     },
     {
       "command": [
@@ -98,9 +98,9 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "environment-related",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "Production build and OCR trace passed with safe local build-only environment values."
+      "summary": "Production build and OCR trace verification passed."
     },
     {
       "command": [
@@ -110,9 +110,9 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "environment-related",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "Migration status passed against an isolated disposable MySQL database."
+      "summary": "Configured database migration status is up to date."
     },
     {
       "command": [
@@ -124,7 +124,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "All nine migrations replayed successfully in disposable MySQL 8.4."
+      "summary": "Disposable MySQL 8.4 migration replay passed."
     },
     {
       "command": [
@@ -136,7 +136,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "No whitespace errors."
+      "summary": "Git diff whitespace check passed."
     },
     {
       "command": [
@@ -147,18 +147,153 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "pre-existing",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "No critical production dependency vulnerability; existing high and moderate advisories remain outside this UI iteration."
+      "summary": "Audit passed at the critical threshold; existing high/moderate advisories remain."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "format"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma format completed without schema changes."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "validate"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma schema validation passed."
+    },
+    {
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "TypeScript completed without errors."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "ESLint passed with one pre-existing unused-variable warning."
+    },
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Full Jest passed: 104 suites and 1032 tests."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Production build and OCR trace verification passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:status"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Configured database migration status is up to date."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:verify"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Disposable MySQL 8.4 migration replay passed."
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Git diff whitespace check passed."
+    },
+    {
+      "command": [
+        "npm",
+        "audit",
+        "--omit=dev",
+        "--audit-level=critical"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Audit passed at the critical threshold; existing high/moderate advisories remain."
+    },
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Full Jest suite passed: 105 suites, 1033 tests."
     }
   ],
   "review": {
     "independent": true,
     "approved": true,
     "baseCommitIsAncestor": true,
-    "summary": "Fresh independent review found four issues; all were repaired and re-reviewed. No High or Medium correctness, financial presentation, security, accessibility, responsive UX, regression, or test-gap blockers remain."
+    "summary": "Independent review approved after fixing the analytics cashflow contract and reconciling validation evidence; no remaining code blockers."
   },
   "authorizedCommit": null,
   "publication": null,
-  "blocker": null
+  "blocker": "Publication evidence is incomplete."
 }
