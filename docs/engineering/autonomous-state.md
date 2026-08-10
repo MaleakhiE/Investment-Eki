@@ -8,8 +8,8 @@ Latest completed iteration: 062 — guided investment snapshot workspace (PR #60
 Current iteration: 063 — shared decision context and accessible financial evidence.
 Current branch: `ux/iteration-063-decision-context`.
 Base branch and commit: `main` / `7ca5fffb85016f93e28f1bde78a6e1de2ae38ee3`.
-Pull request: pending publication authorization.
-Pull-request state: not created.
+Pull request: not created.
+Pull-request state: blocked by loop controller after publication-readiness evidence mismatch.
 
 **Validation status:**
 - Focused finance tests: passed (3 suites, 6 tests)
@@ -27,7 +27,7 @@ Pull-request state: not created.
 
 ## Exact next action
 
-Complete independent review, authorize the exact reviewed HEAD, then publish one PR against `main`. Do not merge automatically.
+Start a fresh governed Iteration 063 retry with the exact recorded review summary, rerun the acceptance contract, and authorize publication only after the controller accepts matching evidence. Do not merge automatically.
 
 ## Reconciliation evidence
 

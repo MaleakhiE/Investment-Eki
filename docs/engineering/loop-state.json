@@ -7,9 +7,9 @@
   "branch": "ux/iteration-063-decision-context",
   "baseBranch": "main",
   "baseCommit": "7ca5fffb85016f93e28f1bde78a6e1de2ae38ee3",
-  "phase": "review",
-  "terminalState": null,
-  "nextAction": "review",
+  "phase": "stopped",
+  "terminalState": "blocked",
+  "nextAction": "stop",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-10T09:09:26.000Z",
@@ -295,5 +295,5 @@
   },
   "authorizedCommit": null,
   "publication": null,
-  "blocker": null
+  "blocker": "Publication evidence is incomplete."
 }
