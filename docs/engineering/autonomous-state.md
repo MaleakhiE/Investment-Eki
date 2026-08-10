@@ -8,8 +8,8 @@ Latest completed iteration: 064 — duplicate-aware transaction import preview (
 Current iteration: 066 — merged-publication reconciliation.
 Current branch: `fix/iteration-066-merged-publication-reconciliation`.
 Base branch and commit: `main` / `4aeb434cb1092558bd85b96803d1a9deeaaaeec7`.
-Pull request: not created yet.
-Pull-request state: implementation complete locally; awaiting independent review and authorization.
+Pull request: not created.
+Pull-request state: blocked pending independent review; fallback review is recorded and is not independent approval.
 
 **Validation status:**
 - Focused preview tests: passed (1 suite, 3 tests)
@@ -27,7 +27,7 @@ Pull-request state: implementation complete locally; awaiting independent review
 
 ## Exact next action
 
-Iteration 065 is accepted and merged. Iteration 066 adds the supported controller recovery transition and must be reviewed, authorized, and published before Iteration 067.
+Iteration 065 is accepted and merged. Iteration 066 adds the supported controller recovery transition; all required validation passed, but publication is blocked until independent review returns.
 
 ## Reconciliation evidence
 
