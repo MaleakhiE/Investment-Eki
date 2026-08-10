@@ -23,7 +23,7 @@ Pull-request state: not created.
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-062-guided-investment-snapshot`, target 070, latest completed 061, current 062, in execution. The accepted Iteration 061 state is preserved in `docs/engineering/loop-archive/iteration-061-accepted.json`.
+`docs/engineering/loop-state.json` is schema version 1 for run `iteration-062-guided-investment-snapshot`, target 070, latest completed 061, current 062, in execution. Iteration 061 evidence remains in Git history and `docs/engineering/iterations/iteration-061.md`.
 
 ## Exact next action
 
