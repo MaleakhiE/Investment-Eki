@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "runId": "iteration-066-merged-publication-reconciliation",
+  "targetIteration": 70,
+  "latestCompletedIteration": 65,
+  "currentIteration": 66,
+  "branch": "fix/iteration-066-merged-publication-reconciliation",
+  "baseBranch": "main",
+  "baseCommit": "4aeb434cb1092558bd85b96803d1a9deeaaaeec7",
+  "phase": "review",
+  "terminalState": null,
+  "nextAction": "review",
+  "repairAttempts": 0,
+  "iterationsAcceptedThisRun": 0,
+  "startedAt": "2026-08-10T16:00:00.000Z",
+  "deadlineAt": "2026-08-10T20:00:00.000Z",
+  "limits": {
+    "maxRepairAttempts": 3,
+    "maxIterations": 18,
+    "maxElapsedMinutes": 240,
+    "validationTimeoutMinutes": 30,
+    "maxNetworkRetries": 2,
+    "maxChildAgents": 6,
+    "maxStackDepth": 1,
+    "maxChangedLines": 2000,
+    "maxChangedFiles": 30
+  },
+  "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
+  "lastRepairStrategyHash": null,
+  "lastFailure": null,
+  "validations": [
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Full Jest suite passed: 108 suites, 1041 tests."
+    },
+    {
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "TypeScript completed without errors."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "format"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma formatting completed without schema changes."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "validate"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma schema validation passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "ESLint passed with one pre-existing warning."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Production build and OCR trace verification passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:status"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Database migration status is up to date."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:verify"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Disposable MySQL migration replay passed."
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Git diff whitespace check passed."
+    },
+    {
+      "command": [
+        "npm",
+        "audit",
+        "--omit=dev",
+        "--audit-level=critical"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Audit passed at critical threshold; existing advisories remain."
+    }
+  ],
+  "review": {
+    "independent": false,
+    "approved": true,
+    "baseCommitIsAncestor": true,
+    "summary": "Dedicated reviewer did not return. Orchestrator fallback review checked normal OPEN/DRAFT ordering, MERGED reconciliation identity/ancestry, fail-closed mismatches, and regression coverage. No Critical or High finding identified; this is not independent approval."
+  },
+  "authorizedCommit": null,
+  "publication": null,
+  "blocker": null
+}

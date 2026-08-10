@@ -386,6 +386,25 @@ test('reconciles a publication that merged before durable acceptance was recorde
   expect(acceptIteration(merged.state, publicationVerification).terminalState).toBe('accepted');
 });
 
+test.each([
+  ['wrong commit', { commit: 'f'.repeat(40) }],
+  ['wrong PR URL', { pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/999' }],
+  ['non-merged state', { pullRequestState: 'OPEN' as const }],
+] as const)('merged publication reconciliation fails closed for %s', (_label, change) => {
+  const reviewed = reviewedState();
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification).state;
+  const open = recordPublication(authorized, {
+    commit: COMMIT_SHA,
+    pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+    pullRequestState: 'OPEN',
+  }, publicationVerification).state;
+  expect(reconcileMergedPublication(open, {
+    ...open.publication!,
+    pullRequestState: 'MERGED',
+    ...change,
+  }, publicationVerification).terminalState).toBe('blocked');
+});
+
 test('iteration 070 completes only after recorded publication evidence', () => {
   const reviewed = reviewedState({ currentIteration: 70 });
   const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification);

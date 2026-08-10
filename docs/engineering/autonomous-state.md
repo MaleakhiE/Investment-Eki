@@ -5,11 +5,11 @@ Last updated: 2026-08-10
 ## Current run
 
 Latest completed iteration: 064 — duplicate-aware transaction import preview (PR #62, merged into `main` at `c81e2cfc77f8cb8ebe04160babb8f5404f0853d9`).
-Current iteration: 066 — merged-publication reconciliation.
-Current branch: `fix/iteration-066-merged-publication-reconciliation`.
-Base branch and commit: `main` / `4aeb434cb1092558bd85b96803d1a9deeaaaeec7`.
-Pull request: not created.
-Pull-request state: blocked pending independent review; fallback review is recorded and is not independent approval.
+Current iteration: 067 — merged-evidence regression coverage.
+Current branch: `test/iteration-067-merged-evidence-regressions`.
+Base branch and commit: `main` / `6788016c5f090fccd909754a5f0765000fead1d0`.
+Pull request: not created yet.
+Pull-request state: implementation in progress; Iteration 066 is verified owner-merged in PR #64 at `6788016c5f090fccd909754a5f0765000fead1d0`.
 
 **Validation status:**
 - Focused preview tests: passed (1 suite, 3 tests)
@@ -27,7 +27,7 @@ Pull-request state: blocked pending independent review; fallback review is recor
 
 ## Exact next action
 
-Iteration 065 is accepted and merged. Iteration 066 adds the supported controller recovery transition; all required validation passed, but publication is blocked until independent review returns.
+Iterations 065 and 066 are verified merged. Iteration 067 adds missing fail-closed regression coverage before another queued PR is prepared.
 
 ## Reconciliation evidence
 
