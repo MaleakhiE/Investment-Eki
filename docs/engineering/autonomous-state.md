@@ -4,40 +4,40 @@ Last updated: 2026-08-10
 
 ## Current run
 
-Latest completed iteration: 060 — investment history empty-state onboarding (PR #58, merged into `main` at `99d2a98e8b2903329b95d3066f230498e527b8a5`).
-Current iteration: 061 — session continuity, trusted shell, and investment provenance.
-Current branch: `fix/iteration-061-session-hallmark-provenance`.
-Base branch and commit: `main` / `99d2a98e8b2903329b95d3066f230498e527b8a5`.
-Pull request: [PR #59](https://github.com/MaleakhiE/Investment-Eki/pull/59).
-Pull-request state: OPEN; not merged.
+Latest completed iteration: 061 — session continuity, trusted shell, and investment provenance (PR #59, merged into `main` at `32abdd96bffdd0a337a2cdd4e7b0260e6600d6c1`).
+Current iteration: 062 — guided investment snapshot workspace.
+Current branch: `ux/iteration-062-guided-investment-snapshot`.
+Base branch and commit: `main` / `32abdd96bffdd0a337a2cdd4e7b0260e6600d6c1`.
+Pull request: pending publication authorization.
+Pull-request state: not created.
 
 **Validation status:**
-- Focused auth/layout/investment tests: passed (60 tests)
-- Jest: passed (102 suites, 1,017 tests)
+- Focused investment tests: passed (3 suites, 11 tests)
+- Jest: passed (103 suites, 1,028 tests)
 - TypeScript: passed
 - ESLint: passed with one pre-existing warning
-- Build: passed, including OCR trace verification
-- Database migration replay: passed against MySQL 8.4 after making the backfill deterministic
+- Build/OCR trace: passed with safe local build-only environment values
+- Prisma validation, disposable migration status, and full replay: passed
+- Critical-level production dependency audit: passed; existing high/moderate advisories remain
 - Diff check: passed
-- GitGuardian: blocked by an external false positive on durable loop-state Git commit IDs; no credential or token was detected
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-061-session-hallmark-provenance-retry`, target 070, latest completed 060, current 061, accepted with PR #59 open at reviewed HEAD `1c0582de016c6efc833d3ff5c541b92798b676f8`. The prior blocked 060 state is preserved at `docs/engineering/loop-archive/iteration-060-blocked.json`.
+`docs/engineering/loop-state.json` is schema version 1 for run `iteration-062-guided-investment-snapshot`, target 070, latest completed 061, current 062, in execution. Iteration 061 evidence remains in Git history and `docs/engineering/iterations/iteration-061.md`.
 
 ## Exact next action
 
-Do not merge PR #59 automatically. The next action is to dismiss or allowlist the GitGuardian false positive for the controller's documented Git commit references, then re-run the check; do not weaken loop-state authorization or remove exact HEAD evidence.
+Complete full validation and independent review, authorize the exact reviewed HEAD, then publish one PR against `main`. Do not merge automatically.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #58 merged into `main` at `99d2a98`; the Iteration 060 blocked state was archived before starting the fresh authorized Iteration 061 run.
+`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #59 merged into `main` at `32abdd9`; Iteration 062 branches directly from that merge.
 
 ## Stacked pull-request dependencies
 
-- Iterations 053–060 are merged into `main` through PR #58.
-- Iteration 061 is based directly on the verified Iteration 060 merge commit.
+- Iterations 053–061 are merged into `main` through PR #59.
+- Iteration 062 is based directly on the verified Iteration 061 merge commit.
 
 ## Portfolio distribution
 
-Iteration 061 balances security/reliability with user-facing shell and provenance improvements. No trade execution, credential aggregation, or new monetary calculation was added.
+Iteration 062 is a user-facing UX/accessibility and financial-presentation slice. It adds no trade execution, credential aggregation, schema change, or new stored monetary calculation.
