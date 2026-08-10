@@ -16,6 +16,17 @@ interface Preview {
   duplicateRows: number[];
 }
 
+const MAX_PREVIEW_BYTES = 1_000_000;
+
+function isPreview(value: unknown): value is Preview {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<Preview>;
+  return Array.isArray(candidate.rows)
+    && typeof candidate.validRows === 'number'
+    && typeof candidate.invalidRows === 'number'
+    && Array.isArray(candidate.duplicateRows);
+}
+
 export async function requestTransactionPreview(csv: string, fetcher: typeof fetch = fetch): Promise<Preview> {
   const response = await fetcher('/api/transactions/import/preview', {
     method: 'POST',
@@ -24,6 +35,7 @@ export async function requestTransactionPreview(csv: string, fetcher: typeof fet
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.responseDetails?.errors?.join(', ') || data.responseMessage || 'Unable to preview CSV');
+  if (!isPreview(data.responseDetails)) throw new Error('Preview response was unavailable');
   return data.responseDetails;
 }
 
@@ -34,6 +46,11 @@ export default function TransactionImportPreview() {
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
+    if (file.size > MAX_PREVIEW_BYTES) {
+      setMessage('CSV must be smaller than 1 MB');
+      setStatus('error');
+      return;
+    }
     setStatus('loading');
     setMessage('');
     setPreview(null);

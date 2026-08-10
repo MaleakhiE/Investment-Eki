@@ -16,3 +16,8 @@ it('requests a preview only and returns the server preview payload', async () =>
   expect(fetcher).toHaveBeenCalledWith('/api/transactions/import/preview', expect.objectContaining({ method: 'POST' }));
   expect(fetcher).not.toHaveBeenCalledWith(expect.stringContaining('/api/transactions/import'), expect.objectContaining({ method: 'POST', body: expect.stringContaining('confirm') }));
 });
+
+it('rejects malformed successful responses instead of rendering an invalid preview', async () => {
+  const fetcher = jest.fn().mockResolvedValue(new Response(JSON.stringify({ responseDetails: { rows: null } }), { status: 200 })) as unknown as typeof fetch;
+  await expect(requestTransactionPreview('csv', fetcher)).rejects.toThrow('Preview response was unavailable');
+});
