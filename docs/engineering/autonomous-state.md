@@ -4,43 +4,40 @@ Last updated: 2026-08-10
 
 ## Current run
 
-Latest completed iteration: 059 — goals empty-state guidance (PR #57, merged into `main` at `31d93ed51dcbf8ceea67c053dcd4a2e1202246cb`).
-Current iteration: 060 — investment history empty-state onboarding.
-Current branch: `ux/iteration-060-investment-empty-states-reconciled`.
-Base branch and commit: `main` / `31d93ed51dcbf8ceea67c053dcd4a2e1202246cb`.
-Pull request: none; loop-control blocked authorization before publication.
-Pull-request state: none.
+Latest completed iteration: 060 — investment history empty-state onboarding (PR #58, merged into `main` at `99d2a98e8b2903329b95d3066f230498e527b8a5`).
+Current iteration: 061 — session continuity, trusted shell, and investment provenance.
+Current branch: `fix/iteration-061-session-hallmark-provenance`.
+Base branch and commit: `main` / `99d2a98e8b2903329b95d3066f230498e527b8a5`.
+Pull request: [PR #59](https://github.com/MaleakhiE/Investment-Eki/pull/59).
+Pull-request state: OPEN; not merged.
 
 **Validation status:**
-- Focused investment availability tests: passed (3 tests)
-- Prisma format/validate: passed
+- Focused auth/layout/investment tests: passed (60 tests)
+- Jest: passed (102 suites, 1,017 tests)
 - TypeScript: passed
 - ESLint: passed with one pre-existing warning
-- Jest: passed (102 suites, 1,005 tests)
 - Build: passed, including OCR trace verification
-- Database status: passed
-- Database migration replay: blocked by pre-existing MySQL 8.4 `only_full_group_by` failure in migration `20260717000000_add_financial_accounts_and_transfers`
+- Database migration replay: passed against MySQL 8.4 after making the backfill deterministic
 - Diff check: passed
-- Critical-threshold audit: passed; existing moderate/high advisories remain
+- GitGuardian: blocked by an external false positive on durable loop-state Git commit IDs; no credential or token was detected
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` is schema version 1 for run `iteration-060-investment-empty-states-retry`, target 070, latest completed 059, current 060, and terminal state `blocked`. Required publication remains unavailable because `npm run db:verify` is blocked by the pre-existing migration replay defect and independent review was unavailable.
+`docs/engineering/loop-state.json` is schema version 1 for run `iteration-061-session-hallmark-provenance-retry`, target 070, latest completed 060, current 061, accepted with PR #59 open at reviewed HEAD `1c0582de016c6efc833d3ff5c541b92798b676f8`. The prior blocked 060 state is preserved at `docs/engineering/loop-archive/iteration-060-blocked.json`.
 
 ## Exact next action
 
-On the next scheduled invocation, preserve the Iteration 060 implementation, investigate the pre-existing migration replay compatibility defect without editing historical migrations blindly, then start a fresh loop-control run for Iteration 060 and rerun the full acceptance contract before publication.
+Do not merge PR #59 automatically. The next action is to dismiss or allowlist the GitGuardian false positive for the controller's documented Git commit references, then re-run the check; do not weaken loop-state authorization or remove exact HEAD evidence.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #57 merged into `main` at `31d93ed`; no new PR was created for Iteration 060.
+`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #58 merged into `main` at `99d2a98`; the Iteration 060 blocked state was archived before starting the fresh authorized Iteration 061 run.
 
 ## Stacked pull-request dependencies
 
-- Iterations 053–059 are merged into `main` through PR #57.
-- Iteration 060 is independent and is based directly on the merged 059 commit.
-- The prior unpublished Iteration 060 branch was not reused because it was based on pre-059 `main` and contained stale loop documentation.
+- Iterations 053–060 are merged into `main` through PR #58.
+- Iteration 061 is based directly on the verified Iteration 060 merge commit.
 
 ## Portfolio distribution
 
-Iterations 055–060 continue the user-facing UX/accessibility cadence. Iteration 060 changes only onboarding presentation and local navigation; no investment calculations or persistence behavior changed.
+Iteration 061 balances security/reliability with user-facing shell and provenance improvements. No trade execution, credential aggregation, or new monetary calculation was added.

@@ -78,7 +78,7 @@ export const authConfig: NextAuthConfig = {
       } else if (token.id) {
         token.session_invalidated = !(await isSessionVersionCurrent(
           token.id as string,
-          token.session_version as number | undefined,
+          token.session_version,
         ));
       }
       return token;

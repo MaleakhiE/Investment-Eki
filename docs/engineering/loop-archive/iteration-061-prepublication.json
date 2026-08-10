@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-061-session-hallmark-provenance-retry",
+  "runId": "iteration-061-session-hallmark-provenance",
   "targetIteration": 70,
   "latestCompletedIteration": 60,
   "currentIteration": 61,
@@ -8,8 +8,8 @@
   "baseBranch": "main",
   "baseCommit": "99d2a98e8b2903329b95d3066f230498e527b8a5",
   "phase": "publish",
-  "terminalState": "accepted",
-  "nextAction": "next-iteration",
+  "terminalState": null,
+  "nextAction": "publish",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-10T00:00:00.000Z",
@@ -88,7 +88,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Full Jest suite completed successfully: 102 suites and 1024 tests."
+      "summary": "Full Jest suite completed successfully: 102 suites and 1017 tests."
     },
     {
       "command": [
@@ -124,7 +124,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Disposable MySQL 8.4 migration replay completed successfully in compatibility mode."
+      "summary": "Disposable MySQL 8.4 migration replay completed successfully."
     },
     {
       "command": [
@@ -156,13 +156,9 @@
     "independent": true,
     "approved": true,
     "baseCommitIsAncestor": true,
-    "summary": "Independent reviewer approved the application diff; historical migration checksum risk is removed, session-version normalization is strict, and the disposable migration compatibility limitation is documented. Subsequent commits only preserve loop evidence."
+    "summary": "Independent reviewer approved the updated diff after confirming historical migration checksum risk was removed and session-version normalization rejects malformed coercions. Compatibility-mode migration replay limitation is documented."
   },
-  "authorizedCommit": "1c0582de016c6efc833d3ff5c541b92798b676f8",
-  "publication": {
-    "commit": "1c0582de016c6efc833d3ff5c541b92798b676f8",
-    "pullRequestUrl": "https://github.com/MaleakhiE/Investment-Eki/pull/59",
-    "pullRequestState": "OPEN"
-  },
+  "authorizedCommit": "435573e16dd381eace9e7aa88d246b3ea691a5b4",
+  "publication": null,
   "blocker": null
 }

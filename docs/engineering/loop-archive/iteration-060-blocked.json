@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-061-session-hallmark-provenance-retry",
+  "runId": "iteration-060-investment-empty-states-retry",
   "targetIteration": 70,
-  "latestCompletedIteration": 60,
-  "currentIteration": 61,
-  "branch": "fix/iteration-061-session-hallmark-provenance",
+  "latestCompletedIteration": 59,
+  "currentIteration": 60,
+  "branch": "ux/iteration-060-investment-empty-states-reconciled",
   "baseBranch": "main",
-  "baseCommit": "99d2a98e8b2903329b95d3066f230498e527b8a5",
-  "phase": "publish",
-  "terminalState": "accepted",
-  "nextAction": "next-iteration",
+  "baseCommit": "31d93ed51dcbf8ceea67c053dcd4a2e1202246cb",
+  "phase": "stopped",
+  "terminalState": "blocked",
+  "nextAction": "stop",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T00:00:00.000Z",
-  "deadlineAt": "2026-08-10T04:00:00.000Z",
+  "startedAt": "2026-08-09T15:36:24.000Z",
+  "deadlineAt": "2026-08-09T17:36:24.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
-    "maxElapsedMinutes": 240,
+    "maxElapsedMinutes": 120,
     "validationTimeoutMinutes": 30,
     "maxNetworkRetries": 2,
     "maxChildAgents": 6,
@@ -39,7 +39,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Prisma schema formatting completed successfully."
+      "summary": "Prisma schema formatting completed successfully without an intentional schema change."
     },
     {
       "command": [
@@ -75,7 +75,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "ESLint completed with one pre-existing warning and no errors."
+      "summary": "ESLint completed with one existing warning and no errors."
     },
     {
       "command": [
@@ -88,7 +88,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Full Jest suite completed successfully: 102 suites and 1024 tests."
+      "summary": "Full Jest suite completed successfully."
     },
     {
       "command": [
@@ -112,7 +112,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Database status reports all migrations applied."
+      "summary": "Database status completed successfully; nine migrations are applied."
     },
     {
       "command": [
@@ -121,10 +121,10 @@
         "db:verify"
       ],
       "required": true,
-      "status": "Passed",
-      "classification": "unknown",
+      "status": "Blocked by environment",
+      "classification": "environment-related",
       "repairable": false,
-      "summary": "Disposable MySQL 8.4 migration replay completed successfully in compatibility mode."
+      "summary": "Disposable MySQL 8.4 migration replay is blocked by pre-existing only_full_group_by failure in migration 20260717000000_add_financial_accounts_and_transfers."
     },
     {
       "command": [
@@ -149,20 +149,16 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "No critical production dependency vulnerabilities were reported; non-critical advisories remain."
+      "summary": "Production dependency audit completed without critical vulnerabilities."
     }
   ],
   "review": {
-    "independent": true,
+    "independent": false,
     "approved": true,
     "baseCommitIsAncestor": true,
-    "summary": "Independent reviewer approved the application diff; historical migration checksum risk is removed, session-version normalization is strict, and the disposable migration compatibility limitation is documented. Subsequent commits only preserve loop evidence."
+    "summary": "Dedicated reviewer was unavailable for the updated HEAD. Orchestrator completed separate architecture, security, reliability, product/UX, accessibility, and adversarial diff-review passes. The focus-management finding was fixed with a keyboard-focusable form heading; no material findings remain. This is fallback review, not independent multi-agent approval."
   },
-  "authorizedCommit": "1c0582de016c6efc833d3ff5c541b92798b676f8",
-  "publication": {
-    "commit": "1c0582de016c6efc833d3ff5c541b92798b676f8",
-    "pullRequestUrl": "https://github.com/MaleakhiE/Investment-Eki/pull/59",
-    "pullRequestState": "OPEN"
-  },
-  "blocker": null
+  "authorizedCommit": null,
+  "publication": null,
+  "blocker": "Publication evidence is incomplete."
 }

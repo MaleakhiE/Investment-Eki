@@ -134,4 +134,12 @@ describe('JWT session revocation', () => {
       user: expect.objectContaining({ id: '', session_invalidated: true }),
     }));
   });
+
+  it('keeps a valid session when JWT serialization returns a string version', async () => {
+    jest.mocked(isSessionVersionCurrent).mockResolvedValue(true);
+    const token = await jwt({ token: { id: publicUserId, session_version: '3' } });
+
+    expect(token.session_invalidated).toBe(false);
+    expect(isSessionVersionCurrent).toHaveBeenCalledWith(publicUserId, '3');
+  });
 });
