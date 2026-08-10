@@ -43,15 +43,19 @@ The client never writes financial data and does not make authorization decisions
 
 ## Validation
 
-- Focused Jest: 3 suites, 5 tests passed.
-- Full Jest: 108 suites, 1,038 tests passed.
+- Focused Jest: 1 suite, 3 tests passed after review fixes.
+- Full Jest: 108 suites, 1,040 tests passed.
 - TypeScript, ESLint, production build/OCR trace, Prisma validation, database status/replay, audit threshold, and diff checks passed.
 - ESLint retains one pre-existing unused-variable warning.
 
 ## Review
 
-Dedicated specialist subagent did not return. The orchestrator completed separate architecture, security, reliability, product/UX, accessibility, and adversarial diff-review passes. This fallback is not represented as independent approval, so publication remains blocked by the loop controller.
+Independent review completed. Findings on visible keyboard focus, malformed response handling, and client-side file-size protection were fixed in commit `661ba6ba359793493030d0bb7e795ac00a32b28f`; no Critical or High findings remain.
 
 ## Rollback and follow-up
 
-Rollback is a component/page revert with no database migration. Follow-up: obtain independent review, then add explicit user-confirmed persistence and existing-transaction reconciliation as a separate bounded iteration.
+Rollback is a component/page revert with no database migration. Follow-up: add explicit user-confirmed persistence and existing-transaction reconciliation as a separate bounded iteration.
+
+## Pull request
+
+PR #63: https://github.com/MaleakhiE/Investment-Eki/pull/63 (merged at `4aeb434cb1092558bd85b96803d1a9deeaaaeec7`).

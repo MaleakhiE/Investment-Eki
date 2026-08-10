@@ -8,6 +8,7 @@ import {
   classifyCommand,
   evaluatePreflight,
   recordPublication,
+  reconcileMergedPublication,
   recordValidation,
   requestRepair,
   type LoopState,
@@ -365,6 +366,24 @@ test('acceptance requires publication commit equals the previously authorized HE
     },
   };
   expect(acceptIteration(publishedAtHeadB, publicationVerification).terminalState).toBe('blocked');
+});
+
+test('reconciles a publication that merged before durable acceptance was recorded', () => {
+  const reviewed = reviewedState();
+  const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification).state;
+  const open = recordPublication(authorized, {
+    commit: COMMIT_SHA,
+    pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53',
+    pullRequestState: 'OPEN',
+  }, publicationVerification).state;
+  const merged = reconcileMergedPublication(open, {
+    ...open.publication!,
+    pullRequestState: 'MERGED',
+  }, publicationVerification);
+
+  expect(merged.terminalState).toBeNull();
+  expect(merged.state.publication?.pullRequestState).toBe('MERGED');
+  expect(acceptIteration(merged.state, publicationVerification).terminalState).toBe('accepted');
 });
 
 test('iteration 070 completes only after recorded publication evidence', () => {

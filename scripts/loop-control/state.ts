@@ -30,7 +30,7 @@ const VALIDATION_STATUSES = new Set<ValidationStatus>(['Passed', 'Failed', 'Bloc
 const FAILURE_CLASSIFICATIONS = new Set<FailureClassification>(['introduced', 'pre-existing', 'environment-related', 'invalid-command', 'external-service', 'unknown']);
 const PHASES = new Set<Phase>(['preflight', 'execute', 'validate', 'repair', 'review', 'publish', 'stopped']);
 const NEXT_ACTIONS = new Set<NextAction>(['preflight', 'execute', 'validate', 'repair', 'review', 'publish', 'next-iteration', 'stop']);
-const PULL_REQUEST_STATES = new Set<PublicationEvidence['pullRequestState']>(['OPEN', 'DRAFT']);
+const PULL_REQUEST_STATES = new Set<PublicationEvidence['pullRequestState']>(['OPEN', 'DRAFT', 'MERGED']);
 const SENSITIVE_VALUE = /\b(?:database_url|token|secret|password|api[_-]?key|authorization|cookie)\s*[:=]|\b(?:mysql|mariadb|postgres(?:ql)?|mongodb(?:\+srv)?|redis):\/\/|https?:\/\/[^\s/:@]+:[^\s/@]+@|\bbearer\s+|\bsk-(?:proj-)?[A-Za-z0-9_-]{16,}\b|\bgh(?:p|o|u|s|r)_[A-Za-z0-9_]{16,}\b|\bgithub_pat_[A-Za-z0-9_]{16,}\b|\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/i;
 const DISALLOWED_SUMMARY_CHARACTER = /[\r\n\x1B]|[^\x20-\x7E]/;
 
