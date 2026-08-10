@@ -7,6 +7,7 @@ import CurrencyInput, { formatNumber } from '@/components/ui/CurrencyInput';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { parseInvestmentHistories } from './investment-history';
+import { getInvestmentReturnPresentation } from './investment-presentation';
 
 interface InvestmentSnapshot {
   id: string;
@@ -244,39 +245,37 @@ export default function InvestmentsPage() {
   };
 
   const previewGL = (parseFloat(currentValue) || 0) - (parseFloat(investedAmount) || 0);
-  const previewReturn = parseFloat(investedAmount) > 0 ? ((previewGL / parseFloat(investedAmount)) * 100).toFixed(1) : '0';
+  const previewPresentation = getInvestmentReturnPresentation(parseFloat(investedAmount), previewGL);
   const inputClass = "w-full py-2 rounded-xl border border-[#dcece8] bg-white text-[#16332f] focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
   const inputClassWithPadding = "w-full px-3 py-2 rounded-xl border border-[#dcece8] bg-white text-[#16332f] focus:outline-none focus:ring-2 focus:ring-[#00d4aa] text-sm";
 
-  const goldTotal = goldSnapshots.reduce((sum, s) => sum + s.current_value, 0);
-  const mfTotal = mfSnapshots.reduce((sum, s) => sum + s.current_value, 0);
-  const goldGainLoss = goldSnapshots.reduce((sum, s) => sum + s.gain_loss, 0);
-  const mfGainLoss = mfSnapshots.reduce((sum, s) => sum + s.gain_loss, 0);
-  const goldInvested = goldSnapshots.reduce((sum, s) => sum + s.invested_amount, 0);
-  const mfInvested = mfSnapshots.reduce((sum, s) => sum + s.invested_amount, 0);
-  const goldReturnPct = goldInvested > 0 ? ((goldGainLoss / goldInvested) * 100).toFixed(1) : '0';
-  const mfReturnPct = mfInvested > 0 ? ((mfGainLoss / mfInvested) * 100).toFixed(1) : '0';
+  // Histories are newest-first; portfolio position must never add repeated monthly snapshots.
+  const latestGold = goldSnapshots[0];
+  const latestMutualFund = mfSnapshots[0];
+  const goldTotal = latestGold?.current_value ?? 0;
+  const mfTotal = latestMutualFund?.current_value ?? 0;
+  const goldGainLoss = latestGold?.gain_loss ?? 0;
+  const mfGainLoss = latestMutualFund?.gain_loss ?? 0;
+  const goldInvested = latestGold?.invested_amount ?? 0;
+  const mfInvested = latestMutualFund?.invested_amount ?? 0;
+  const goldReturn = getInvestmentReturnPresentation(goldInvested, goldGainLoss);
+  const mfReturn = getInvestmentReturnPresentation(mfInvested, mfGainLoss);
+  const portfolioTotal = goldTotal + mfTotal;
 
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
       <main className="app-page investments-page lg:ml-64 p-4 lg:p-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-[#16332f]">Investments</h2>
-          <p className="text-sm text-zinc-600">Track your Gold and Mutual Fund investments</p>
-        </div>
-
-        <section className="investment-provenance" aria-labelledby="investment-provenance-title">
+        <div className="investment-page-header">
           <div>
-            <p className="app-eyebrow">Data provenance</p>
-            <h3 id="investment-provenance-title">Know what each number represents.</h3>
-            <p>Snapshots stay user-entered. Live market context is shown with its provider and update time so stale data is visible.</p>
+            <h1>Investasi</h1>
+            <p>Catat posisi investasi bulanan tanpa menghubungkan akun penyedia.</p>
           </div>
-          <dl>
-            <div><dt>Gold price</dt><dd>{goldPriceData ? `${goldPriceData.source} · ${formatSourceTimestamp(goldPriceData.updated_at)}` : 'Unavailable until refreshed'}</dd></div>
-            <div><dt>Mutual funds</dt><dd>{mfSnapshots.length > 0 ? 'Manual snapshot · provider recorded per entry' : 'No snapshots recorded'}</dd></div>
-          </dl>
-        </section>
+          <div className="investment-total" aria-label={`Total portofolio ${formatCurrency(portfolioTotal)}`}>
+            <span>Total portofolio</span>
+            <strong>{formatCurrency(portfolioTotal)}</strong>
+          </div>
+        </div>
 
         {snapshotStatus === 'loading' ? (
           <div role="status" className="flex h-64 items-center justify-center text-zinc-600">Loading investment data...</div>
@@ -289,8 +288,9 @@ export default function InvestmentsPage() {
         ) : (
           <div className="space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="card rounded-2xl p-6">
+            <section className="investment-overview" aria-labelledby="investment-overview-title">
+              <h2 id="investment-overview-title" className="sr-only">Ringkasan portofolio</h2>
+              <article className="card investment-summary-card">
                 <div className="flex items-center gap-3 mb-3">
                   <div>
                     <p className="text-sm text-zinc-600">Gold (Emas)</p>
@@ -299,12 +299,12 @@ export default function InvestmentsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-600">Invested: {formatCurrency(goldInvested)}</span>
-                  <span className={goldGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {goldGainLoss >= 0 ? '+' : ''}{formatCurrency(goldGainLoss)} ({goldReturnPct}%)
+                  <span className={`investment-return is-${goldReturn.tone}`}>
+                    {goldReturn.percentage === null ? 'Belum ada data' : `${goldReturn.amountPrefix}${formatCurrency(Math.abs(goldGainLoss))} (${goldReturn.percentage}%)`}
                   </span>
                 </div>
-              </div>
-              <div className="card rounded-2xl p-6">
+              </article>
+              <article className="card investment-summary-card">
                 <div className="flex items-center gap-3 mb-3">
                   <div>
                     <p className="text-sm text-zinc-600">Mutual Fund (Reksa Dana)</p>
@@ -313,32 +313,31 @@ export default function InvestmentsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-600">Invested: {formatCurrency(mfInvested)}</span>
-                  <span className={mfGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {mfGainLoss >= 0 ? '+' : ''}{formatCurrency(mfGainLoss)} ({mfReturnPct}%)
+                  <span className={`investment-return is-${mfReturn.tone}`}>
+                    {mfReturn.percentage === null ? 'Belum ada data' : `${mfReturn.amountPrefix}${formatCurrency(Math.abs(mfGainLoss))} (${mfReturn.percentage}%)`}
                   </span>
                 </div>
-              </div>
-            </div>
+              </article>
+            </section>
 
             {/* Form */}
-            <div className="card rounded-2xl p-6">
-              <h3 id="investment-snapshot-form-title" tabIndex={-1} className="font-semibold text-[#16332f] mb-4">Add/Update Snapshot</h3>
+            <section className="card investment-workspace" aria-labelledby="investment-snapshot-form-title">
+              <div className="investment-workspace-heading">
+                <div><h2 id="investment-snapshot-form-title" tabIndex={-1}>Catat posisi investasi</h2><p>Pilih aset, masukkan modal, lalu tinjau nilainya sebelum menyimpan.</p></div>
+                <div className="investment-asset-switcher" role="group" aria-label="Pilih jenis investasi">
+                  <button type="button" aria-pressed={selectedType === 'GOLD'} onClick={() => setSelectedType('GOLD')}>Emas</button>
+                  <button type="button" aria-pressed={selectedType === 'MUTUAL_FUND'} onClick={() => setSelectedType('MUTUAL_FUND')}>Reksa dana</button>
+                </div>
+              </div>
               <form id="investment-snapshot-form" onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1">Type</label>
-                    <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as InvestmentType)} className={inputClassWithPadding}>
-                      <option value="GOLD">Gold (Emas)</option>
-                      <option value="MUTUAL_FUND">Mutual Fund (Reksa Dana)</option>
-                    </select>
+                    <label htmlFor="investment-month" className="block text-sm font-medium mb-1">Bulan</label>
+                    <input id="investment-month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} required className={inputClassWithPadding} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1">Month</label>
-                    <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} required className={inputClassWithPadding} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1">Invested Amount</label>
-                    <CurrencyInput value={investedAmount} onChange={setInvestedAmount} required className={inputClass} />
+                    <label htmlFor="investment-capital" className="block text-sm font-medium mb-1">Modal tercatat</label>
+                    <CurrencyInput id="investment-capital" value={investedAmount} onChange={setInvestedAmount} required className={inputClass} />
                   </div>
                 </div>
 
@@ -357,24 +356,26 @@ export default function InvestmentsPage() {
                         <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} label="Use gold calculator" />
                       </div>
                     </div>
-                    {goldPriceData && (
-                      <div className="mb-4 flex flex-col gap-2 rounded-xl border border-[#ead9a8] bg-[#fff2c8] p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mb-4 flex flex-col gap-2 rounded-xl border border-[#ead9a8] bg-[#fff2c8] p-3 sm:flex-row sm:items-center sm:justify-between">
+                      {goldPriceData ? (
+                        <>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium text-[#6c551d]">Live price</span>
+                          <span className="text-sm font-medium text-[#6c551d]">Sumber nilai</span>
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${goldPriceData.source.includes('offline') ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#dcfce7] text-[#166534]'}`}>{goldPriceData.source}</span>
                         </div>
-                        <span className="font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram</span>
-                      </div>
-                    )}
+                        <span className="font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram · {formatSourceTimestamp(goldPriceData.updated_at)}</span>
+                        </>
+                      ) : <span className="text-sm text-[#6c551d]">Sumber nilai belum tersedia. Coba muat ulang harga.</span>}
+                    </div>
                     {useGoldCalc && (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-[#5e4712]">Price/gram</label>
-                          <CurrencyInput value={goldPrice} onChange={setGoldPrice} className={`${inputClass} border-[#dfcf9f] bg-white focus:ring-[#c69218]`} />
+                          <label htmlFor="gold-price" className="mb-1 block text-xs font-medium text-[#5e4712]">Harga/gram</label>
+                          <CurrencyInput id="gold-price" value={goldPrice} onChange={setGoldPrice} className={`${inputClass} border-[#dfcf9f] bg-white focus:ring-[#c69218]`} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-[#5e4712]">Grams</label>
-                          <input type="number" value={goldGrams} onChange={(e) => setGoldGrams(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-[#dfcf9f] bg-white focus:ring-[#c69218]`} />
+                          <label htmlFor="gold-grams" className="mb-1 block text-xs font-medium text-[#5e4712]">Gram</label>
+                          <input id="gold-grams" type="number" value={goldGrams} onChange={(e) => setGoldGrams(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-[#dfcf9f] bg-white focus:ring-[#c69218]`} />
                         </div>
                       </div>
                     )}
@@ -392,24 +393,24 @@ export default function InvestmentsPage() {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-xs text-blue-400 mb-1">Platform</label>
-                        <select value={mfPlatform} onChange={(e) => setMfPlatform(e.target.value)} className={`${inputClassWithPadding} border-blue-500/30`}>
+                        <label htmlFor="mutual-fund-platform" className="block text-xs text-blue-400 mb-1">Platform</label>
+                        <select id="mutual-fund-platform" value={mfPlatform} onChange={(e) => setMfPlatform(e.target.value)} className={`${inputClassWithPadding} border-blue-500/30`}>
                           {PLATFORMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                         </select>
                       </div>
                       <div className="col-span-2 md:col-span-1">
-                        <label className="block text-xs text-blue-400 mb-1">Product Name</label>
-                        <input type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Mutual fund name" className={`${inputClassWithPadding} border-blue-500/30`} />
+                        <label htmlFor="mutual-fund-product" className="block text-xs text-blue-400 mb-1">Product Name</label>
+                        <input id="mutual-fund-product" type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Mutual fund name" className={`${inputClassWithPadding} border-blue-500/30`} />
                       </div>
                       {useMfCalc && (
                         <>
                           <div>
-                            <label className="block text-xs text-blue-400 mb-1">Units</label>
-                            <input type="number" value={mfUnits} onChange={(e) => setMfUnits(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-blue-500/30`} />
+                            <label htmlFor="mutual-fund-units" className="block text-xs text-blue-400 mb-1">Units</label>
+                            <input id="mutual-fund-units" type="number" value={mfUnits} onChange={(e) => setMfUnits(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-blue-500/30`} />
                           </div>
                           <div>
-                            <label className="block text-xs text-blue-400 mb-1">NAV/Unit</label>
-                            <CurrencyInput value={mfNav} onChange={setMfNav} className={`${inputClass} border-blue-500/30`} />
+                            <label htmlFor="mutual-fund-nav" className="block text-xs text-blue-400 mb-1">NAV/Unit</label>
+                            <CurrencyInput id="mutual-fund-nav" value={mfNav} onChange={setMfNav} className={`${inputClass} border-blue-500/30`} />
                           </div>
                         </>
                       )}
@@ -419,17 +420,17 @@ export default function InvestmentsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1">Current Value</label>
-                    <CurrencyInput value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
+                    <label htmlFor="investment-current-value" className="block text-sm font-medium mb-1">Nilai saat ini</label>
+                    <CurrencyInput id="investment-current-value" value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
                   </div>
                   <div className="bg-[#f5fbf9] rounded-xl p-3">
                     <p className="text-xs text-zinc-600 mb-1">Gain/Loss Preview</p>
-                    <p className={`text-lg font-bold ${previewGL >= 0 ? 'text-green-400' : 'text-red-400'}`}>{previewGL >= 0 ? '+' : ''}Rp {formatNumber(Math.abs(previewGL))} ({previewReturn}%)</p>
+                    <p className={`investment-return is-${previewPresentation.tone}`}>{previewPresentation.percentage === null ? 'Belum ada data' : `${previewPresentation.amountPrefix}Rp ${formatNumber(Math.abs(previewGL))} (${previewPresentation.percentage}%)`}</p>
                   </div>
                   <button type="submit" disabled={isSaving} className="py-3 px-4 bg-[#00d4aa] hover:bg-[#00a88a] disabled:bg-blue-400 text-[#16332f] font-medium rounded-xl transition-colors text-sm">{isSaving ? 'Saving...' : 'Save Snapshot'}</button>
                 </div>
               </form>
-            </div>
+            </section>
 
             {/* History Tables */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

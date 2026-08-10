@@ -28,4 +28,15 @@ describe('investment history availability UX', () => {
     expect(source).toContain('investment-snapshot-form-title');
     expect(source).toContain('focus({ preventScroll: true })');
   });
+
+  it('presents a guided, sourced snapshot workflow', () => {
+    expect(source).toContain('Catat posisi investasi');
+    expect(source).toContain('Belum ada data');
+    expect(source).toContain('aria-label="Pilih jenis investasi"');
+    expect(source).toContain('Sumber nilai');
+    expect(source).not.toContain('className="investment-provenance"');
+    expect(source).toContain('goldSnapshots[0]');
+    expect(source).toContain('mfSnapshots[0]');
+    expect(source).not.toContain('investment-native-type');
+  });
 });

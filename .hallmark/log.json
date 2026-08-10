@@ -1,6 +1,13 @@
 [
   {
     "date": "2026-08-10",
+    "macrostructure": "Split Studio",
+    "theme": "FinTrack mint",
+    "enrichment": "none",
+    "brief": "Guided investment snapshot workspace with neutral empty returns"
+  },
+  {
+    "date": "2026-08-10",
     "macrostructure": "Workbench",
     "theme": "Studio",
     "enrichment": "none",

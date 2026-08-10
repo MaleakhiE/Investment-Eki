@@ -1,0 +1,8 @@
+{
+  "framework": "Next.js 16 App Router with Tailwind CSS 4",
+  "fontStack": "system UI",
+  "palette": "existing FinTrack mint tokens",
+  "motion": "motion-cut",
+  "spacing": "existing CSS plus 4px page-scoped scale",
+  "scannedAt": "2026-08-10"
+}

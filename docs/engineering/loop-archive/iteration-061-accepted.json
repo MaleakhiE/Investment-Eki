@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-062-guided-investment-snapshot",
+  "runId": "iteration-061-session-hallmark-provenance-retry",
   "targetIteration": 70,
-  "latestCompletedIteration": 61,
-  "currentIteration": 62,
-  "branch": "ux/iteration-062-guided-investment-snapshot",
+  "latestCompletedIteration": 60,
+  "currentIteration": 61,
+  "branch": "fix/iteration-061-session-hallmark-provenance",
   "baseBranch": "main",
-  "baseCommit": "32abdd96bffdd0a337a2cdd4e7b0260e6600d6c1",
-  "phase": "review",
-  "terminalState": null,
-  "nextAction": "review",
+  "baseCommit": "99d2a98e8b2903329b95d3066f230498e527b8a5",
+  "phase": "publish",
+  "terminalState": "accepted",
+  "nextAction": "next-iteration",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T07:09:28.000Z",
-  "deadlineAt": "2026-08-10T11:09:28.000Z",
+  "startedAt": "2026-08-10T00:00:00.000Z",
+  "deadlineAt": "2026-08-10T04:00:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -39,7 +39,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Prisma formatter exited successfully; no schema behavior change retained."
+      "summary": "Prisma schema formatting completed successfully."
     },
     {
       "command": [
@@ -51,7 +51,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Prisma schema validated against an isolated disposable MySQL URL."
+      "summary": "Prisma schema validation completed successfully."
     },
     {
       "command": [
@@ -63,7 +63,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "TypeScript completed without errors."
+      "summary": "TypeScript type checking completed successfully."
     },
     {
       "command": [
@@ -73,9 +73,9 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "pre-existing",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "ESLint exited zero with one pre-existing unused-variable warning."
+      "summary": "ESLint completed with one pre-existing warning and no errors."
     },
     {
       "command": [
@@ -88,7 +88,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Jest passed 103 suites and 1028 tests."
+      "summary": "Full Jest suite completed successfully: 102 suites and 1024 tests."
     },
     {
       "command": [
@@ -98,9 +98,9 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "environment-related",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "Production build and OCR trace passed with safe local build-only environment values."
+      "summary": "Next.js production build and OCR trace verification completed successfully."
     },
     {
       "command": [
@@ -110,9 +110,9 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "environment-related",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "Migration status passed against an isolated disposable MySQL database."
+      "summary": "Database status reports all migrations applied."
     },
     {
       "command": [
@@ -124,7 +124,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "All nine migrations replayed successfully in disposable MySQL 8.4."
+      "summary": "Disposable MySQL 8.4 migration replay completed successfully in compatibility mode."
     },
     {
       "command": [
@@ -136,7 +136,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "No whitespace errors."
+      "summary": "Git diff whitespace check completed successfully."
     },
     {
       "command": [
@@ -147,18 +147,22 @@
       ],
       "required": true,
       "status": "Passed",
-      "classification": "pre-existing",
+      "classification": "unknown",
       "repairable": false,
-      "summary": "No critical production dependency vulnerability; existing high and moderate advisories remain outside this UI iteration."
+      "summary": "No critical production dependency vulnerabilities were reported; non-critical advisories remain."
     }
   ],
   "review": {
     "independent": true,
     "approved": true,
     "baseCommitIsAncestor": true,
-    "summary": "Fresh independent review found four issues; all were repaired and re-reviewed. No High or Medium correctness, financial presentation, security, accessibility, responsive UX, regression, or test-gap blockers remain."
+    "summary": "Independent reviewer approved the application diff; historical migration checksum risk is removed, session-version normalization is strict, and the disposable migration compatibility limitation is documented. Subsequent commits only preserve loop evidence."
   },
-  "authorizedCommit": null,
-  "publication": null,
+  "authorizedCommit": "1c0582de016c6efc833d3ff5c541b92798b676f8",
+  "publication": {
+    "commit": "1c0582de016c6efc833d3ff5c541b92798b676f8",
+    "pullRequestUrl": "https://github.com/MaleakhiE/Investment-Eki/pull/59",
+    "pullRequestState": "OPEN"
+  },
   "blocker": null
 }
