@@ -8,8 +8,8 @@ Latest verified merged iteration: 068 — Iteration 067 is merged in PR #65 at `
 Current iteration: 069 — Goals unavailable-state recovery.
 Current branch: `ux/iteration-069-goals-unavailable-retry`.
 Base branch and commit: `main` / `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`.
-Pull request: not created yet.
-Pull-request state: local reviewed implementation; owner-review PR publication pending.
+Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/67
+Pull-request state: owner review pending; PR #67 is open at reviewed HEAD `8518a6a2cff89cca2ed10e9eff1b80f25735b09d`.
 
 **Validation status:**
 - Focused goals availability test: passed
@@ -29,7 +29,7 @@ Pull-request state: local reviewed implementation; owner-review PR publication p
 
 ## Exact next action
 
-Push the reviewed Iteration 069 commit `75fb9cf`, create one open owner-review PR against `main`, record its exact PR head, and stop without merging.
+Owner reviews PR #67. Autonomous merge is disabled; the next scheduler invocation should reconcile the PR state and repair only if checks or owner feedback require it.
 
 ## Reconciliation evidence
 
