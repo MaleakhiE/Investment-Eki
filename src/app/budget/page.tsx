@@ -37,10 +37,14 @@ export default function BudgetPage() {
   useEffect(() => { fetchBudgets(); }, []);
 
   async function fetchBudgets() {
+    setError('');
+    setIsLoading(true);
     try {
       const res = await fetch('/api/budgets');
-      if (res.ok) { const d = await res.json(); setBudgets(d.responseDetails || []); }
-    } catch { setError('Failed to load'); } finally { setIsLoading(false); }
+      if (!res.ok) throw new Error('Budgets unavailable');
+      const data = await res.json();
+      setBudgets(data.responseDetails || []);
+    } catch { setError('Budget data is unavailable.'); } finally { setIsLoading(false); }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -111,9 +115,19 @@ export default function BudgetPage() {
           <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">Create budget</button>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
-
-        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
+        {error ? (
+          <div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700">
+            <p className="font-semibold">Budget data is unavailable</p>
+            <p className="mt-1">{error}</p>
+            <button
+              type="button"
+              onClick={() => { void fetchBudgets(); }}
+              className="mt-4 rounded-lg bg-[#16332f] px-4 py-2 font-medium text-white hover:bg-[#24544c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2"
+            >
+              Retry loading budgets
+            </button>
+          </div>
+        ) : isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
             {/* Summary */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
