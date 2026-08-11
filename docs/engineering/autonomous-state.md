@@ -28,7 +28,7 @@ Pull-request state: owner review pending; Iteration 066 is verified owner-merged
 
 ## Exact next action
 
-Iterations 065 and 066 are verified merged. PR #65 is open for owner review at reviewed HEAD `3de851a`; do not claim controller acceptance or merge.
+Iterations 065 and 066 are verified merged. PR #65 is open for owner review at reviewed HEAD `40b9fd5`; do not claim controller acceptance or merge.
 
 ## Reconciliation evidence
 
