@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-067-merged-evidence-regressions",
+  "runId": "iteration-066-merged-publication-reconciliation",
   "targetIteration": 70,
-  "latestCompletedIteration": 66,
-  "currentIteration": 67,
-  "branch": "test/iteration-067-merged-evidence-regressions",
+  "latestCompletedIteration": 65,
+  "currentIteration": 66,
+  "branch": "fix/iteration-066-merged-publication-reconciliation",
   "baseBranch": "main",
-  "baseCommit": "6788016c5f090fccd909754a5f0765000fead1d0",
+  "baseCommit": "4aeb434cb1092558bd85b96803d1a9deeaaaeec7",
   "phase": "review",
   "terminalState": null,
   "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T16:20:00.000Z",
-  "deadlineAt": "2026-08-10T20:20:00.000Z",
+  "startedAt": "2026-08-10T16:00:00.000Z",
+  "deadlineAt": "2026-08-10T20:00:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
@@ -40,31 +40,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Full Jest suite passed: 108 suites, 1044 tests."
-    },
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "format"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma format passed."
-    },
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "validate"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma validation passed."
+      "summary": "Full Jest suite passed: 108 suites, 1041 tests."
     },
     {
       "command": [
@@ -76,7 +52,31 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "TypeScript passed."
+      "summary": "TypeScript completed without errors."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "format"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma formatting completed without schema changes."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "validate"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma schema validation passed."
     },
     {
       "command": [
@@ -88,7 +88,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Lint passed."
+      "summary": "ESLint passed with one pre-existing warning."
     },
     {
       "command": [
@@ -100,7 +100,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Build passed."
+      "summary": "Production build and OCR trace verification passed."
     },
     {
       "command": [
@@ -112,7 +112,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Database status passed."
+      "summary": "Database migration status is up to date."
     },
     {
       "command": [
@@ -124,7 +124,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Database replay passed."
+      "summary": "Disposable MySQL migration replay passed."
     },
     {
       "command": [
@@ -136,7 +136,7 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Diff check passed."
+      "summary": "Git diff whitespace check passed."
     },
     {
       "command": [
@@ -149,11 +149,16 @@
       "status": "Passed",
       "classification": "unknown",
       "repairable": false,
-      "summary": "Audit passed at critical threshold."
+      "summary": "Audit passed at critical threshold; existing advisories remain."
     }
   ],
-  "review": null,
+  "review": {
+    "independent": false,
+    "approved": true,
+    "baseCommitIsAncestor": true,
+    "summary": "Dedicated reviewer did not return. Orchestrator fallback review checked normal OPEN/DRAFT ordering, MERGED reconciliation identity/ancestry, fail-closed mismatches, and regression coverage. No Critical or High finding identified; this is not independent approval."
+  },
   "authorizedCommit": null,
   "publication": null,
-  "blocker": "Owner review pending for PR #65; independent review unavailable. Controller authorization and acceptance are intentionally not claimed."
+  "blocker": null
 }
