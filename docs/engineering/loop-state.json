@@ -155,5 +155,5 @@
   "review": null,
   "authorizedCommit": null,
   "publication": null,
-  "blocker": null
+  "blocker": "Owner review pending for PR #65; independent review unavailable. Controller authorization and acceptance are intentionally not claimed."
 }

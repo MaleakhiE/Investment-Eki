@@ -8,7 +8,7 @@ Latest completed iteration: 066 — merged-publication reconciliation (PR #64, m
 Current iteration: 067 — merged-evidence regression coverage.
 Current branch: `test/iteration-067-merged-evidence-regressions`.
 Base branch and commit: `main` / `6788016c5f090fccd909754a5f0765000fead1d0`.
-Pull request: to be created as an open owner-review artifact for Iteration 067.
+Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/65
 Pull-request state: owner review pending; Iteration 066 is verified owner-merged in PR #64 at `6788016c5f090fccd909754a5f0765000fead1d0`.
 
 **Validation status:**
@@ -28,7 +28,7 @@ Pull-request state: owner review pending; Iteration 066 is verified owner-merged
 
 ## Exact next action
 
-Iterations 065 and 066 are verified merged. Create the open owner-review PR for Iteration 067 from reviewed commit `5ae6777`; do not claim controller acceptance or merge.
+Iterations 065 and 066 are verified merged. PR #65 is open for owner review at reviewed HEAD `3de851a`; do not claim controller acceptance or merge.
 
 ## Reconciliation evidence
 

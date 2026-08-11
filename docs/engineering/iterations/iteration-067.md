@@ -40,4 +40,4 @@ Revert the focused test commit; no production migration or runtime rollback is r
 
 ## Pull request
 
-Owner-review PR creation is permitted by the current queue mode after fallback review. Autonomous merge and controller acceptance remain disabled until independent/owner review requirements are satisfied.
+Owner-review PR #65 is open at reviewed HEAD `3de851a`. Autonomous merge and controller acceptance remain disabled until independent/owner review requirements are satisfied.
