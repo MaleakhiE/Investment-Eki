@@ -9,7 +9,7 @@ Current iteration: 069 — Goals unavailable-state recovery.
 Current branch: `ux/iteration-069-goals-unavailable-retry`.
 Base branch and commit: `main` / `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`.
 Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/67
-Pull-request state: owner review pending; PR #67 is open at reviewed HEAD `8518a6a2cff89cca2ed10e9eff1b80f25735b09d`.
+Pull-request state: owner review pending; PR #67 is open at reviewed HEAD `739cc99ffbd53cf8653add7290fd938c0fa21beb`.
 
 **Validation status:**
 - Focused goals availability test: passed
