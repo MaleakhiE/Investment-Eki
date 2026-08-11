@@ -8,8 +8,8 @@ Latest verified merged iteration: 068 — Iteration 067 is merged in PR #65 at `
 Current iteration: 070 — Budget unavailable-state recovery.
 Current branch: `ux/iteration-070-budget-unavailable-retry`.
 Base branch and commit: `main` / `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`.
-Pull request: not created yet.
-Pull-request state: local reviewed implementation; owner-review PR publication pending.
+Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/68
+Pull-request state: owner review pending; PR #68 is open at reviewed HEAD `58a51eb`.
 
 **Validation status:**
 - Focused budget availability test: passed
@@ -29,7 +29,7 @@ Pull-request state: local reviewed implementation; owner-review PR publication p
 
 ## Exact next action
 
-Commit and push the reviewed Iteration 070 implementation, create one open owner-review PR against `main`, record its exact PR head, and stop without merging.
+Owner reviews PR #68. Autonomous merge is disabled; the next scheduler invocation should reconcile PR #67 and PR #68 and repair only if checks or owner feedback require it.
 
 ## Reconciliation evidence
 
