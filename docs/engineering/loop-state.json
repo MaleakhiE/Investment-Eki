@@ -7,9 +7,9 @@
   "branch": "test/iteration-067-merged-evidence-regressions",
   "baseBranch": "main",
   "baseCommit": "6788016c5f090fccd909754a5f0765000fead1d0",
-  "phase": "execute",
+  "phase": "review",
   "terminalState": null,
-  "nextAction": "execute",
+  "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-10T16:20:00.000Z",
@@ -28,7 +28,130 @@
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
   "lastFailure": null,
-  "validations": [],
+  "validations": [
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--runInBand"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Full Jest suite passed: 108 suites, 1044 tests."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "format"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma format passed."
+    },
+    {
+      "command": [
+        "npx",
+        "prisma",
+        "validate"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Prisma validation passed."
+    },
+    {
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "TypeScript passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Lint passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Build passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:status"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Database status passed."
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "db:verify"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Database replay passed."
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Diff check passed."
+    },
+    {
+      "command": [
+        "npm",
+        "audit",
+        "--omit=dev",
+        "--audit-level=critical"
+      ],
+      "required": true,
+      "status": "Passed",
+      "classification": "unknown",
+      "repairable": false,
+      "summary": "Audit passed at critical threshold."
+    }
+  ],
   "review": null,
   "authorizedCommit": null,
   "publication": null,
