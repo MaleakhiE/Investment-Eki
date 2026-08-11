@@ -4,41 +4,41 @@ Last updated: 2026-08-11
 
 ## Current run
 
-Latest completed iteration: 066 — merged-publication reconciliation (PR #64, merged into `main` at `6788016c5f090fccd909754a5f0765000fead1d0`).
-Current iteration: 067 — merged-evidence regression coverage.
-Current branch: `test/iteration-067-merged-evidence-regressions`.
-Base branch and commit: `main` / `6788016c5f090fccd909754a5f0765000fead1d0`.
-Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/65
-Pull-request state: owner review pending; Iteration 066 is verified owner-merged in PR #64 at `6788016c5f090fccd909754a5f0765000fead1d0`.
+Latest verified merged iteration: 068 — Iteration 067 is merged in PR #65 at `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`; Iteration 068 is merged in PR #66 at `60e0dea`.
+Current iteration: 069 — Goals unavailable-state recovery.
+Current branch: `ux/iteration-069-goals-unavailable-retry`.
+Base branch and commit: `main` / `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`.
+Pull request: not created yet.
+Pull-request state: local reviewed implementation; owner-review PR publication pending.
 
 **Validation status:**
-- Focused preview tests: passed (1 suite, 3 tests)
-- Jest: passed (108 suites, 1,044 tests)
-- TypeScript: passed
-- ESLint: passed with one pre-existing warning
-- Build/OCR trace: passed with safe local build-only environment values
-- Prisma validation, disposable migration status, and full replay: passed
-- Critical-level production dependency audit: passed; existing high/moderate advisories remain
+- Focused goals availability test: passed
+- Jest: passed (110 suites, 1,046 tests)
+- TypeScript: passed after the production build generated `.next` types
+- ESLint: passed with one pre-existing warning in `src/lib/loop-control/state.test.ts`
+- Build/OCR trace: passed
+- Prisma validation: passed
+- Database status: passed; schema up to date
+- Critical-level production dependency audit: passed; existing 1 moderate and 3 high advisories remain
 - Diff check: passed
-- Independent review: unavailable; explicit fallback review completed with no unresolved Critical/High finding
+- Independent review: unavailable; fallback architecture, security, financial, reliability, UX/accessibility, test-adequacy, and adversarial reviews completed with no unresolved Critical/High finding
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` records Iteration 067 in review with no autonomous authorization or publication evidence. GitHub truth is authoritative: PR #63 and PR #64 are merged; owner-review queue mode permits creating an open review artifact without fabricating controller acceptance. Iteration 066 merged-run state is archived at `docs/engineering/loop-archive/iteration-066-owner-merged-state.json`.
+`docs/engineering/loop-state.json` still contains the legacy Iteration 067 controller record. It is not rewritten to claim authorization or acceptance. GitHub truth is authoritative: PRs #65 and #66 are merged, and owner-review queue mode allows Iteration 069 to be published without fabricating controller acceptance.
 
 ## Exact next action
 
-Iterations 065 and 066 are verified merged. PR #65 is open for owner review at reviewed HEAD `40b9fd5`; do not claim controller acceptance or merge.
+Push the reviewed Iteration 069 commit `75fb9cf`, create one open owner-review PR against `main`, record its exact PR head, and stop without merging.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully on 2026-08-10. GitHub confirms PR #62 merged into `main` at `c81e2cf`; Iteration 065 branches directly from that merge.
+`git fetch --all --prune` completed successfully. GitHub reports no open iteration PRs after owner merges of #65 and #66. The next unique assigned iteration is 069.
 
 ## Stacked pull-request dependencies
 
-- Iterations 053–064 are merged into `main` through PR #62.
-- Iteration 065 is based directly on the verified Iteration 064 merge commit.
+Iteration 069 is independent and based directly on the verified Iteration 068 merge line. It changes only the Goals page, its focused availability test, and iteration documentation.
 
 ## Portfolio distribution
 
-Iteration 065 is a user-facing accessibility slice. It adds no persistence, provider credentials, or schema changes.
+Iteration 069 is a user-facing UX/accessibility/reliability slice. It adds no persistence, provider credentials, schema changes, or dependencies.
