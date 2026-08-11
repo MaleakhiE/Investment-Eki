@@ -68,14 +68,18 @@ export default function GoalsPage() {
   useEffect(() => { fetchData(); }, []);
 
   async function fetchData() {
+    setError('');
+    setIsLoading(true);
     try {
       const [goalsRes, summaryRes] = await Promise.all([
         fetch('/api/goals'),
         fetch('/api/goals?summary=true'),
       ]);
-      if (goalsRes.ok) { const d = await goalsRes.json(); setGoals(d.responseDetails || []); }
-      if (summaryRes.ok) { const d = await summaryRes.json(); setSummary(d.responseDetails); }
-    } catch { setError('Failed to load'); } finally { setIsLoading(false); }
+      if (!goalsRes.ok || !summaryRes.ok) throw new Error('Goals unavailable');
+      const [goalsData, summaryData] = await Promise.all([goalsRes.json(), summaryRes.json()]);
+      setGoals(goalsData.responseDetails || []);
+      setSummary(summaryData.responseDetails);
+    } catch { setError('Financial goal data is unavailable.'); } finally { setIsLoading(false); }
   }
 
   function resetForm() {
@@ -211,9 +215,19 @@ export default function GoalsPage() {
           <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">New Goal</button>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-400">{error}</div>}
-
-        {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
+        {error ? (
+          <div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700">
+            <p className="font-semibold">Financial goal data is unavailable</p>
+            <p className="mt-1">{error}</p>
+            <button
+              type="button"
+              onClick={() => { void fetchData(); }}
+              className="mt-4 rounded-lg bg-[#16332f] px-4 py-2 font-medium text-white hover:bg-[#24544c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2"
+            >
+              Retry loading financial goals
+            </button>
+          </div>
+        ) : isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
             {/* Summary */}
             {summary && (
