@@ -405,14 +405,14 @@ test.each([
   }, publicationVerification).terminalState).toBe('blocked');
 });
 
-test('iteration 070 completes only after recorded publication evidence', () => {
+test('legacy target metadata does not stop unbounded continuation', () => {
   const reviewed = reviewedState({ currentIteration: 70 });
   const authorized = authorizePublication(reviewed, readyForPublication(), authorizationVerification);
   const published = recordPublication(authorized.state, {
     commit: COMMIT_SHA, pullRequestUrl: 'https://github.com/MaleakhiE/Investment-Eki/pull/53', pullRequestState: 'OPEN',
   }, publicationVerification).state;
 
-  expect(acceptIteration(published, publicationVerification).terminalState).toBe('completed');
+  expect(acceptIteration(published, publicationVerification)).toMatchObject({ terminalState: 'accepted', nextAction: 'next-iteration' });
 });
 
 test('an accepted non-target iteration continues to the next iteration', () => {

@@ -402,9 +402,8 @@ export const acceptIteration = (state: LoopState, verification: PublicationVerif
     || !['OPEN', 'DRAFT', 'MERGED'].includes(state.publication.pullRequestState)) {
     return decide(state, 'blocked', 'stop', 'Acceptance evidence is incomplete.');
   }
-  const terminalState: TerminalState = state.currentIteration >= state.targetIteration ? 'completed' : 'accepted';
-  const nextAction: NextAction = terminalState === 'completed' ? 'stop' : 'next-iteration';
-  return decide(state, terminalState, nextAction, null);
+  // targetIteration is retained as legacy metadata; continuation is unbounded.
+  return decide(state, 'accepted', 'next-iteration', null);
 };
 
 export const classifyCommand = (argv: readonly string[]): CommandClassification => {
