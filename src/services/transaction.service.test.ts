@@ -411,6 +411,40 @@ describe('linked account transactions', () => {
 });
 
 describe('account transfers', () => {
+  it('replays an exact transfer retry without creating another transaction', async () => {
+    financialAccountRepository.findMany.mockResolvedValue([
+      { id: BigInt(1), name: 'BCA' }, { id: BigInt(2), name: 'Mandiri' },
+    ]);
+    transactionRepository.findFirst.mockResolvedValue({
+      ...persisted, date: new Date('2026-07-17T00:00:00.000Z'), type: 'TRANSFER', category: 'Transfer', description: 'Move funds',
+      account: 'BCA', account_id: BigInt(1), destination_account_id: BigInt(2), receipt_image: null,
+    });
+
+    const result = await createTransfer(BigInt(20), {
+      date: '2026-07-17', source_account_id: '1', destination_account_id: '2', amount: 50_000, description: 'Move funds',
+    }, 'transfer-123');
+
+    expect(result).toEqual(expect.objectContaining({ success: true }));
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('persists a transfer idempotency key on the first request', async () => {
+    financialAccountRepository.findMany.mockResolvedValue([
+      { id: BigInt(1), name: 'BCA' }, { id: BigInt(2), name: 'Mandiri' },
+    ]);
+    transactionRepository.findFirst.mockResolvedValue(null);
+    transactionRepository.create.mockResolvedValue({
+      ...persisted, type: 'TRANSFER', category: 'Transfer', account: 'BCA',
+      account_id: BigInt(1), destination_account_id: BigInt(2), receipt_image: null,
+    });
+
+    await createTransfer(BigInt(20), {
+      date: '2026-07-17', source_account_id: '1', destination_account_id: '2', amount: 50_000, description: 'Move funds',
+    }, 'transfer-123');
+
+    expect(transactionRepository.create).toHaveBeenCalledWith({ data: expect.objectContaining({ idempotency_key: 'transfer-123' }) });
+  });
+
   it('rejects transfers to the same account', async () => {
     await expect(createTransfer(BigInt(20), {
       date: '2026-07-17',

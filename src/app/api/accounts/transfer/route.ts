@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     try { body = await request.json(); }
     catch { return NextResponse.json(validationErrorResponse(['Invalid JSON body']), { status: 400 }); }
 
-    const result = await createTransfer(userId, body);
+    const result = await createTransfer(userId, body, request.headers.get('Idempotency-Key') ?? undefined);
     if (!result.success || !result.transaction) {
       return NextResponse.json(validationErrorResponse([result.error || 'Failed to transfer funds']), { status: 400 });
     }

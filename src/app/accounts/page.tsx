@@ -115,7 +115,7 @@ export default function AccountsPage() {
     event.preventDefault(); setSaving(true);
     try {
       const response = await fetch('/api/accounts/transfer', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
+        method: 'POST', headers: { 'content-type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
         body: JSON.stringify({
           date: new Date().toISOString().slice(0, 10), source_account_id: sourceId,
           destination_account_id: destinationId, amount: parseAmount(transferAmount),
