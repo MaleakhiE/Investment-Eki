@@ -4,10 +4,10 @@ Last updated: 2026-08-12
 
 ## Current run
 
-Latest verified merged iteration: 078 — PR #76 merged at `c475ef0`.
+Latest verified merged iteration: 078 — PR #76 merged at `79ef970`.
 Current iteration: 079 — Retry-safe account transfers.
 Current branch: `fix/iteration-079-transfer-idempotency`.
-Base branch and commit: `main` / `c475ef0`.
+Base branch and commit: `main` / `79ef970`.
 Pull request: owner-review PR for transfer idempotency.
 Pull-request state: owner review pending after publication.
 
@@ -26,7 +26,7 @@ Owner reviews the Iteration 079 transfer idempotency PR. Autonomous merge is dis
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully. PR #76 is merged into `origin/main` at `c475ef0`; Iteration 079 is based directly on that verified merge.
+`git fetch --all --prune` completed successfully. PR #76 is merged into `origin/main` at `79ef970`; Iteration 079 is rebased onto that verified merge.
 
 ## Stacked pull-request dependencies
 
