@@ -1,15 +1,15 @@
 # Autonomous engineering state
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 
 ## Current run
 
-Latest verified merged iteration: 068 — Iteration 067 is merged in PR #65 at `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`; Iteration 068 is merged in PR #66 at `60e0dea7d0bd4e64291c7e410558b43a580adad2`.
-Current iteration: 070 — Budget unavailable-state recovery.
-Current branch: `ux/iteration-070-budget-unavailable-retry`.
-Base branch and commit: `main` / `6b3c70992dd85a21aeba277af6c32eb3b8a4d18e`.
-Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/68
-Pull-request state: owner review pending; PR #68 is open at reviewed HEAD `58a51eb`.
+Latest verified merged iteration: 073 — PR #71 merged at `35cc7e6`.
+Current iteration: 075 — Cashflow transaction and summary unavailable-state recovery.
+Current branch: `ux/iteration-075-cashflow-unavailable-retry`.
+Base branch and commit: `main` / `35cc7e6`.
+Pull request: https://github.com/MaleakhiE/Investment-Eki/pull/73
+Pull-request state: owner review pending; PR #73 is open at reviewed HEAD `5ac6f7d`.
 
 **Validation status:**
 - Focused budget availability test: passed
@@ -25,20 +25,20 @@ Pull-request state: owner review pending; PR #68 is open at reviewed HEAD `58a51
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` remains a legacy controller record and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PR #67 is an open owner-review artifact for Iteration 069, while Iteration 070 is independent and based directly on verified `main`.
+`docs/engineering/loop-state.json` remains a legacy controller record with `targetIteration: 70` and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PR #72 (Iteration 074) and PR #73 (Iteration 075) are open owner-review artifacts. Iteration 075 is independent and based directly on verified `main`.
 
 ## Exact next action
 
-Owner reviews PR #68. Autonomous merge is disabled; the next scheduler invocation should reconcile PR #67 and PR #68 and repair only if checks or owner feedback require it.
+Owner reviews PR #72 and PR #73. Autonomous merge is disabled; the next scheduler invocation should reconcile both open PRs and repair only if checks or owner feedback require it.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully. PR #67 is open with checks pending and does not conflict with the Budget surface. No queued repair is required.
+`git fetch --all --prune` completed successfully. PR #72 is open for the independent accounts retry slice; PR #73 is open for the independent transaction/summary retry slice. No queued repair is required.
 
 ## Stacked pull-request dependencies
 
-Iteration 070 is independent of PR #67 and changes only the Budget page, its focused availability test, and iteration documentation.
+Iteration 075 is independent of PR #72 and changes only the Cashflow page, its focused availability test, and iteration documentation/state summary.
 
 ## Portfolio distribution
 
-Iteration 070 is a user-facing UX/accessibility/reliability slice. It adds no persistence, provider credentials, schema changes, or dependencies.
+Iteration 075 is a user-facing UX/accessibility/reliability slice. It adds no persistence, provider credentials, schema changes, or dependencies.
