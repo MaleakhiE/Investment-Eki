@@ -46,6 +46,7 @@ export default function CashflowPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [accountsError, setAccountsError] = useState(false);
   const [transactionsError, setTransactionsError] = useState(false);
   const [summaryError, setSummaryError] = useState(false);
   const [showAllModal, setShowAllModal] = useState(false);
@@ -268,6 +269,7 @@ export default function CashflowPage() {
         <div className="mb-4"><TransactionImportPreview /></div>
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-3 sm:space-y-4">
+            {accountsError && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">Account data is unavailable.{' '}<button type="button" onClick={() => { setIsLoading(true); void fetchAccounts().finally(() => setIsLoading(false)); }} className="font-semibold underline focus-visible:outline-2 focus-visible:outline-offset-2">Retry loading accounts</button></p>}
             {(transactionsError || summaryError) && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">Cashflow data is unavailable.{' '}<button type="button" onClick={() => { setIsLoading(true); void Promise.all([fetchTransactions(), fetchSummary()]).finally(() => setIsLoading(false)); }} className="font-semibold underline focus-visible:outline-2 focus-visible:outline-offset-2">Retry loading cashflow</button></p>}
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
