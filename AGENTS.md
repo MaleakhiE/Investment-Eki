@@ -232,7 +232,7 @@ If GitHub itself requires an unavailable separate approval identity, do not fabr
 
 ## Executable Loop Control
 
-Use `npm run loop:control` where its current commands can truthfully represent the work.
+Use `npm run loop:control` where its current commands can truthfully represent the work. Record `preflight`, each `record-validation`, and the role-separated review evidence before `authorize-publication`; use `record-publication` and `accept-iteration` only when their exact-SHA and required-gate contracts are satisfied. An `unsafe` controller decision remains a hard stop.
 
 Never fabricate controller evidence.
 
