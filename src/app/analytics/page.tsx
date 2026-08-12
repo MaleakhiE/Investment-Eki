@@ -34,6 +34,7 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingRecommendation, setIsRefreshingRecommendation] = useState(false);
   const [error, setError] = useState('');
+  const [isUnavailable, setIsUnavailable] = useState(false);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
 
   function handleTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, tab: AnalyticsTab) {
@@ -44,29 +45,31 @@ export default function AnalyticsPage() {
     document.getElementById(`analytics-tab-${nextTab}`)?.focus();
   }
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [settingsRes, trendRes, compRes] = await Promise.all([
-          fetch('/api/settings'),
-          fetch('/api/analytics/cashflow-trend'),
-          fetch('/api/analytics/comparison'),
-        ]);
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json();
-          setSettings(settingsData.responseDetails);
-          if (settingsData.responseDetails?.ai_recommendation_enabled) {
-            const recRes = await fetch('/api/analytics/recommendation');
-            if (recRes.ok) { const recData = await recRes.json(); setRecommendation(recData.responseDetails); }
-            else { const recData = await recRes.json(); setError(recData.responseMessage || 'Failed'); }
-          }
-        }
-        if (trendRes.ok) { const d = await trendRes.json(); setTrend(d.responseStatus === 'SUCCESS' ? (parseCashflowTrend(d.responseDetails) || []) : []); }
-        if (compRes.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
-      } catch { setError('Failed to load'); } finally { setIsLoading(false); }
-    }
-    fetchData();
-  }, []);
+  async function fetchData() {
+    setIsLoading(true);
+    setError('');
+    setIsUnavailable(false);
+    try {
+      const [settingsRes, trendRes, compRes] = await Promise.all([
+        fetch('/api/settings'),
+        fetch('/api/analytics/cashflow-trend'),
+        fetch('/api/analytics/comparison'),
+      ]);
+      if (!settingsRes.ok || !trendRes.ok || !compRes.ok) throw new Error('Analytics unavailable');
+      const settingsData = await settingsRes.json();
+      const trendData = await trendRes.json();
+      const comparisonData = await compRes.json();
+      setSettings(settingsData.responseDetails);
+      setTrend(trendData.responseStatus === 'SUCCESS' ? (parseCashflowTrend(trendData.responseDetails) || []) : []);
+      setComparison(comparisonData.responseDetails);
+      if (settingsData.responseDetails?.ai_recommendation_enabled) {
+        const recRes = await fetch('/api/analytics/recommendation');
+        if (recRes.ok) { const recData = await recRes.json(); setRecommendation(recData.responseDetails); }
+      }
+    } catch { setSettings(null); setTrend([]); setComparison(null); setRecommendation(null); setIsUnavailable(true); } finally { setIsLoading(false); }
+  }
+
+  useEffect(() => { void fetchData(); }, []);
 
   async function refreshRecommendation() {
     setIsRefreshingRecommendation(true);
@@ -138,14 +141,14 @@ export default function AnalyticsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>
+        ) : isUnavailable ? (
+          <div role="alert" className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6">
+            <p className="text-amber-700 text-sm">Analytics data is unavailable.</p>
+            <button type="button" onClick={() => { void fetchData(); }} className="mt-3 rounded-lg bg-[#16332f] px-3 py-2 text-xs font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2">Retry loading analytics</button>
+          </div>
         ) : error && !recommendation ? (
           <div className="bg-red-500/20 border border-red-500/30 rounded-2xl p-6">
             <p className="text-red-400 text-sm">{error}</p>
-            {settings?.ai_recommendation_enabled && (
-              <button type="button" onClick={() => { void refreshRecommendation(); }} disabled={isRefreshingRecommendation} className="mt-3 rounded-lg bg-[#16332f] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
-                {isRefreshingRecommendation ? 'Refreshing...' : 'Retry recommendation'}
-              </button>
-            )}
           </div>
         ) : (
           <div className="space-y-4">
