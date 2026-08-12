@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingNotif, setIsSavingNotif] = useState(false);
   const [error, setError] = useState('');
+  const [notifError, setNotifError] = useState(false);
   const [showCustomAlertForm, setShowCustomAlertForm] = useState(false);
   const [newAlertName, setNewAlertName] = useState('');
   const [newAlertType, setNewAlertType] = useState<'expense_limit' | 'income_target' | 'savings_goal'>('expense_limit');
@@ -52,20 +53,24 @@ export default function SettingsPage() {
   useEffect(() => { fetchSettings(); fetchNotifSettings(); fetchExportSummary(); }, []);
 
   async function fetchSettings() {
+    setIsLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/settings');
-      if (res.ok) { const d = await res.json(); setSettings(d.responseDetails); }
-    } catch { setError('Failed to load'); } finally { setIsLoading(false); }
+      if (!res.ok) throw new Error('Settings unavailable');
+      const d = await res.json();
+      setSettings(d.responseDetails);
+    } catch { setSettings(null); setError('Settings are unavailable.'); } finally { setIsLoading(false); }
   }
   async function fetchNotifSettings() {
+    setNotifError(false);
     try {
       const res = await fetch('/api/settings/notifications');
-      if (res.ok) {
-        const d = await res.json();
-        setNotifSettings(d.responseDetails);
-        setLowBalanceDraft(String(d.responseDetails?.low_balance_threshold ?? ''));
-      }
-    } catch { /* A persistent loading placeholder remains visible. */ }
+      if (!res.ok) throw new Error('Notification settings unavailable');
+      const d = await res.json();
+      setNotifSettings(d.responseDetails);
+      setLowBalanceDraft(String(d.responseDetails?.low_balance_threshold ?? ''));
+    } catch { setNotifSettings(null); setNotifError(true); }
   }
   async function fetchExportSummary() {
     setIsExportSummaryLoading(true);
@@ -219,7 +224,7 @@ export default function SettingsPage() {
 
             <div className="card rounded-xl p-4">
               <h3 className="font-semibold text-[#16332f] text-sm mb-3">Notification settings</h3>
-              {!notifSettings ? <p className="text-xs text-zinc-500 text-center py-4">Loading...</p> : (
+              {notifError ? <p role="alert" className="text-xs text-amber-700 text-center py-4">Notification settings are unavailable.{' '}<button type="button" onClick={() => { void fetchNotifSettings(); }} className="font-semibold underline focus-visible:outline-2 focus-visible:outline-offset-2">Retry loading notifications</button></p> : !notifSettings ? <p className="text-xs text-zinc-500 text-center py-4">Loading...</p> : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-lg">
                     <div className="flex-1 mr-3"><p className="text-xs font-medium text-[#16332f]">Monthly reminder</p><p className="text-[10px] text-zinc-600">Reminder to update your finances</p>
