@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "mode": "OWNER_REVIEW_QUEUE",
+  "continuation": "UNBOUNDED",
+  "mergePolicy": {
+    "autoMergeRequested": false,
+    "mergeAuthority": "CTO_ROLE_AFTER_GATES",
+    "ownerApprovalRequired": true,
+    "independentReviewRequired": true,
+    "branchProtectionRequired": true,
+    "exactReviewedHeadRequired": true,
+    "failClosedOnMissingEvidence": true
+  },
+  "roles": [
+    { "id": "ceo", "name": "CEO", "responsibilities": ["business strategy", "priorities", "product and business risk"] },
+    { "id": "cto", "name": "CTO", "responsibilities": ["final technical review", "merge readiness decision after all gates"] },
+    { "id": "engineering-manager", "name": "Engineering Manager / Principal Engineer Orchestrator", "responsibilities": ["coordinate iterations", "delegate work", "enforce scope and gates"] },
+    { "id": "business-analyst", "name": "Business Analyst", "responsibilities": ["requirements", "business rules", "acceptance criteria", "edge cases"] },
+    { "id": "product-manager", "name": "Product Manager", "responsibilities": ["user value", "scope", "product journey"] },
+    { "id": "backend-engineer", "name": "Backend Engineer", "responsibilities": ["APIs", "services", "auth", "validation", "server and domain logic"] },
+    { "id": "frontend-engineer", "name": "Frontend Engineer", "responsibilities": ["UI", "client behavior", "responsiveness"] },
+    { "id": "qa-engineer", "name": "QA / Test Engineer", "responsibilities": ["independent testing", "regression validation"] },
+    { "id": "security-engineer", "name": "Security Engineer", "responsibilities": ["auth", "authorization", "IDOR", "XSS", "CSRF", "secrets", "privacy"] },
+    { "id": "database-engineer", "name": "Database / Data Engineer", "responsibilities": ["Prisma", "migrations", "indexes", "integrity", "transactions"] },
+    { "id": "devops-sre", "name": "DevOps / SRE Engineer", "responsibilities": ["deployment", "CI/CD", "runtime", "rollback", "reliability"] },
+    { "id": "financial-reviewer", "name": "Financial Domain Reviewer", "responsibilities": ["money calculations", "rounding", "allocation", "financial correctness"] },
+    { "id": "ux-designer", "name": "UX / Product Designer", "responsibilities": ["user journey", "interaction design"] },
+    { "id": "accessibility-reviewer", "name": "Accessibility Reviewer", "responsibilities": ["keyboard", "ARIA", "screen readers", "responsive accessibility"] },
+    { "id": "performance-engineer", "name": "Performance Engineer", "responsibilities": ["performance", "scalability"] },
+    { "id": "observability-operations", "name": "Observability / Operations Engineer", "responsibilities": ["logs", "metrics", "health checks", "operational support"] },
+    { "id": "release-reviewer", "name": "Release / Integration Reviewer", "responsibilities": ["mergeability", "base and head", "migration and cross-PR conflicts"] }
+  ],
+  "requiredReviewsBySurface": {
+    "financial": ["business-analyst", "financial-reviewer", "qa-engineer", "security-engineer", "cto"],
+    "database": ["business-analyst", "database-engineer", "qa-engineer", "security-engineer", "release-reviewer", "cto"],
+    "backend": ["business-analyst", "backend-engineer", "qa-engineer", "security-engineer", "cto"],
+    "frontend": ["product-manager", "frontend-engineer", "ux-designer", "accessibility-reviewer", "qa-engineer", "cto"],
+    "operations": ["devops-sre", "observability-operations", "security-engineer", "qa-engineer", "release-reviewer", "cto"],
+    "performance": ["performance-engineer", "qa-engineer", "observability-operations", "cto"]
+  }
+}

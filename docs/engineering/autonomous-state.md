@@ -5,10 +5,10 @@ Last updated: 2026-08-12
 ## Current run
 
 Latest verified merged iteration: 081 — PR #79 merged at `2424ac3`.
-Current iteration: 082 — Durable loop-state reconciliation.
-Current branch: `docs/iteration-082-reconcile-loop-state`.
-Base branch and commit: `main` / `2424ac3`.
-Pull request: owner-review PR for this reconciliation.
+Current iteration: 084 — Role-separated engineering governance.
+Current branch: `docs/iteration-084-role-governance`.
+Base branch and commit: `main` / `7bde588`.
+Pull request: owner-review PR for role governance.
 Pull-request state: owner review pending after publication.
 
 **Validation status:**
@@ -22,7 +22,7 @@ Pull-request state: owner review pending after publication.
 
 ## Exact next action
 
-Owner reviews the Iteration 082 reconciliation PR. Autonomous merge is disabled; the next scheduler invocation should continue discovery from reliability/error handling.
+Owner reviews the Iteration 084 role-governance PR. Autonomous merge remains disabled; CTO merge authority is modeled only after all verified gates and owner approval. Next discovery continues from reliability/error handling.
 
 ## Reconciliation evidence
 
@@ -30,8 +30,8 @@ Owner reviews the Iteration 082 reconciliation PR. Autonomous merge is disabled;
 
 ## Stacked pull-request dependencies
 
-Iteration 082 is an independent documentation reconciliation based on verified `origin/main`; it changes only this durable state summary.
+Iteration 084 is an independent governance slice based on verified `origin/main`; it adds the role registry and review-routing contract without runtime behavior.
 
 ## Portfolio distribution
 
-Iteration 082 is governance/maintenance work. It adds no persistence, provider credentials, schema changes, dependencies, or application behavior.
+Iteration 084 is governance/architecture work. It adds no persistence, provider credentials, schema changes, dependencies, or application behavior.
