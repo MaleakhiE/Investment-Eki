@@ -46,6 +46,7 @@ export default function CashflowPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [accountsError, setAccountsError] = useState(false);
   const [showAllModal, setShowAllModal] = useState(false);
   const [filterMonth, setFilterMonth] = useState(() => {
     const now = new Date();
@@ -69,14 +70,15 @@ export default function CashflowPage() {
   const closeAllTransactions = useCallback(() => setShowAllModal(false), []);
 
   const fetchAccounts = useCallback(async () => {
+    setAccountsError(false);
     try {
       const response = await fetch('/api/accounts');
-      if (!response.ok) return;
+      if (!response.ok) throw new Error('Accounts unavailable');
       const data = await response.json();
       const list = Array.isArray(data.responseDetails) ? data.responseDetails : [];
       setAccounts(list);
       setAccountChoice((current) => current || list[0]?.id || '');
-    } catch (err) { console.error(err); }
+    } catch { setAccounts([]); setAccountsError(true); }
   }, []);
 
   const fetchTransactions = useCallback(async () => {
@@ -265,6 +267,7 @@ export default function CashflowPage() {
         <div className="mb-4"><TransactionImportPreview /></div>
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-3 sm:space-y-4">
+            {accountsError && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">Account data is unavailable.{' '}<button type="button" onClick={() => { setIsLoading(true); void fetchAccounts().finally(() => setIsLoading(false)); }} className="font-semibold underline focus-visible:outline-2 focus-visible:outline-offset-2">Retry loading accounts</button></p>}
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-5">
                 <p className="text-[10px] sm:text-sm text-zinc-600">Net Cashflow</p>
