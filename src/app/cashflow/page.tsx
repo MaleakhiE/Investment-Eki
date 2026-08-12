@@ -71,14 +71,15 @@ export default function CashflowPage() {
   const closeAllTransactions = useCallback(() => setShowAllModal(false), []);
 
   const fetchAccounts = useCallback(async () => {
+    setAccountsError(false);
     try {
       const response = await fetch('/api/accounts');
-      if (!response.ok) return;
+      if (!response.ok) throw new Error('Accounts unavailable');
       const data = await response.json();
       const list = Array.isArray(data.responseDetails) ? data.responseDetails : [];
       setAccounts(list);
       setAccountChoice((current) => current || list[0]?.id || '');
-    } catch (err) { console.error(err); }
+    } catch { setAccounts([]); setAccountsError(true); }
   }, []);
 
   const fetchTransactions = useCallback(async () => {
