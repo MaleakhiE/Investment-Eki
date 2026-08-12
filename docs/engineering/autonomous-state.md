@@ -18,7 +18,7 @@ Pull-request state: owner review pending after publication.
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` remains a legacy controller record with `targetIteration: 70` and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PRs #72 through #79 are merged. The next assigned iteration is 082.
+`docs/engineering/loop-state.json` remains a legacy controller record with `targetIteration: 70` and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PRs #72 through #80 are merged. The next assigned iteration is 083.
 
 ## Exact next action
 
@@ -26,7 +26,7 @@ Owner reviews the Iteration 084 role-governance PR. Autonomous merge remains dis
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully. PR #79 is merged into `origin/main` at `2424ac3`; no open queued PR or repair is currently present.
+`git fetch --all --prune` completed successfully. PR #80 is merged into `origin/main` at `7bde588`; no open queued PR or repair is currently present.
 
 ## Stacked pull-request dependencies
 
