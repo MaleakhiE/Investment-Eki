@@ -34,6 +34,27 @@ export interface TransferInput {
   description: string;
 }
 
+function matchesIdempotentTransfer(
+  record: {
+    date: Date;
+    type: string;
+    description: string;
+    amount: string;
+    account_id: bigint | null;
+    destination_account_id: bigint | null;
+  },
+  input: TransferInput,
+  sourceId: bigint,
+  destinationId: bigint,
+): boolean {
+  return record.date.toISOString().slice(0, 10) === input.date
+    && record.type === 'TRANSFER'
+    && record.description === (input.description?.trim() || 'Account transfer')
+    && decryptNumber(record.amount) === input.amount
+    && record.account_id === sourceId
+    && record.destination_account_id === destinationId;
+}
+
 export interface TransactionRecord {
   id: bigint;
   user_id: bigint;
@@ -494,7 +515,8 @@ export async function getMonthlySummary(
 
 export async function createTransfer(
   userId: bigint,
-  input: TransferInput
+  input: TransferInput,
+  idempotencyKey?: string,
 ): Promise<{ success: boolean; transaction?: TransactionRecord; error?: string }> {
   const transactionDate = parseCalendarDate(input.date);
   if (!transactionDate) {
@@ -502,6 +524,9 @@ export async function createTransfer(
   }
   if (!isFinitePositiveAmount(input.amount)) {
     return { success: false, error: 'Amount must be a positive number' };
+  }
+  if (idempotencyKey !== undefined && !normalizeIdempotencyKey(idempotencyKey)) {
+    return { success: false, error: 'Idempotency-Key must be 1-128 visible ASCII characters' };
   }
 
   const sourceId = parseAccountId(input.source_account_id);
@@ -522,21 +547,48 @@ export async function createTransfer(
     const destination = accounts.find((account) => account.id === destinationId);
     if (!source || !destination) return { success: false, error: 'Source or destination account not found' };
 
-    const record = await client.transaction.create({
-      data: {
-        user_id: userId,
-        date: transactionDate,
-        type: 'TRANSFER',
-        category: 'Transfer',
-        description: typeof input.description === 'string' && input.description.trim()
-          ? input.description.trim()
-          : 'Account transfer',
-        amount: encryptNumber(input.amount),
-        account: source.name,
-        account_id: sourceId,
-        destination_account_id: destinationId,
-      },
-    });
+    const normalizedIdempotencyKey = idempotencyKey ? normalizeIdempotencyKey(idempotencyKey) : null;
+    if (normalizedIdempotencyKey) {
+      const existing = await client.transaction.findFirst({
+        where: { user_id: userId, idempotency_key: normalizedIdempotencyKey },
+      });
+      if (existing) {
+        if (!matchesIdempotentTransfer(existing, input, sourceId, destinationId)) {
+          return { success: false, error: 'Idempotency key already used for a different transfer' };
+        }
+        return {
+          success: true,
+          transaction: {
+            id: existing.id, user_id: existing.user_id, date: existing.date, type: 'TRANSFER',
+            category: existing.category, description: existing.description, amount: input.amount,
+            account: existing.account, account_id: existing.account_id,
+            destination_account_id: existing.destination_account_id,
+            source_account_name: source.name, destination_account_name: destination.name,
+            receipt_image: existing.receipt_image, created_at: existing.created_at, updated_at: existing.updated_at,
+          },
+        };
+      }
+    }
+
+    let record;
+    try {
+      record = await client.transaction.create({
+        data: {
+          user_id: userId, date: transactionDate, type: 'TRANSFER', category: 'Transfer',
+          description: typeof input.description === 'string' && input.description.trim() ? input.description.trim() : 'Account transfer',
+          amount: encryptNumber(input.amount), account: source.name, account_id: sourceId,
+          destination_account_id: destinationId, ...(normalizedIdempotencyKey ? { idempotency_key: normalizedIdempotencyKey } : {}),
+        },
+      });
+    } catch (error) {
+      if (!normalizedIdempotencyKey || !isUniqueConstraintError(error)) throw error;
+      const existing = await client.transaction.findFirst({ where: { user_id: userId, idempotency_key: normalizedIdempotencyKey } });
+      if (!existing) throw error;
+      if (!matchesIdempotentTransfer(existing, input, sourceId, destinationId)) {
+        return { success: false, error: 'Idempotency key already used for a different transfer' };
+      }
+      record = existing;
+    }
 
     return {
       success: true,
