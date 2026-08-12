@@ -18,6 +18,10 @@ config_file = "./agents/ceo.toml"
 description = "Perform final exact-SHA technical review and issue APPROVE_AND_MERGE, REQUEST_CHANGES, BLOCK, or DEFER."
 config_file = "./agents/cto.toml"
 
+[agents.engineering_manager]
+description = "Coordinate bounded iterations, delegation, scope, dependencies, and reviewer coverage."
+config_file = "./agents/engineering-manager.toml"
+
 [agents.business_analyst]
 description = "Define requirements, business rules, acceptance criteria, and edge cases; verify final behavior against them."
 config_file = "./agents/business-analyst.toml"
@@ -29,6 +33,10 @@ config_file = "./agents/product-analyst.toml"
 [agents.product_manager]
 description = "Assess user value, scope, product journey, and release usefulness."
 config_file = "./agents/product-manager.toml"
+
+[agents.ux_designer]
+description = "Review user journeys, interaction design, information architecture, and interface clarity."
+config_file = "./agents/ux-designer.toml"
 
 [agents.ux_auditor]
 description = "Audit responsive UX and accessibility without edits."
