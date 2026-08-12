@@ -179,14 +179,14 @@ const assertCoherentState = (state: LoopState): void => {
 
   if (state.terminalState === 'accepted') {
     if (state.phase !== 'publish' || state.nextAction !== 'next-iteration' || state.blocker !== null
-      || state.currentIteration >= state.targetIteration || !state.publication || state.authorizedCommit !== state.publication.commit
+      || !state.publication || state.authorizedCommit !== state.publication.commit
       || !hasApprovedReview(state) || !hasPassedAcceptanceContract(state)) throw invalidState();
     return;
   }
 
   if (state.phase !== 'stopped' || state.nextAction !== 'stop') throw invalidState();
   if (state.terminalState === 'completed') {
-    if (state.blocker !== null || state.currentIteration < state.targetIteration || !state.publication
+    if (state.blocker !== null || !state.publication
       || state.authorizedCommit !== state.publication.commit
       || !hasApprovedReview(state) || !hasPassedAcceptanceContract(state)) throw invalidState();
   } else if (state.blocker === null) throw invalidState();
@@ -266,7 +266,7 @@ export const parseLoopState = (value: unknown): LoopState => {
   const limits = parseLimits(value.limits);
   const startedAt = timestampValue(value.startedAt);
   const deadlineAt = timestampValue(value.deadlineAt);
-  if (schemaVersion !== 1 || latestCompletedIteration >= currentIteration || currentIteration > targetIteration
+  if (schemaVersion !== 1 || latestCompletedIteration >= currentIteration
     || repairAttempts > limits.maxRepairAttempts || iterationsAcceptedThisRun > limits.maxIterations
     || Date.parse(deadlineAt) <= Date.parse(startedAt)) throw invalidState();
   if (!Array.isArray(value.validations)) throw invalidState();
