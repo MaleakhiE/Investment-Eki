@@ -4,10 +4,10 @@ Last updated: 2026-08-12
 
 ## Current run
 
-Latest verified merged iteration: 076 — PR #74 merged at `d6b459c`.
-Current iteration: 077 — Durable loop-state reconciliation.
-Current branch: `docs/iteration-077-reconcile-loop-state`.
-Base branch and commit: `main` / `d6b459c`.
+Latest verified merged iteration: 077 — PR #75 merged at `c475ef0`.
+Current iteration: 078 — Durable loop-state reconciliation.
+Current branch: `docs/iteration-078-reconcile-loop-state`.
+Base branch and commit: `main` / `c475ef0`.
 Pull request: owner-review PR to be created for this reconciliation.
 Pull-request state: owner review pending after publication.
 
@@ -18,20 +18,20 @@ Pull-request state: owner review pending after publication.
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` remains a legacy controller record with `targetIteration: 70` and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PRs #72, #73, and #74 are merged. The next assigned iteration is 077.
+`docs/engineering/loop-state.json` remains a legacy controller record with `targetIteration: 70` and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PRs #72 through #75 are merged. The next assigned iteration is 078.
 
 ## Exact next action
 
-Owner reviews the Iteration 077 reconciliation PR. Autonomous merge is disabled; the next scheduler invocation should inspect its status and continue discovery from financial correctness if no repair is required.
+Owner reviews the Iteration 078 reconciliation PR. Autonomous merge is disabled; the next scheduler invocation should continue discovery from data integrity/concurrency.
 
 ## Reconciliation evidence
 
-`git fetch --all --prune` completed successfully. PR #74 is merged into `origin/main` at `d6b459c`; no open queued PR or repair is currently present.
+`git fetch --all --prune` completed successfully. PR #75 is merged into `origin/main` at `c475ef0`; no open queued PR or repair is currently present. The financial-correctness discovery pass found no safe candidate without additional product-policy evidence.
 
 ## Stacked pull-request dependencies
 
-Iteration 077 is an independent documentation reconciliation based on verified `origin/main`; it changes only this durable state summary.
+Iteration 078 is an independent documentation reconciliation based on verified `origin/main`; it changes only this durable state summary and discovery cursor.
 
 ## Portfolio distribution
 
-Iteration 077 is governance/maintenance work. It adds no persistence, provider credentials, schema changes, dependencies, or application behavior.
+Iteration 078 is governance/maintenance work. It adds no persistence, provider credentials, schema changes, dependencies, or application behavior.
