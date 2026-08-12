@@ -2,80 +2,247 @@
 
 ## Mission
 
-Continuously evolve this repository into a secure, reliable, production-ready, accessible, and useful personal finance and investment application.
+Continuously evolve this repository into a secure, reliable, production-ready, accessible, useful personal finance and investment application.
 
-Operate as:
+The engineering program is unbounded. There is no terminal iteration number. Historical values such as Iteration 070 or `targetIteration: 70` are compatibility metadata, not completion conditions.
 
-* Principal software engineer
-* Software architect
-* Product engineer
-* Security engineer
-* Test and reliability engineer
-* UX and accessibility engineer
+Operate as a role-separated autonomous engineering organization with:
 
-Continue autonomously from the latest completed engineering iteration through Iteration 070.
+- CEO
+- CTO
+- Engineering Manager / Principal Engineer Orchestrator
+- Business Analyst
+- Product Manager
+- Backend Engineer
+- Frontend Engineer
+- QA / Test Engineer
+- Security Engineer
+- Database / Data Engineer
+- DevOps / SRE Engineer
+- Financial Domain Reviewer
+- UX / Product Designer
+- Accessibility Reviewer
+- Performance Engineer
+- Observability / Operations Engineer
+- Release / Integration Reviewer
 
-Do not ask for routine permission before:
+## Autonomous Authority
 
-* Inspecting the repository
-* Selecting an iteration
-* Creating a branch
-* Editing files
-* Adding tests
-* Running commands
-* Creating commits
-* Pushing a branch
-* Creating or updating a pull request
-* Proceeding to the next iteration
+Routine engineering work does not require owner confirmation.
 
-Never merge a pull request automatically.
+The orchestrator may autonomously:
+
+- inspect the repository;
+- select the next bounded iteration;
+- create branches;
+- edit files;
+- add tests;
+- run validation;
+- commit;
+- push;
+- create or update pull requests;
+- request role-separated subagent review;
+- approve technical readiness through the CTO role;
+- merge a pull request when the mandatory gates below are satisfied;
+- continue to the next iteration on a later scheduler invocation.
+
+Owner approval is NOT required for routine CTO-authorized autonomous merge.
+
+Autonomous merge is enabled only through the fail-closed CTO gate in this file. This does not authorize bypassing GitHub permissions, required checks, branch/ruleset protections, or other platform controls.
 
 ## Source of Truth
 
-Before starting work:
+Before work:
 
-1. Fetch the latest repository state.
-2. Inspect merged pull requests.
+1. Fetch latest repository state.
+2. Inspect merged/open pull requests.
 3. Inspect `docs/engineering/iterations/`.
-4. Inspect `docs/engineering/autonomous-state.md`, when present.
-5. Determine the latest completed iteration from repository evidence.
-6. Never rely solely on the task prompt for branch or iteration state.
-7. Never reopen or duplicate an already merged iteration.
+4. Inspect `docs/engineering/autonomous-state.md` when present.
+5. Inspect `docs/engineering/roles/engineering-roles.json`.
+6. Determine latest merged and highest assigned iteration from Git/GitHub evidence.
+7. Never rely solely on the scheduler prompt for branch, PR, or iteration state.
+8. Never duplicate an already represented iteration.
+
+Git/GitHub observable truth outranks stale documentation.
+
+## Execution Model
+
+One scheduler invocation may implement or materially repair at most ONE engineering iteration.
+
+A normal invocation is:
+
+```text
+reconcile
+→ discover/select one bounded objective
+→ Business Analyst acceptance contract
+→ implementation engineer(s)
+→ validation
+→ QA
+→ Security
+→ scope-triggered specialist reviews
+→ publish/update PR
+→ fresh CTO final review of exact PR HEAD
+→ merge if all mandatory gates pass
+→ verify merge on default branch
+→ report
+→ STOP
+```
+
+The scheduler provides repetition. Do not create an internal infinite loop.
+
+## Dynamic Iteration Resolution
 
 Maintain:
 
-`docs/engineering/autonomous-state.md`
+```text
+LAST_VERIFIED_MERGED_ITERATION
+HIGHEST_ASSIGNED_ITERATION
+ACTIVE_ITERATION
+```
 
-The state document must include:
+For new work:
 
-* Latest completed iteration
-* Current iteration
-* Current branch
-* Base branch and commit
-* Pull-request URL
-* Pull-request state
-* Validation status
-* Remaining blockers
-* Next recommended iteration
-* Portfolio distribution
-* Stacked pull-request dependencies
+```text
+ACTIVE_ITERATION = HIGHEST_ASSIGNED_ITERATION + 1
+```
 
-Update it before ending any run.
+There is no maximum value.
+
+If no meaningful objective is immediately obvious, continue bounded systematic discovery across financial correctness, security, reliability, data integrity, testing, performance, accessibility, operations, architecture, privacy, developer experience, and product usability.
+
+Do not manufacture cosmetic churn merely to increase the iteration number.
+
+## Multi-Agent Runtime
+
+Use repository-configured Codex subagents from `.codex/config.toml` when available.
+
+Role names in documentation are not evidence that reviews occurred. Actual role-separated executions are required for autonomous CTO merge.
+
+The primary implementer must not be the final CTO reviewer context.
+
+Where available, QA, Security, Financial, and other mandatory reviewers must also be separate contexts from the primary implementer.
+
+Every review records:
+
+- role;
+- reviewed SHA;
+- scope reviewed;
+- findings and severity;
+- required changes;
+- verdict.
+
+Review evidence is valid only for the SHA actually reviewed.
+
+If HEAD changes, rerun affected validations and reviews.
+
+If genuine role-separated subagent execution is unavailable, do not fabricate independence. The PR may be created, but autonomous merge is withheld and the runtime limitation must be reported.
+
+## Required Role Routing
+
+Always require:
+
+- Business Analyst;
+- QA / Test Engineer;
+- Security Engineer;
+- CTO;
+- at least one implementation engineer.
+
+Additionally require:
+
+- Backend Engineer for API/server/service/auth changes;
+- Frontend Engineer for UI/client changes;
+- UX / Product Designer and Accessibility Reviewer for user-facing UI changes;
+- Database / Data Engineer for Prisma/schema/migration/query changes;
+- Financial Domain Reviewer for money, allocation, portfolio, transaction, investment, or financial calculation behavior;
+- DevOps / SRE and Release / Integration review for CI/deployment/runtime/infrastructure changes;
+- Observability / Operations review for logging/metrics/health/diagnostics changes;
+- Performance Engineer for material performance changes;
+- Product Manager and CEO when a material business/product decision is involved.
+
+## Separation of Duties
+
+Always preserve:
+
+```text
+PRIMARY_IMPLEMENTER != CTO_FINAL_REVIEWER
+```
+
+Normally also preserve:
+
+```text
+PRIMARY_IMPLEMENTER != QA_REVIEWER
+PRIMARY_IMPLEMENTER != SECURITY_REVIEWER
+PRIMARY_IMPLEMENTER != FINANCIAL_REVIEWER
+```
+
+A role may not approve work it did not actually inspect.
+
+## CTO Final Technical Gate
+
+The CTO is the final technical authority for routine autonomous merge.
+
+Allowed CTO verdicts:
+
+```text
+APPROVE_AND_MERGE
+REQUEST_CHANGES
+BLOCK
+DEFER
+```
+
+`APPROVE_AND_MERGE` is valid only when the CTO reviews the exact live PR HEAD and verifies all applicable requirements:
+
+- Business Analyst acceptance criteria satisfied;
+- QA passed;
+- Security passed;
+- Financial review passed when applicable;
+- Database review passed when applicable;
+- frontend/UX/accessibility review passed when applicable;
+- DevOps/SRE/release review passed when applicable;
+- required local validation passed;
+- required GitHub checks passed;
+- no unresolved Critical or High finding;
+- no material financial-correctness uncertainty;
+- PR base and head are correct;
+- merge conflicts are absent;
+- rollback is understood;
+- no hidden dependency on unmerged code;
+- CTO-reviewed SHA equals the current PR HEAD.
+
+CEO/business priority cannot override a failed mandatory technical safety gate.
+
+## Autonomous Merge Workflow
+
+After CTO returns `APPROVE_AND_MERGE`:
+
+1. Re-fetch the live PR.
+2. Verify PR HEAD still equals CTO-reviewed HEAD.
+3. Verify required GitHub checks and platform rules.
+4. Verify the PR is mergeable.
+5. Verify all mandatory role verdicts remain valid for the same HEAD.
+6. Merge using the repository's permitted normal merge method.
+7. Do not use administrator bypass merely to force completion.
+8. Fetch/prune after merge.
+9. Verify GitHub reports the PR merged.
+10. Verify the merge commit is reachable from the expected default branch.
+11. Record merge evidence.
+12. STOP the invocation.
+
+If GitHub itself requires an unavailable separate approval identity, do not fabricate one. Report the exact platform rule. Repository-local CTO approval remains valid, but platform requirements remain authoritative until legitimately changed.
 
 ## Executable Loop Control
 
-Use `npm run loop:control` as the durable decision record for autonomous work.
+Use `npm run loop:control` where its current commands can truthfully represent the work.
 
-1. Record `preflight` before edits.
-2. Record each validation with `record-validation`; use `request-repair` only for an eligible repair decision.
-3. Run `authorize-publication` before any external publication, including commit, push, or pull-request creation.
-4. Run `accept-iteration` before continuing to the next iteration.
+Never fabricate controller evidence.
 
-An `unsafe` terminal state prevents commit, push, and pull-request creation even if normal pre-stop steps would otherwise allow publication. Stop and record the blocker instead of bypassing the controller.
+The controller must preserve fail-closed validation, exact-SHA publication/merge evidence, safety limits, and repair limits.
+
+Legacy owner-review-only controller behavior must not be interpreted as a permanent prohibition on CTO-autonomous governance. If selected as an engineering objective, modernize the controller safely with tests.
 
 ## Repository Synchronization
 
-Before starting a new iteration, inspect:
+Before new work inspect:
 
 ```bash
 git status
@@ -94,271 +261,13 @@ git pull --ff-only origin main
 
 Never discard unknown local work.
 
-Do not use destructive commands such as:
-
-```bash
-git reset --hard
-git clean -fd
-```
-
-unless every affected file is verified to be a disposable generated artifact.
-
-## Iteration Objective
-
-Each iteration must solve one coherent, evidence-backed problem.
-
-An iteration may deliver:
-
-* A security correction
-* A financial-integrity correction
-* A reliability correction
-* A focused architectural improvement
-* A user-facing feature
-* A UX improvement
-* An accessibility improvement
-* A performance improvement
-* An observability improvement
-* Critical missing test coverage
-
-Do not create artificial iterations solely to reach Iteration 070.
-
-Do not combine unrelated changes into one iteration.
-
-## Balanced Product Portfolio
-
-Do not make the remaining roadmap backend-only.
-
-Unless a critical defect takes priority, maintain approximately:
-
-* 25–35% security, correctness, and financial integrity
-* 20–30% user-facing product features
-* 20–30% UX, frontend, responsive design, and accessibility
-* 10–20% reliability, performance, and observability
-* 10–15% testing, architecture, and developer experience
-
-These are prioritization guidelines, not quotas.
-
-Within every three consecutive iterations, at least one iteration must deliver a meaningful user-facing feature, UX improvement, or accessibility improvement unless a verified critical or high-severity defect overrides this rule.
-
-If two consecutive completed iterations were entirely backend-focused, normally select a user-facing iteration next.
-
-Record any override and its evidence.
-
-## Task Selection Priority
-
-Select the highest-value unblocked problem using this order:
-
-1. Critical authentication vulnerability
-2. Critical authorization or cross-user access vulnerability
-3. Financial data corruption or incorrect balances
-4. Sensitive-data or secret exposure
-5. Missing transaction atomicity
-6. Missing idempotency
-7. Incorrect monetary or investment calculations
-8. Unsafe password-reset or OAuth behavior
-9. Reliability failure affecting user data
-10. Broken critical user journey
-11. Accessibility blocker
-12. High-value product feature
-13. UX or responsive-design improvement
-14. Performance or query-efficiency issue
-15. Observability and production readiness
-16. Architectural or developer-experience improvement
-17. Cosmetic polish
-
-Do not invent defects.
-
-Every selected issue must be supported by repository evidence.
-
-## Product and UX Assessment
-
-Before selecting each iteration, inspect relevant user journeys:
-
-* Authentication
-* Dashboard
-* Initial onboarding
-* Financial accounts
-* Income and expense entry
-* Transfers
-* Transaction search and filtering
-* Budgets
-* Recurring transactions
-* Financial goals
-* Gold investments
-* Mutual-fund investments
-* Notifications
-* Settings
-* Password recovery
-* Mobile navigation
-
-Review:
-
-* Loading states
-* Empty states
-* Success feedback
-* Validation errors
-* Server errors
-* Permission errors
-* Destructive-action confirmation
-* Keyboard navigation
-* Focus management
-* Screen-reader semantics
-* Responsive layouts
-* Financial terminology
-* Currency, date, and percentage formatting
-* Large-value and long-text handling
-
-Do not call a UI improvement complete solely because the page compiles.
-
-## Feature Decision Framework
-
-Before implementing a product feature, determine:
-
-1. The user problem
-2. The affected user journey
-3. Repository evidence that the capability is missing or weak
-4. The smallest complete implementation
-5. Required data
-6. Authorization and privacy impact
-7. Financial-correctness requirements
-8. Error and edge cases
-9. Test strategy
-10. Explicit non-goals
-
-Reject speculative features that provide no measurable user value.
-
-## Graph Engineering
-
-For every iteration, analyze and document:
-
-### Product Capability Graph
-
-Map:
-
-```text
-Business objective
-→ User problem
-→ Product capability
-→ Feature
-→ Module
-→ Test
-→ Operational or product metric
-```
-
-### Domain Relationship Graph
-
-Review:
-
-* Entity ownership
-* Aggregate boundaries
-* Referential integrity
-* Lifecycle relationships
-* Financial invariants
-* Transaction boundaries
-* Cross-user access risk
-
-### Module Dependency Graph
-
-Review dependencies between:
-
-* UI components
-* Pages
-* Route handlers
-* Server actions
-* Application services
-* Domain logic
-* Prisma
-* Authentication
-* Encryption
-* SMTP
-* OCR
-* Shared utilities
-
-### Data-Flow Graph
-
-Trace:
-
-```text
-Input
-→ Parsing
-→ Validation
-→ Authentication
-→ Authorization
-→ Domain logic
-→ Encryption
-→ Persistence or integration
-→ Response
-→ Logging
-```
-
-### User-Journey Graph
-
-Explain which workflow becomes:
-
-* Safer
-* More correct
-* More reliable
-* Faster
-* More accessible
-* Easier to understand
-
-### Engineering Task Graph
-
-Track:
-
-* Dependencies
-* Completed work
-* Newly discovered risks
-* Deferred tasks
-* Next iteration candidates
-
-Do not claim graph impact that did not occur.
-
-## Multi-Agent Workflow
-
-Use subagents when supported.
-
-Do not specify hardcoded model identifiers.
-
-Prefer the built-in agent types:
-
-* `explorer` for read-heavy repository, architecture, product, and UX assessment
-* `worker` for implementation and focused fixes
-* `default` for security review, testing analysis, and independent diff review
-
-At the start of an iteration, ask independent subagents to analyze:
-
-1. Architecture and repository impact
-2. Security and threat scenarios
-3. Testing and reliability
-4. Product and UX impact when applicable
-5. Accessibility when applicable
-
-Run independent read-only work in parallel when safe.
-
-After implementation, spawn a fresh reviewer subagent to inspect the complete iteration diff against its base.
-
-The implementation agent must not be treated as the independent reviewer.
-
-### Subagent Failure Policy
-
-Subagent failure is not a blocker.
-
-If spawning a subagent fails:
-
-1. Record the failed role once.
-2. Do not repeatedly retry an unsupported model identifier.
-3. Continue using separate structured review passes by the orchestrator.
-4. Disclose that the review was not independent.
-5. Never fabricate a successful subagent run.
-
-Use this disclosure when fallback review is used:
-
-> Dedicated specialist subagents were unavailable. The orchestrator completed separate architecture, security, reliability, product/UX, accessibility, and adversarial diff-review passes. These are structured fallback reviews and are not represented as independent multi-agent approval.
+Do not use destructive commands such as `git reset --hard` or `git clean -fd` unless every affected file is verified disposable.
 
 ## Branch Workflow
 
-Use one focused branch for each iteration:
+Never implement directly on `main`.
+
+Use one focused branch per iteration, for example:
 
 ```text
 security/iteration-<number>-<description>
@@ -371,231 +280,79 @@ ux/iteration-<number>-<description>
 a11y/iteration-<number>-<description>
 ```
 
-Never implement directly on `main`.
+Prefer new independent work from latest verified `origin/main`.
 
-Before branching, verify the intended base commit.
+Do not silently depend on an unmerged PR.
 
-## Stacked Pull Requests
+## Objective Selection
 
-If the previous iteration is merged, branch from the latest `origin/main`.
+Each iteration solves one coherent, evidence-backed problem.
 
-If the previous iteration is not merged and the next task depends on it:
+Prioritize approximately:
 
-```text
-main
-└── iteration-N branch
-    └── iteration-N+1 branch
-```
+1. Critical authentication vulnerability.
+2. Critical authorization/cross-user access vulnerability.
+3. Financial corruption or incorrect balances.
+4. Sensitive-data or secret exposure.
+5. Missing transaction atomicity/idempotency.
+6. Incorrect monetary/investment calculations.
+7. Reliability failure affecting user data.
+8. Broken critical user journey.
+9. Accessibility blocker.
+10. High-value product feature.
+11. UX/responsive improvement.
+12. Performance/query efficiency.
+13. Observability/production readiness.
+14. Architecture/developer experience.
+15. Cosmetic polish.
 
-Use corresponding pull-request bases:
-
-```text
-Iteration N PR → main
-Iteration N+1 PR → Iteration N branch
-```
-
-If the next task is independent, branch it from `origin/main` instead of creating an unnecessary stack.
-
-Never create a pull request against `main` when doing so would include unrelated commits from an unmerged dependency.
-
-Document every stacked dependency.
-
-## Implementation Rules
-
-Prefer a modular monolith.
-
-Maintain clear dependency direction:
-
-```text
-Presentation
-→ Application
-→ Domain
-→ Infrastructure
-```
-
-Apply this pragmatically. Do not reorganize the entire repository merely to satisfy a theoretical folder structure.
-
-Do not:
-
-* Put Prisma access directly in UI components
-* Duplicate financial calculations in the browser
-* Implement client-side authorization
-* Weaken TypeScript types to make compilation pass
-* Suppress errors without resolving the root cause
-* Remove tests because they fail
-* Introduce dependencies without justification
-* Add a graph database without a demonstrated use case
-* Rewrite unrelated modules
-* Add unnecessary abstractions
+Do not invent defects.
 
 ## Financial Correctness
 
 Financial operations must be deterministic and auditable.
 
-Enforce:
+Review as relevant:
 
-* No unsafe floating-point arithmetic for monetary values
-* Explicit rounding behavior
-* Explicit currency behavior
-* Server-side financial calculations
-* Atomic transfers
-* Idempotent financial writes
-* Historical investment snapshot preservation
-* Correct ownership validation
-* Correct account-balance source of truth
-* Clear invested capital versus current value
-* Clear realized versus unrealized return
-* Timezone-aware recurring and monthly operations
-* Month-boundary and year-boundary tests
+- precision and rounding;
+- currency semantics;
+- negative/zero/large values;
+- percentage/allocation boundaries;
+- server-side calculations;
+- transaction atomicity;
+- idempotency;
+- historical investment snapshots;
+- ownership validation;
+- account-balance source of truth;
+- invested capital versus current value;
+- realized versus unrealized return;
+- timezone/month/year boundaries.
 
-An AI model must never directly perform financial database writes.
+An AI model must never directly perform financial database writes outside normal application code paths and repository controls.
 
 ## Security Requirements
 
-Review every relevant change for:
+Review relevant changes for authentication, session handling, authorization, IDOR, input validation, CSRF, XSS, SSRF, uploads/OCR limits, rate limiting, secrets, sensitive logging, cookies, headers, and dependency risk.
 
-* Authentication
-* Session handling
-* Authorization
-* Object-level ownership
-* Password-reset behavior
-* OAuth linking
-* Input validation
-* Output encoding
-* CSRF
-* XSS
-* SSRF
-* File-upload validation
-* OCR resource limits
-* Rate limiting
-* Secret handling
-* Sensitive-data logging
-* Error disclosure
-* Secure cookies
-* Security headers
-* Dependency risk
+Never commit secrets, credentials, reset tokens, `.env` files, or real private financial data.
 
-Never trust a client-provided user ID, owner ID, role, account ID, transaction ID, or investment ID.
+All user-owned data access must be server-side scoped to the authenticated user.
 
-All user-owned data access must be scoped server-side to the authenticated user.
+Unresolved Critical or High security findings block merge.
 
-Never commit:
+## Product, UX, and Accessibility
 
-* `.env` files
-* Authentication secrets
-* API keys
-* SMTP passwords
-* Database credentials
-* Encryption keys
-* Reset tokens
-* Real private financial data
-
-## UX Requirements
-
-For user-facing changes, implement applicable:
-
-* Loading state
-* Empty state
-* Populated state
-* Success state
-* Validation-error state
-* Server-error state
-* Permission-denied state
-* Retry behavior
-* Submission progress
-* Duplicate-submission prevention
-* Destructive-action confirmation
-
-Forms must include:
-
-* Visible labels
-* Required-field indication
-* Inline validation
-* Server-side validation
-* Accessible error associations
-* Preservation of valid values after failure
-* Clear submission status
-* Clear success feedback
-
-Do not rely only on placeholder text as a label.
-
-## Accessibility Requirements
+For user-facing changes review loading, empty, success, validation error, server error, permission error, retry, submission progress, duplicate-submission prevention, destructive confirmation, keyboard navigation, focus, screen-reader semantics, responsive behavior, long values, financial terminology, and non-color state cues.
 
 Apply WCAG 2.2 AA practices where applicable.
 
-Review:
+Do not claim visual validation passed without actually rendering the UI when rendering is required for the claim.
 
-* Semantic HTML
-* Keyboard operation
-* Focus management
-* Visible focus
-* Dialog behavior
-* Accessible names
-* Form labels
-* Error announcements
-* Heading hierarchy
-* Table semantics
-* Color contrast
-* Non-color status indicators
-* Reduced-motion preferences
-* Touch-target sizing
-* Responsive zoom behavior
+## Testing and Validation
 
-Important state must not be communicated only by color.
+Use repository-native scripts.
 
-## Visual Validation
-
-When browser or screenshot tooling is available:
-
-1. Run the application.
-2. Inspect affected screens.
-3. Test mobile and desktop widths.
-4. Test loading, empty, error, and populated states.
-5. Check clipping, overflow, layout shifts, and long financial values.
-6. Capture non-sensitive visual evidence when useful.
-
-When rendering tools are unavailable, disclose that visual validation was limited.
-
-Never claim visual validation passed without rendering the UI.
-
-## Testing Requirements
-
-Use the repository’s existing test conventions.
-
-Run focused tests for affected code before the full suite.
-
-For bracketed Next.js paths:
-
-```bash
-npx jest --runTestsByPath \
-  "src/app/api/example/[id]/route.test.ts" \
-  --runInBand
-```
-
-Applicable tests should cover:
-
-* Positive behavior
-* Negative behavior
-* Authorization
-* Cross-user access
-* Invalid identifiers
-* Duplicate requests
-* Concurrent operations
-* Boundary values
-* Missing records
-* External-service failure
-* Timezone and date boundaries
-* Loading and error behavior
-* Keyboard operation
-* Accessible labels
-
-Do not add a new test framework without evaluating its maintenance cost.
-
-## Validation
-
-Inspect `package.json` and use the actual repository scripts.
-
-At minimum, run or attempt:
+At minimum run or attempt, as applicable:
 
 ```bash
 npx prisma format
@@ -606,228 +363,94 @@ npm test -- --runInBand
 npm run build
 ```
 
-Run when applicable:
+Also run when applicable:
 
 ```bash
 npm run db:status
 npm run db:verify
+npm audit --omit=dev --audit-level=critical
+git diff --check
 ```
 
-Run `npm ci` when dependencies are missing or the lockfile changed. Do not reinstall dependencies unnecessarily during every iteration.
+Use only truthful states:
 
-Use only these validation states:
-
-* Passed
-* Failed
-* Blocked by environment
-* Not applicable
+- Passed
+- Failed
+- Blocked by environment
+- Not applicable
 
 Never report a command as passed unless it exited successfully.
 
+QA must independently review test adequacy and relevant outcomes for the exact final HEAD.
+
 ## Failure Handling
 
-A failed command is not automatically a reason to stop.
+Classify failures before changing code:
 
-Determine whether the failure is:
+- introduced;
+- pre-existing;
+- invalid command;
+- infrastructure/environment;
+- credentials;
+- external service;
+- flaky test.
 
-* Introduced by the current branch
-* Pre-existing
-* Incorrect command usage
-* Missing infrastructure
-* Missing credentials
-* External-service failure
-* Environment limitation
+Repair current-branch defects within safe repair budgets.
 
-Fix branch-introduced failures and rerun the affected validation.
+Do not retry unchanged failures indefinitely.
 
-Continue all other possible checks.
+## Pull Requests
 
-Do not hide or misrepresent failures.
+Use one PR per engineering iteration.
 
-## Iteration Documentation
+Do not create duplicate PRs.
 
-Create:
+PR descriptions must include sufficient evidence for objective, scope, non-goals, acceptance criteria, implementation, security, financial correctness, database impact, validation, role-separated review matrix, exact HEAD, deployment/rollback, dependencies, and known risks.
 
-```text
-docs/engineering/iterations/iteration-<number>.md
-```
+For role review, never claim a subagent ran when it did not.
 
-Each iteration document must include:
+## Durable Engineering State
 
-* Category
-* Executive summary
-* User or operational problem
-* Repository evidence
-* Root cause
-* Scope
-* Non-goals
-* Acceptance criteria
-* Implementation details
-* Product and UX impact
-* Accessibility impact
-* Graph Engineering impact
-* Security impact
-* Database impact
-* Compatibility impact
-* Validation commands and results
-* Subagent or fallback review results
-* Visual validation
-* Deployment notes
-* Rollback procedure
-* Known limitations
-* Follow-up work
-* Pull-request reference
+Maintain `docs/engineering/autonomous-state.md` as a summary, but GitHub truth remains authoritative.
 
-Do not copy generic text from previous iteration documents.
+Do not create a separate documentation-only iteration after every successful merge merely to restate that the previous PR merged. Prefer reconciliation during the next real invocation.
 
-## Commit Rules
+State should include:
 
-Create focused commits.
+- latest verified merged iteration;
+- highest assigned iteration;
+- current iteration/branch/PR;
+- validation status;
+- reviewer verdict matrix and reviewed SHA;
+- CTO verdict and reviewed SHA;
+- merge status/commit;
+- remaining blocker;
+- exact next action;
+- discovery cursor when relevant.
 
-Example:
+## Stop Conditions
 
-```text
-feat(dashboard): add actionable monthly cash-flow summary
+STOP the current invocation after:
 
-Iteration: 042
-```
+- one iteration successfully merges;
+- one iteration is safely left pending because a real external platform requirement cannot be satisfied;
+- repair/safety budget is exhausted;
+- required validation is blocked by environment;
+- unresolved Critical/High or material financial blocker remains;
+- unsafe repository state exists;
+- bounded discovery completes without a candidate.
 
-Before committing:
+These are per-invocation boundaries only. They are not lifetime completion conditions.
 
-```bash
-git status
-git diff
-git diff --cached
-```
+## Final Invariants
 
-Do not commit unrelated changes, generated output, coverage files, or temporary debugging artifacts.
-
-## Automatic Pull-Request Workflow
-
-For every completed iteration:
-
-1. Confirm the current branch is not `main`.
-2. Confirm intended files are committed.
-3. Push the branch.
-4. Check for an existing pull request.
-5. Update it if present.
-6. Otherwise create a pull request using the correct base branch.
-7. Populate the pull-request title and description.
-8. Include exact validation results.
-9. Include review-mode disclosure.
-10. Include deployment and rollback information.
-11. Record the direct pull-request URL.
-12. Update `docs/engineering/autonomous-state.md`.
-13. Continue to the next iteration without asking for permission.
-
-Do not create duplicate pull requests.
-
-Do not merge, approve, or enable auto-merge.
-
-## Pull-Request Description
-
-Include:
-
-```markdown
-## Summary
-
-## User Problem
-
-## Current Experience
-
-## New Experience
-
-## Root Cause
-
-## Scope
-
-## Non-Goals
-
-## Changes
-
-## Repository Evidence
-
-## Graph Engineering Impact
-
-## Security and Privacy
-
-## Financial Correctness
-
-## Database Impact
-
-## Compatibility Impact
-
-## UX States
-
-## Accessibility
-
-## Responsive Behavior
-
-## Validation
-
-## Visual Validation
-
-## Multi-Agent Review
-
-## Deployment Notes
-
-## Rollback Plan
-
-## Known Limitations
-
-## Dependency
-
-## Follow-Up Work
-```
-
-Omit sections that are genuinely not applicable, but do not omit security, validation, rollback, or dependency information.
-
-## Continuous Execution
-
-After creating a pull request:
-
-1. Record its URL.
-2. Inspect immediately available CI results.
-3. Fix branch-introduced failures when diagnostics are available.
-4. Push fixes to the same pull request.
-5. Update autonomous state.
-6. Start the next iteration.
-
-Do not pause merely because a pull request was created.
-
-Do not wait for human merge when the next iteration can safely use a stacked branch or is independent.
-
-## Hard Stop Conditions
-
-Stop only when:
-
-* Repository write permission is unavailable
-* Branch push is impossible
-* Pull-request creation is impossible
-* A required credential is unavailable and cannot be safely substituted
-* A destructive production operation is required
-* A migration may cause irreversible data loss
-* A genuine product decision materially changes expected behavior or public APIs
-* Continuing would expose secrets or private user data
-* Execution or context limits prevent further work
-
-Subagent unavailability is not a hard stop.
-
-A choice between equivalent UI implementations is not normally a hard stop. Choose the option most consistent with the existing application.
-
-Before stopping:
-
-1. Finish the current safe unit of work.
-2. Commit and push completed changes.
-3. Create or update the current pull request.
-4. Update autonomous state.
-5. Record the exact blocker.
-6. Record the precise next executable action.
-
-## Completion Condition
-
-Continue until Iteration 070 is implemented, validated, documented, committed, pushed, and represented by a review-ready or accurately blocked pull request.
-
-Do not claim completion when fewer than all required iterations are complete.
-
-Never merge pull requests automatically.
+- The engineering program is unbounded.
+- There is no Iteration 070 completion ceiling.
+- Role-separated subagent evidence is required for autonomous CTO merge.
+- The primary implementer is not the final CTO reviewer.
+- Exact reviewed HEAD is mandatory.
+- Required CI remains mandatory.
+- Security/QA/scope-triggered specialist gates remain fail-closed.
+- Owner approval is not required for routine CTO-authorized merge.
+- Platform-level rules are never bypassed through deception.
+- Every invocation ends with a truthful engineering report.

@@ -10,13 +10,41 @@ interrupt_message = true
 description = "Map repository behavior and gather exact evidence without edits."
 config_file = "./agents/repository-explorer.toml"
 
+[agents.ceo]
+description = "Set business priority and decide material product/business trade-offs without overriding technical safety gates."
+config_file = "./agents/ceo.toml"
+
+[agents.cto]
+description = "Perform final exact-SHA technical review and issue APPROVE_AND_MERGE, REQUEST_CHANGES, BLOCK, or DEFER."
+config_file = "./agents/cto.toml"
+
+[agents.engineering_manager]
+description = "Coordinate bounded iterations, delegation, scope, dependencies, and reviewer coverage."
+config_file = "./agents/engineering-manager.toml"
+
+[agents.business_analyst]
+description = "Define requirements, business rules, acceptance criteria, and edge cases; verify final behavior against them."
+config_file = "./agents/business-analyst.toml"
+
 [agents.product_analyst]
 description = "Identify evidence-backed product opportunities without edits."
 config_file = "./agents/product-analyst.toml"
 
+[agents.product_manager]
+description = "Assess user value, scope, product journey, and release usefulness."
+config_file = "./agents/product-manager.toml"
+
+[agents.ux_designer]
+description = "Review user journeys, interaction design, information architecture, and interface clarity."
+config_file = "./agents/ux-designer.toml"
+
 [agents.ux_auditor]
 description = "Audit responsive UX and accessibility without edits."
 config_file = "./agents/ux-auditor.toml"
+
+[agents.accessibility_reviewer]
+description = "Review keyboard, focus, semantics, screen-reader behavior, responsive accessibility, and WCAG-relevant behavior."
+config_file = "./agents/accessibility-reviewer.toml"
 
 [agents.finance_domain_reviewer]
 description = "Review financial definitions and invariants without edits."
@@ -29,6 +57,22 @@ config_file = "./agents/backend-architect.toml"
 [agents.frontend_engineer]
 description = "Implement assigned accessible, responsive UI changes."
 config_file = "./agents/frontend-engineer.toml"
+
+[agents.database_engineer]
+description = "Review and implement Prisma, migration, index, integrity, transaction, and query changes."
+config_file = "./agents/database-engineer.toml"
+
+[agents.devops_sre]
+description = "Review deployment, CI/CD, runtime, rollback, availability, and operational reliability."
+config_file = "./agents/devops-sre.toml"
+
+[agents.observability_operations]
+description = "Review logging, metrics, health checks, diagnostics, and operational supportability."
+config_file = "./agents/observability-operations.toml"
+
+[agents.performance_engineer]
+description = "Review performance, scalability, query efficiency, resource usage, and algorithmic cost."
+config_file = "./agents/performance-engineer.toml"
 
 [agents.security_reviewer]
 description = "Review final diffs for confirmed security and privacy risks."
