@@ -4,34 +4,25 @@ Last updated: 2026-08-13
 
 ## Current run
 
-Latest verified merged iteration: 086 — PR #84 merged at `4efbe03`.
-Current iteration: 087 — Reconcile governance bootstrap merge.
-Current branch: `docs/iteration-087-reconcile-governance`.
-Base branch and commit: `main` / `4efbe03`.
-Pull request: owner-review PR for governance-state reconciliation.
-Pull-request state: pending publication.
+Latest verified merged iteration: 091 — PR #92 merged at `eacc982`.
+Current iteration: 092 — Persist password-reset rate limits and concurrency safety.
+Current branch: `security/iteration-092-password-reset-rate-limit`.
+Base branch and commit: `main` / `eacc982`.
+Pull request: #93 (`https://github.com/MaleakhiE/Investment-Eki/pull/93`).
+Pull-request state: OPEN (CodeRabbit review addressed with row-locking and serialization retry; required CI checks passed; awaiting fresh role-separated BA, QA, Security, and CTO review of exact HEAD `5144385`).
 
 **Validation status:**
-- Documentation-only reconciliation; governance validation is inherited from merged PR #85.
-- `git diff --check`: required before publication
-- Independent review: unavailable; fallback governance and adversarial diff review required before publication
+- Focused Jest (`password-reset.service.test.ts`): Passed (9/9 tests)
+- Full Jest suite: Passed (118 suites, 1059 tests)
+- TypeScript (`tsc --noEmit`): Passed
+- ESLint: Passed
+- Production build & OCR trace: Passed
+- `git diff --check`: Passed
 
 ## Durable loop state
 
-`docs/engineering/loop-state.json` remains a legacy controller record with `targetIteration: 70` and is not rewritten to claim authorization or acceptance. GitHub truth is authoritative; PRs #72 through #85 are merged. The next assigned iteration is 087.
+Role registry is `MULTI_AGENT_AUTONOMOUS_ORG` with `autoMergeRequested: true` and `ownerApprovalRequired: false`. CTO autonomous merge authority is active after mandatory role-separated gates.
 
 ## Exact next action
 
-Publish the Iteration 087 reconciliation PR. Governance bootstrap is merged: role-separated CTO authority is enabled only after exact-SHA, required-check, branch-protection, and fail-closed specialist gates. Next discovery continues from reliability/error handling.
-
-## Reconciliation evidence
-
-`git fetch --all --prune` completed; GitHub and the verified remote ref report governance PR #85 merged into `origin/main` at `4efbe03`. No open queued PR or repair is currently present.
-
-## Stacked pull-request dependencies
-
-Iteration 087 is an independent documentation reconciliation based on verified `origin/main`; it records the governance bootstrap merge without changing application runtime behavior.
-
-## Portfolio distribution
-
-Iteration 087 is documentation-only. It adds no persistence, provider credentials, schema changes, dependencies, or application behavior.
+Complete fresh role-separated review of exact PR #93 HEAD `5144385`; merge only after CTO approval and live hosting gates pass.
