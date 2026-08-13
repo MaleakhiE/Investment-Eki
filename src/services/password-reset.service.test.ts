@@ -1,6 +1,7 @@
 const user = { findUnique: jest.fn(), update: jest.fn() };
-const passwordResetToken = { updateMany: jest.fn(), create: jest.fn(), findUnique: jest.fn() };
-const transaction = jest.fn(async (callback: (tx: unknown) => unknown) => callback({ user, passwordResetToken }));
+const passwordResetToken = { updateMany: jest.fn(), create: jest.fn(), findUnique: jest.fn(), count: jest.fn() };
+const queryRaw = jest.fn();
+const transaction = jest.fn(async (callback: (tx: unknown) => unknown) => callback({ user, passwordResetToken, $queryRaw: queryRaw }));
 jest.mock('@/lib/prisma', () => ({ prisma: { user, passwordResetToken, $transaction: transaction } }));
 jest.mock('@/lib/encryption', () => ({ encryptDeterministic: (value: string) => `email:${value}`, decrypt: (value: string) => value }));
 jest.mock('./smtp.service', () => ({ sendSmtpMail: jest.fn().mockResolvedValue(undefined) }));
@@ -17,6 +18,7 @@ describe('password reset', () => {
     user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
     passwordResetToken.create.mockResolvedValue({});
+    passwordResetToken.count.mockResolvedValue(0);
     const unknown = await requestPasswordReset('unknown@example.com', 'https://app.example.com');
     const existing = await requestPasswordReset('person@example.com', 'https://app.example.com');
     expect(unknown).toEqual(existing);
@@ -27,6 +29,7 @@ describe('password reset', () => {
     user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.updateMany.mockResolvedValue({ count: 1 });
     passwordResetToken.create.mockResolvedValue({});
+    passwordResetToken.count.mockResolvedValue(0);
     await requestPasswordReset('person@example.com', 'https://app.example.com');
     const created = passwordResetToken.create.mock.calls[0][0].data;
     expect(created.token_hash).toMatch(/^[a-f0-9]{64}$/);
@@ -46,6 +49,7 @@ describe('password reset', () => {
     user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
     passwordResetToken.create.mockResolvedValue({});
+    passwordResetToken.count.mockResolvedValue(0);
     jest.mocked(sendSmtpMail).mockRejectedValueOnce(new Error('SMTP unavailable'));
     await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
       success: true,
@@ -53,6 +57,63 @@ describe('password reset', () => {
     });
     expect(consoleError).toHaveBeenCalledWith('Password reset email delivery failed');
     consoleError.mockRestore();
+  });
+
+  it('enforces a persistent request limit without changing the generic response', async () => {
+    const fixedTime = new Date('2026-08-13T12:00:00.000Z');
+    jest.useFakeTimers().setSystemTime(fixedTime);
+    user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.count.mockResolvedValue(5);
+    await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
+      success: true,
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+    const countCall = passwordResetToken.count.mock.calls[0][0];
+    expect(countCall.where.user_id).toBe(BigInt(7));
+    expect(countCall.where.created_at.gte).toEqual(new Date(fixedTime.getTime() - 15 * 60 * 1000));
+    expect(passwordResetToken.create).not.toHaveBeenCalled();
+    expect(sendSmtpMail).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it('locks the account row and retries serialization conflicts before issuing a reset link', async () => {
+    user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.count.mockResolvedValue(0);
+    passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
+    passwordResetToken.create.mockResolvedValue({});
+    transaction.mockImplementationOnce(async () => {
+      const error = Object.assign(new Error('serialization conflict'), { code: 'P2034' });
+      throw error;
+    });
+
+    await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
+      success: true,
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(passwordResetToken.create).toHaveBeenCalledTimes(1);
+    expect(sendSmtpMail).toHaveBeenCalledTimes(1);
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    const [strings, accountId] = queryRaw.mock.calls[0];
+    expect(String(strings[0])).toContain('SELECT id FROM users WHERE id = ');
+    expect(String(strings[1])).toContain(' FOR UPDATE');
+    expect(accountId).toBe(BigInt(7));
+  });
+
+  it('returns the generic response without sending mail when a retryable transaction ultimately loses the rate-limit race', async () => {
+    user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.count.mockResolvedValue(5);
+    passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
+    passwordResetToken.create.mockResolvedValue({});
+
+    await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
+      success: true,
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+
+    expect(passwordResetToken.create).not.toHaveBeenCalled();
+    expect(sendSmtpMail).not.toHaveBeenCalled();
   });
 
   it('rejects weak passwords without consuming a token', async () => {
