@@ -59,17 +59,32 @@ describe('password reset', () => {
   });
 
   it('enforces a persistent request limit without changing the generic response', async () => {
+    const fixedTime = new Date('2026-08-13T12:00:00.000Z');
+    jest.useFakeTimers().setSystemTime(fixedTime);
     user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.count.mockResolvedValue(5);
     await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
       success: true,
       message: 'If an account exists for that email, a reset link has been sent.',
     });
-    expect(passwordResetToken.count).toHaveBeenCalledWith({
-      where: { user_id: BigInt(7), created_at: { gte: expect.any(Date) } },
-    });
+    const countCall = passwordResetToken.count.mock.calls[0][0];
+    expect(countCall.where.user_id).toBe(BigInt(7));
+    expect(countCall.where.created_at.gte).toEqual(new Date(fixedTime.getTime() - 15 * 60 * 1000));
     expect(passwordResetToken.create).not.toHaveBeenCalled();
     expect(sendSmtpMail).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it('prevents concurrent requests from exceeding the rate limit', async () => {
+    user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
+    passwordResetToken.create.mockResolvedValue({});
+    let requestCount = 0;
+    passwordResetToken.count.mockImplementation(() => Promise.resolve(requestCount++));
+    const concurrent = Array.from({ length: 10 }, () => requestPasswordReset('person@example.com', 'https://app.example.com'));
+    await Promise.all(concurrent);
+    expect(passwordResetToken.create).toHaveBeenCalledTimes(5);
+    expect(sendSmtpMail).toHaveBeenCalledTimes(5);
   });
 
   it('rejects weak passwords without consuming a token', async () => {

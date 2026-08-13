@@ -21,17 +21,41 @@ export async function requestPasswordReset(email: string, applicationUrl: string
   const account = await prisma.user.findUnique({ where: { email: encryptDeterministic(normalizedEmail) } });
   if (!account) return generic;
 
-  const recentRequests = await prisma.passwordResetToken.count({
-    where: { user_id: account.id, created_at: { gte: new Date(Date.now() - RESET_RATE_WINDOW_MS) } },
-  });
-  if (recentRequests >= RESET_RATE_LIMIT) return generic;
-
   const rawToken = crypto.randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + RESET_TTL_MS);
-  await prisma.$transaction(async (tx) => {
-    await tx.passwordResetToken.updateMany({ where: { user_id: account.id, used_at: null }, data: { used_at: new Date(), active_user_id: null } });
-    await tx.passwordResetToken.create({ data: { user_id: account.id, active_user_id: account.id, token_hash: hashToken(rawToken), expires_at: expiresAt } });
-  });
+
+  const MAX_RETRIES = 3;
+  let attempt = 0;
+  let tokenCreated = false;
+
+  while (attempt < MAX_RETRIES) {
+    try {
+      await prisma.$transaction(
+        async (tx) => {
+          const recentRequests = await tx.passwordResetToken.count({
+            where: { user_id: account.id, created_at: { gte: new Date(Date.now() - RESET_RATE_WINDOW_MS) } },
+          });
+          if (recentRequests >= RESET_RATE_LIMIT) {
+            return;
+          }
+          await tx.passwordResetToken.updateMany({ where: { user_id: account.id, used_at: null }, data: { used_at: new Date(), active_user_id: null } });
+          await tx.passwordResetToken.create({ data: { user_id: account.id, active_user_id: account.id, token_hash: hashToken(rawToken), expires_at: expiresAt } });
+          tokenCreated = true;
+        },
+        { isolationLevel: 'Serializable' }
+      );
+      break;
+    } catch (error: any) {
+      attempt++;
+      const isSerializationError = error?.code === 'P2034' || error?.code === '40001' || error?.message?.includes('serialization');
+      if (isSerializationError && attempt < MAX_RETRIES) {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (!tokenCreated) return generic;
 
   const resetUrl = new URL('/reset-password', applicationUrl);
   resetUrl.searchParams.set('token', rawToken);

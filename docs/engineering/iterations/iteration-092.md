@@ -17,7 +17,7 @@ Non-goals: adding a new cache provider, changing public reset-token semantics, o
 
 ## Implementation
 
-`requestPasswordReset` counts recent token rows for the authenticated account's deterministic email lookup before creating a new token. This state is shared by application instances through the existing database.
+`requestPasswordReset` counts recent token rows for the resolved account (identified by deterministic email lookup) before creating a new token. Token counting is scoped to the resolved account rather than an authenticated user, since password recovery is a public endpoint. The deterministic email lookup is an intentional exception to authenticated-user scoping, necessary for the forgot-password flow. This state is shared by application instances through the existing database.
 
 ## Security and privacy
 
