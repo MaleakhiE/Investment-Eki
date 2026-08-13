@@ -12,10 +12,11 @@ import { prisma } from '@/lib/prisma';
 import { encryptNumber, decryptNumber } from '@/lib/encryption';
 import {
   successResponse,
-  errorResponse,
   unauthorizedResponse,
   serverErrorResponse,
+  validationErrorResponse,
 } from '@/lib/api-response';
+import { isFiniteNonNegativeAmount } from '@/lib/financial-input';
 
 export interface NotificationSettingsResponse {
   monthly_reminder: boolean;
@@ -83,7 +84,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(unauthorizedResponse(), { status: 401 });
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(validationErrorResponse(['Invalid JSON body']), { status: 400 });
+    }
+
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+      return NextResponse.json(validationErrorResponse(['Invalid JSON body']), { status: 400 });
+    }
 
     const {
       monthly_reminder,
@@ -92,16 +102,55 @@ export async function POST(request: NextRequest) {
       low_balance_alert,
       low_balance_threshold,
       custom_alerts,
-    } = body;
+    } = body as {
+      monthly_reminder?: unknown;
+      monthly_reminder_day?: unknown;
+      monthly_summary?: unknown;
+      low_balance_alert?: unknown;
+      low_balance_threshold?: unknown;
+      custom_alerts?: unknown;
+    };
 
-    // Validate monthly_reminder_day
-    if (monthly_reminder_day !== undefined && (monthly_reminder_day < 1 || monthly_reminder_day > 28)) {
-      return NextResponse.json(errorResponse('Tanggal pengingat harus antara 1-28'), { status: 400 });
+    const booleanFields = [
+      ['monthly_reminder', monthly_reminder],
+      ['monthly_summary', monthly_summary],
+      ['low_balance_alert', low_balance_alert],
+    ] as const;
+    const invalidBoolean = booleanFields.find(([, value]) => value !== undefined && typeof value !== 'boolean');
+    if (invalidBoolean) {
+      return NextResponse.json(validationErrorResponse([`${invalidBoolean[0]} must be a boolean`]), { status: 400 });
     }
 
-    // Validate low_balance_threshold
-    if (low_balance_threshold !== undefined && low_balance_threshold < 0) {
-      return NextResponse.json(errorResponse('Threshold saldo tidak boleh negatif'), { status: 400 });
+    if (
+      monthly_reminder_day !== undefined
+      && (typeof monthly_reminder_day !== 'number'
+        || !Number.isInteger(monthly_reminder_day)
+        || monthly_reminder_day < 1
+        || monthly_reminder_day > 28)
+    ) {
+      return NextResponse.json(validationErrorResponse(['monthly_reminder_day must be an integer between 1 and 28']), { status: 400 });
+    }
+
+    if (low_balance_threshold !== undefined && !isFiniteNonNegativeAmount(low_balance_threshold)) {
+      return NextResponse.json(validationErrorResponse(['low_balance_threshold must be a finite non-negative amount']), { status: 400 });
+    }
+
+    if (custom_alerts !== undefined) {
+      const validTypes = new Set<CustomAlert['type']>(['expense_limit', 'income_target', 'savings_goal']);
+      const valid = Array.isArray(custom_alerts) && custom_alerts.every((alert) => {
+        if (typeof alert !== 'object' || alert === null || Array.isArray(alert)) return false;
+        const candidate = alert as Record<string, unknown>;
+        return (
+          typeof candidate.id === 'string'
+          && typeof candidate.name === 'string'
+          && validTypes.has(candidate.type as CustomAlert['type'])
+          && isFiniteNonNegativeAmount(candidate.threshold)
+          && typeof candidate.enabled === 'boolean'
+        );
+      });
+      if (!valid) {
+        return NextResponse.json(validationErrorResponse(['custom_alerts must contain valid alert objects']), { status: 400 });
+      }
     }
 
     const updateData: Record<string, unknown> = {};
@@ -110,7 +159,7 @@ export async function POST(request: NextRequest) {
     if (monthly_reminder_day !== undefined) updateData.monthly_reminder_day = monthly_reminder_day;
     if (monthly_summary !== undefined) updateData.monthly_summary = monthly_summary;
     if (low_balance_alert !== undefined) updateData.low_balance_alert = low_balance_alert;
-    if (low_balance_threshold !== undefined) updateData.low_balance_threshold = encryptNumber(low_balance_threshold);
+    if (low_balance_threshold !== undefined) updateData.low_balance_threshold = encryptNumber(low_balance_threshold as number);
     if (custom_alerts !== undefined) updateData.custom_alerts = JSON.stringify(custom_alerts);
 
     const settings = await prisma.notificationSettings.upsert({
@@ -118,11 +167,11 @@ export async function POST(request: NextRequest) {
       update: updateData,
       create: {
         user_id: userId,
-        monthly_reminder: monthly_reminder ?? true,
-        monthly_reminder_day: monthly_reminder_day ?? 25,
-        monthly_summary: monthly_summary ?? true,
-        low_balance_alert: low_balance_alert ?? false,
-        low_balance_threshold: encryptNumber(low_balance_threshold ?? 0),
+        monthly_reminder: (monthly_reminder as boolean | undefined) ?? true,
+        monthly_reminder_day: (monthly_reminder_day as number | undefined) ?? 25,
+        monthly_summary: (monthly_summary as boolean | undefined) ?? true,
+        low_balance_alert: (low_balance_alert as boolean | undefined) ?? false,
+        low_balance_threshold: encryptNumber((low_balance_threshold as number | undefined) ?? 0),
         custom_alerts: JSON.stringify(custom_alerts ?? []),
       },
     });
