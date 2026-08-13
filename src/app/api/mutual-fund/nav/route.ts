@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
       source: 'not_found',
       message: 'NAV tidak ditemukan. Silakan input manual.',
     }, 'Fund not found'));
-  } catch (error) {
-    console.error('Error fetching NAV:', error);
+  } catch {
+    console.error('mutual_fund_nav_fetch_failed');
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
@@ -103,8 +103,8 @@ async function fetchFromPasardana(fundName: string): Promise<NavData | null> {
         };
       }
     }
-  } catch (e) {
-    console.error('Pasardana fetch error:', e);
+  } catch {
+    console.error('mutual_fund_nav_pasardana_failed');
   }
   return null;
 }
@@ -145,8 +145,8 @@ async function fetchFromInfovesta(fundName: string): Promise<NavData | null> {
         };
       }
     }
-  } catch (e) {
-    console.error('Infovesta fetch error:', e);
+  } catch {
+    console.error('mutual_fund_nav_infovesta_failed');
   }
   return null;
 }
