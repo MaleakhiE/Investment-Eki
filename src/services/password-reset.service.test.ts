@@ -1,5 +1,5 @@
 const user = { findUnique: jest.fn(), update: jest.fn() };
-const passwordResetToken = { updateMany: jest.fn(), create: jest.fn(), findUnique: jest.fn() };
+const passwordResetToken = { updateMany: jest.fn(), create: jest.fn(), findUnique: jest.fn(), count: jest.fn() };
 const transaction = jest.fn(async (callback: (tx: unknown) => unknown) => callback({ user, passwordResetToken }));
 jest.mock('@/lib/prisma', () => ({ prisma: { user, passwordResetToken, $transaction: transaction } }));
 jest.mock('@/lib/encryption', () => ({ encryptDeterministic: (value: string) => `email:${value}`, decrypt: (value: string) => value }));
@@ -17,6 +17,7 @@ describe('password reset', () => {
     user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
     passwordResetToken.create.mockResolvedValue({});
+    passwordResetToken.count.mockResolvedValue(0);
     const unknown = await requestPasswordReset('unknown@example.com', 'https://app.example.com');
     const existing = await requestPasswordReset('person@example.com', 'https://app.example.com');
     expect(unknown).toEqual(existing);
@@ -27,6 +28,7 @@ describe('password reset', () => {
     user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.updateMany.mockResolvedValue({ count: 1 });
     passwordResetToken.create.mockResolvedValue({});
+    passwordResetToken.count.mockResolvedValue(0);
     await requestPasswordReset('person@example.com', 'https://app.example.com');
     const created = passwordResetToken.create.mock.calls[0][0].data;
     expect(created.token_hash).toMatch(/^[a-f0-9]{64}$/);
@@ -46,6 +48,7 @@ describe('password reset', () => {
     user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
     passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
     passwordResetToken.create.mockResolvedValue({});
+    passwordResetToken.count.mockResolvedValue(0);
     jest.mocked(sendSmtpMail).mockRejectedValueOnce(new Error('SMTP unavailable'));
     await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
       success: true,
@@ -53,6 +56,20 @@ describe('password reset', () => {
     });
     expect(consoleError).toHaveBeenCalledWith('Password reset email delivery failed');
     consoleError.mockRestore();
+  });
+
+  it('enforces a persistent request limit without changing the generic response', async () => {
+    user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.count.mockResolvedValue(5);
+    await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
+      success: true,
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+    expect(passwordResetToken.count).toHaveBeenCalledWith({
+      where: { user_id: BigInt(7), created_at: { gte: expect.any(Date) } },
+    });
+    expect(passwordResetToken.create).not.toHaveBeenCalled();
+    expect(sendSmtpMail).not.toHaveBeenCalled();
   });
 
   it('rejects weak passwords without consuming a token', async () => {

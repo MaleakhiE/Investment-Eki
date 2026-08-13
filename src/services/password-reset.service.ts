@@ -6,6 +6,8 @@ import { validateEmail, validatePassword } from '@/lib/validation';
 import { sendSmtpMail } from './smtp.service';
 
 const RESET_TTL_MS = 30 * 60 * 1000;
+const RESET_RATE_WINDOW_MS = 15 * 60 * 1000;
+const RESET_RATE_LIMIT = 5;
 export const PASSWORD_RESET_REQUESTED_MESSAGE = 'If an account exists for that email, a reset link has been sent.';
 
 function hashToken(token: string): string {
@@ -18,6 +20,11 @@ export async function requestPasswordReset(email: string, applicationUrl: string
   const normalizedEmail = email.toLowerCase().trim();
   const account = await prisma.user.findUnique({ where: { email: encryptDeterministic(normalizedEmail) } });
   if (!account) return generic;
+
+  const recentRequests = await prisma.passwordResetToken.count({
+    where: { user_id: account.id, created_at: { gte: new Date(Date.now() - RESET_RATE_WINDOW_MS) } },
+  });
+  if (recentRequests >= RESET_RATE_LIMIT) return generic;
 
   const rawToken = crypto.randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + RESET_TTL_MS);
