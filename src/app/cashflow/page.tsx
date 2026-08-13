@@ -95,7 +95,7 @@ export default function CashflowPage() {
       const data = await response.json();
       const txList = data.responseDetails?.transactions;
       setTransactions(Array.isArray(txList) ? txList : []);
-    } catch (err) { console.error(err); setTransactions([]); setTransactionsError(true); }
+    } catch { console.error('cashflow_transactions_fetch_failed'); setTransactions([]); setTransactionsError(true); }
   }, [filterMonth]);
 
   const fetchSummary = useCallback(async () => {
@@ -109,7 +109,7 @@ export default function CashflowPage() {
       if (!response.ok) throw new Error('Summary unavailable');
       const data = await response.json();
       setSummary(data.responseDetails);
-    } catch (err) { console.error(err); setSummary(null); setSummaryError(true); }
+    } catch { console.error('cashflow_summary_fetch_failed'); setSummary(null); setSummaryError(true); }
   }, [filterMonth]);
 
   useEffect(() => {
