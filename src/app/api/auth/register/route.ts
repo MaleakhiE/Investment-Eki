@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
       ),
       { status: 201 }
     );
-  } catch (error) {
-    console.error('Error registering user:', error);
+  } catch {
+    console.error('auth_register_failed');
     return NextResponse.json(serverErrorResponse(), { status: 500 });
   }
 }
