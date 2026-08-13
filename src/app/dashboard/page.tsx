@@ -25,6 +25,13 @@ interface UpcomingTransaction { id: string; category: string; description: strin
 interface BudgetSummary { id: string; category: string; amount: number; spent: number; remaining: number; percentage: number; isOverBudget: boolean; }
 type ResourceStatus = 'loading' | 'ready' | 'error';
 
+const isInvestmentDetail = (value: unknown): value is InvestmentDetail => {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<InvestmentDetail>;
+  return ['type', 'platform', 'product_name'].every((key) => typeof item[key as keyof InvestmentDetail] === 'string')
+    && ['invested_amount', 'current_value', 'gain_loss'].every((key) => Number.isFinite(item[key as keyof InvestmentDetail]));
+};
+
 export default function DashboardPage() {
   useSession();
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
@@ -41,6 +48,7 @@ export default function DashboardPage() {
   const [summaryStatus, setSummaryStatus] = useState<ResourceStatus>('loading');
   const [accountsStatus, setAccountsStatus] = useState<ResourceStatus>('loading');
   const [transactionsStatus, setTransactionsStatus] = useState<ResourceStatus>('loading');
+  const [investmentsStatus, setInvestmentsStatus] = useState<ResourceStatus>('loading');
   const [isLoading, setIsLoading] = useState(true);
   const [periodLabel, setPeriodLabel] = useState('');
 
@@ -94,7 +102,13 @@ export default function DashboardPage() {
         } else setSummaryStatus('error');
         if (compRes?.ok) { const d = await compRes.json(); setComparison(d.responseDetails); }
         if (trendRes?.ok) { const d = await trendRes.json(); setTrend(d.responseDetails || []); }
-        if (invRes?.ok) { const d = await invRes.json(); setInvestments(Array.isArray(d.responseDetails) ? d.responseDetails : []); }
+        if (invRes?.ok) {
+          const d = await invRes.json();
+          if (Array.isArray(d.responseDetails) && d.responseDetails.every(isInvestmentDetail)) {
+            setInvestments(d.responseDetails);
+            setInvestmentsStatus('ready');
+          } else setInvestmentsStatus('error');
+        } else setInvestmentsStatus('error');
         if (txRes?.ok) { const d = await txRes.json(); const txList = d.responseDetails?.transactions; if (d.responseStatus === 'SUCCESS' && Array.isArray(txList)) { setTransactions(txList); setTransactionsStatus('ready'); } else setTransactionsStatus('error'); } else setTransactionsStatus('error');
         if (goalsRes?.ok) { const d = await goalsRes.json(); setGoals(Array.isArray(d.responseDetails) ? d.responseDetails.filter((g: GoalProgress) => !g.is_completed).slice(0, 3) : []); }
         if (suggestionsRes?.ok) { const d = await suggestionsRes.json(); const list = d.responseDetails?.suggestions ?? d.responseDetails; setSuggestions(Array.isArray(list) ? list : []); }
@@ -305,7 +319,13 @@ export default function DashboardPage() {
           </div>
 
           {/* Portfolio Card */}
-          {currentVal > 0 && (
+          {investmentsStatus === 'error' ? (
+            <div role="alert" className="card rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
+              <p className="font-medium">Investment data is unavailable</p>
+              <p className="mt-1">The dashboard could not verify portfolio values. Open Investments to retry.</p>
+              <Link href="/investments" className="mt-2 inline-block font-semibold underline">Open Investments</Link>
+            </div>
+          ) : currentVal > 0 && (
             <div className="card rounded-3xl p-5 animate-fade-in stat-card" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
