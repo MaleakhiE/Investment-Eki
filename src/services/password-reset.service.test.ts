@@ -1,6 +1,7 @@
 const user = { findUnique: jest.fn(), update: jest.fn() };
 const passwordResetToken = { updateMany: jest.fn(), create: jest.fn(), findUnique: jest.fn(), count: jest.fn() };
-const transaction = jest.fn(async (callback: (tx: unknown) => unknown) => callback({ user, passwordResetToken }));
+const queryRaw = jest.fn();
+const transaction = jest.fn(async (callback: (tx: unknown) => unknown) => callback({ user, passwordResetToken, $queryRaw: queryRaw }));
 jest.mock('@/lib/prisma', () => ({ prisma: { user, passwordResetToken, $transaction: transaction } }));
 jest.mock('@/lib/encryption', () => ({ encryptDeterministic: (value: string) => `email:${value}`, decrypt: (value: string) => value }));
 jest.mock('./smtp.service', () => ({ sendSmtpMail: jest.fn().mockResolvedValue(undefined) }));
@@ -75,16 +76,44 @@ describe('password reset', () => {
     jest.useRealTimers();
   });
 
-  it('prevents concurrent requests from exceeding the rate limit', async () => {
+  it('locks the account row and retries serialization conflicts before issuing a reset link', async () => {
     user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.count.mockResolvedValue(0);
     passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
     passwordResetToken.create.mockResolvedValue({});
-    let requestCount = 0;
-    passwordResetToken.count.mockImplementation(() => Promise.resolve(requestCount++));
-    const concurrent = Array.from({ length: 10 }, () => requestPasswordReset('person@example.com', 'https://app.example.com'));
-    await Promise.all(concurrent);
-    expect(passwordResetToken.create).toHaveBeenCalledTimes(5);
-    expect(sendSmtpMail).toHaveBeenCalledTimes(5);
+    transaction.mockImplementationOnce(async () => {
+      const error = Object.assign(new Error('serialization conflict'), { code: 'P2034' });
+      throw error;
+    });
+
+    await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
+      success: true,
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(passwordResetToken.create).toHaveBeenCalledTimes(1);
+    expect(sendSmtpMail).toHaveBeenCalledTimes(1);
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    const [strings, accountId] = queryRaw.mock.calls[0];
+    expect(String(strings[0])).toContain('SELECT id FROM users WHERE id = ');
+    expect(String(strings[1])).toContain(' FOR UPDATE');
+    expect(accountId).toBe(BigInt(7));
+  });
+
+  it('returns the generic response without sending mail when a retryable transaction ultimately loses the rate-limit race', async () => {
+    user.findUnique.mockResolvedValue({ id: BigInt(7), email: 'person@example.com' });
+    passwordResetToken.count.mockResolvedValue(5);
+    passwordResetToken.updateMany.mockResolvedValue({ count: 0 });
+    passwordResetToken.create.mockResolvedValue({});
+
+    await expect(requestPasswordReset('person@example.com', 'https://app.example.com')).resolves.toEqual({
+      success: true,
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+
+    expect(passwordResetToken.create).not.toHaveBeenCalled();
+    expect(sendSmtpMail).not.toHaveBeenCalled();
   });
 
   it('rejects weak passwords without consuming a token', async () => {

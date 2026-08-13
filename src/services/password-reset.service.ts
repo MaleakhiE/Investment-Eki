@@ -8,10 +8,19 @@ import { sendSmtpMail } from './smtp.service';
 const RESET_TTL_MS = 30 * 60 * 1000;
 const RESET_RATE_WINDOW_MS = 15 * 60 * 1000;
 const RESET_RATE_LIMIT = 5;
+const MAX_RETRIES = 3;
 export const PASSWORD_RESET_REQUESTED_MESSAGE = 'If an account exists for that email, a reset link has been sent.';
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function isRetryableSerializationError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const candidate = error as { code?: unknown; message?: unknown };
+  return candidate.code === 'P2034'
+    || candidate.code === '40001'
+    || (typeof candidate.message === 'string' && candidate.message.includes('serialization'));
 }
 
 export async function requestPasswordReset(email: string, applicationUrl: string): Promise<{ success: true; message: string }> {
@@ -23,32 +32,31 @@ export async function requestPasswordReset(email: string, applicationUrl: string
 
   const rawToken = crypto.randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + RESET_TTL_MS);
-
-  const MAX_RETRIES = 3;
-  let attempt = 0;
+  const rateWindowStart = new Date(Date.now() - RESET_RATE_WINDOW_MS);
   let tokenCreated = false;
+  let attempt = 0;
 
   while (attempt < MAX_RETRIES) {
     try {
-      await prisma.$transaction(
+      tokenCreated = await prisma.$transaction(
         async (tx) => {
+          await tx.$queryRaw`SELECT id FROM users WHERE id = ${account.id} FOR UPDATE`;
           const recentRequests = await tx.passwordResetToken.count({
-            where: { user_id: account.id, created_at: { gte: new Date(Date.now() - RESET_RATE_WINDOW_MS) } },
+            where: { user_id: account.id, created_at: { gte: rateWindowStart } },
           });
           if (recentRequests >= RESET_RATE_LIMIT) {
-            return;
+            return false;
           }
           await tx.passwordResetToken.updateMany({ where: { user_id: account.id, used_at: null }, data: { used_at: new Date(), active_user_id: null } });
           await tx.passwordResetToken.create({ data: { user_id: account.id, active_user_id: account.id, token_hash: hashToken(rawToken), expires_at: expiresAt } });
-          tokenCreated = true;
+          return true;
         },
-        { isolationLevel: 'Serializable' }
+        { isolationLevel: 'Serializable' },
       );
       break;
-    } catch (error: any) {
-      attempt++;
-      const isSerializationError = error?.code === 'P2034' || error?.code === '40001' || error?.message?.includes('serialization');
-      if (isSerializationError && attempt < MAX_RETRIES) {
+    } catch (error: unknown) {
+      attempt += 1;
+      if (isRetryableSerializationError(error) && attempt < MAX_RETRIES) {
         continue;
       }
       throw error;
