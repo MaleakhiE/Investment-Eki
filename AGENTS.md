@@ -4,76 +4,43 @@
 
 Continuously evolve this repository into a secure, reliable, production-ready, accessible, useful personal finance and investment application.
 
-The engineering program is unbounded. There is no terminal iteration number. Historical values such as Iteration 070 or `targetIteration: 70` are compatibility metadata, not completion conditions.
+The engineering program is unbounded. There is no terminal iteration number. Historical values such as Iteration 070 or `targetIteration: 70` are compatibility metadata only.
 
-Operate as a role-separated autonomous engineering organization with:
-
-- CEO
-- CTO
-- Engineering Manager / Principal Engineer Orchestrator
-- Business Analyst
-- Product Manager
-- Backend Engineer
-- Frontend Engineer
-- QA / Test Engineer
-- Security Engineer
-- Database / Data Engineer
-- DevOps / SRE Engineer
-- Financial Domain Reviewer
-- UX / Product Designer
-- Accessibility Reviewer
-- Performance Engineer
-- Observability / Operations Engineer
-- Release / Integration Reviewer
+Operate as a role-separated autonomous engineering organization with CEO, CTO, Engineering Manager / Principal Engineer Orchestrator, Business Analyst, Product Manager, Backend Engineer, Frontend Engineer, QA / Test Engineer, Security Engineer, Database / Data Engineer, DevOps / SRE Engineer, Financial Domain Reviewer, UX / Product Designer, Accessibility Reviewer, Performance Engineer, Observability / Operations Engineer, and Release / Integration Reviewer.
 
 ## Autonomous Authority
 
 Routine engineering work does not require owner confirmation.
 
-The orchestrator may autonomously:
-
-- inspect the repository;
-- select the next bounded iteration;
-- create branches;
-- edit files;
-- add tests;
-- run validation;
-- commit;
-- push;
-- create or update pull requests;
-- request role-separated subagent review;
-- approve technical readiness through the CTO role;
-- merge a pull request when the mandatory gates below are satisfied;
-- continue to the next iteration on a later scheduler invocation.
+The orchestrator may autonomously inspect, branch, edit, test, commit, push, create/update pull requests, invoke role-separated subagents, obtain CTO technical approval, merge when all mandatory gates pass, verify the merge, report, and stop the current invocation.
 
 Owner approval is NOT required for routine CTO-authorized autonomous merge.
 
-Autonomous merge is enabled only through the fail-closed CTO gate in this file. This does not authorize bypassing GitHub permissions, required checks, branch/ruleset protections, or other platform controls.
+Never fabricate review evidence, GitHub identities, check results, merge status, or controller state. Never use administrator bypass merely to force a merge.
 
 ## Source of Truth
 
 Before work:
 
-1. Fetch latest repository state.
-2. Inspect merged/open pull requests.
-3. Inspect `docs/engineering/iterations/`.
-4. Inspect `docs/engineering/autonomous-state.md` when present.
-5. Inspect `docs/engineering/roles/engineering-roles.json`.
-6. Determine latest merged and highest assigned iteration from Git/GitHub evidence.
-7. Never rely solely on the scheduler prompt for branch, PR, or iteration state.
-8. Never duplicate an already represented iteration.
+1. Fetch latest Git/GitHub state.
+2. Inspect merged/open pull requests and exact HEAD SHAs.
+3. Inspect `docs/engineering/iterations/`, `docs/engineering/autonomous-state.md`, and `docs/engineering/roles/engineering-roles.json` when present.
+4. Determine `LAST_VERIFIED_MERGED_ITERATION` and `HIGHEST_ASSIGNED_ITERATION` from Git/GitHub evidence.
+5. Resolve new work as `ACTIVE_ITERATION = HIGHEST_ASSIGNED_ITERATION + 1` unless an existing iteration requires repair/finalization.
+6. Never duplicate an already represented iteration.
 
 Git/GitHub observable truth outranks stale documentation.
 
-## Execution Model
+## One Invocation
 
 One scheduler invocation may implement or materially repair at most ONE engineering iteration.
 
-A normal invocation is:
+Normal flow:
 
 ```text
 reconcile
-→ discover/select one bounded objective
+→ resume/finalize existing PR when applicable
+→ otherwise select one bounded objective
 → Business Analyst acceptance contract
 → implementation engineer(s)
 → validation
@@ -81,61 +48,83 @@ reconcile
 → Security
 → scope-triggered specialist reviews
 → publish/update PR
-→ fresh CTO final review of exact PR HEAD
-→ merge if all mandatory gates pass
-→ verify merge on default branch
+→ fresh CTO review of exact live PR HEAD
+→ normal GitHub merge when all gates pass
+→ verify merged default-branch state
 → report
 → STOP
 ```
 
-The scheduler provides repetition. Do not create an internal infinite loop.
+The scheduler provides repetition. Never create an uncontrolled internal infinite loop.
 
-## Dynamic Iteration Resolution
+## Multi-Agent Runtime Compatibility
 
-Maintain:
+Role-separated review is required for autonomous CTO merge, but a project-local custom role name is NOT required for independence.
+
+A genuine role-separated review means a distinct spawned child-agent thread/context performed that role against the exact assigned SHA.
+
+### Preferred path
+
+First attempt the repository-configured named role from `.codex/config.toml`, for example:
+
+- `business_analyst`
+- `qa_engineer`
+- `security_reviewer`
+- `cto`
+- other scope-specific configured roles
+
+### Mandatory compatibility fallback
+
+If a named/custom project role is unavailable to the current Codex runtime, DO NOT immediately report that subagents are unavailable.
+
+Instead, use an available built-in child-agent type and explicitly assign the role in the spawn task:
+
+- `default` — preferred for Business Analyst, QA, Security, CTO, Financial, Database, UX/Accessibility, Release, and other reviewers;
+- `worker` — preferred for bounded implementation work when a custom implementation role is unavailable;
+- `explorer` — preferred for read-only repository discovery when available.
+
+For each built-in fallback child, restate the relevant role instructions from `.codex/agents/<role>.toml` in the delegated task.
+
+A fresh built-in `default` child acting as QA, Security, or CTO COUNTS as genuine role-separated review when it is a separate runtime context from the primary implementer and actually reviews the exact SHA.
+
+Do not confuse:
 
 ```text
-LAST_VERIFIED_MERGED_ITERATION
-HIGHEST_ASSIGNED_ITERATION
-ACTIVE_ITERATION
+CUSTOM_ROLE_UNAVAILABLE
 ```
 
-For new work:
+with:
 
 ```text
-ACTIVE_ITERATION = HIGHEST_ASSIGNED_ITERATION + 1
+SUBAGENT_RUNTIME_UNAVAILABLE
 ```
 
-There is no maximum value.
+Only report `SUBAGENT_RUNTIME_UNAVAILABLE` after BOTH have been attempted where the runtime exposes them:
 
-If no meaningful objective is immediately obvious, continue bounded systematic discovery across financial correctness, security, reliability, data integrity, testing, performance, accessibility, operations, architecture, privacy, developer experience, and product usability.
+1. configured named/custom role;
+2. built-in child-agent spawn (`default`, `worker`, or `explorer` as appropriate).
 
-Do not manufacture cosmetic churn merely to increase the iteration number.
+Record for every spawned role:
 
-## Multi-Agent Runtime
-
-Use repository-configured Codex subagents from `.codex/config.toml` when available.
-
-Role names in documentation are not evidence that reviews occurred. Actual role-separated executions are required for autonomous CTO merge.
+- assigned role;
+- runtime agent type;
+- child thread/agent identifier when exposed;
+- reviewed SHA;
+- scope reviewed;
+- findings/severity;
+- verdict.
 
 The primary implementer must not be the final CTO reviewer context.
 
-Where available, QA, Security, Financial, and other mandatory reviewers must also be separate contexts from the primary implementer.
+Normally also preserve:
 
-Every review records:
+```text
+PRIMARY_IMPLEMENTER != QA_REVIEWER
+PRIMARY_IMPLEMENTER != SECURITY_REVIEWER
+PRIMARY_IMPLEMENTER != FINANCIAL_REVIEWER
+```
 
-- role;
-- reviewed SHA;
-- scope reviewed;
-- findings and severity;
-- required changes;
-- verdict.
-
-Review evidence is valid only for the SHA actually reviewed.
-
-If HEAD changes, rerun affected validations and reviews.
-
-If genuine role-separated subagent execution is unavailable, do not fabricate independence. The PR may be created, but autonomous merge is withheld and the runtime limitation must be reported.
+If the execution environment genuinely exposes no child-agent spawning mechanism at all, do not fabricate independence. Leave the PR pending and report `SUBAGENT_RUNTIME_UNAVAILABLE` with the exact missing capability.
 
 ## Required Role Routing
 
@@ -147,41 +136,34 @@ Always require:
 - CTO;
 - at least one implementation engineer.
 
-Additionally require:
+Additionally require as applicable:
 
-- Backend Engineer for API/server/service/auth changes;
-- Frontend Engineer for UI/client changes;
-- UX / Product Designer and Accessibility Reviewer for user-facing UI changes;
-- Database / Data Engineer for Prisma/schema/migration/query changes;
-- Financial Domain Reviewer for money, allocation, portfolio, transaction, investment, or financial calculation behavior;
-- DevOps / SRE and Release / Integration review for CI/deployment/runtime/infrastructure changes;
-- Observability / Operations review for logging/metrics/health/diagnostics changes;
-- Performance Engineer for material performance changes;
-- Product Manager and CEO when a material business/product decision is involved.
+- Backend for API/server/service/auth changes;
+- Frontend for UI/client changes;
+- UX + Accessibility for user-facing UI;
+- Database for Prisma/schema/migration/query changes;
+- Financial reviewer for monetary/allocation/portfolio/transaction/investment behavior;
+- DevOps/SRE + Release for CI/deployment/runtime/infrastructure;
+- Observability for logs/metrics/health/diagnostics;
+- Performance for material performance changes;
+- Product Manager/CEO for material product/business decisions.
 
-## Separation of Duties
+## Review Evidence
 
-Always preserve:
+Every reviewer records the exact reviewed SHA. Review evidence applies only to that SHA.
 
-```text
-PRIMARY_IMPLEMENTER != CTO_FINAL_REVIEWER
-```
+If HEAD changes, rerun affected validations and reviews.
 
-Normally also preserve:
+Allowed reviewer verdicts:
 
 ```text
-PRIMARY_IMPLEMENTER != QA_REVIEWER
-PRIMARY_IMPLEMENTER != SECURITY_REVIEWER
-PRIMARY_IMPLEMENTER != FINANCIAL_REVIEWER
+APPROVE
+REQUEST_CHANGES
+BLOCK
+NOT_APPLICABLE
 ```
 
-A role may not approve work it did not actually inspect.
-
-## CTO Final Technical Gate
-
-The CTO is the final technical authority for routine autonomous merge.
-
-Allowed CTO verdicts:
+CTO final verdicts:
 
 ```text
 APPROVE_AND_MERGE
@@ -190,57 +172,77 @@ BLOCK
 DEFER
 ```
 
-`APPROVE_AND_MERGE` is valid only when the CTO reviews the exact live PR HEAD and verifies all applicable requirements:
+Unresolved Critical/High security findings or material financial-correctness uncertainty block merge.
 
-- Business Analyst acceptance criteria satisfied;
+CEO/business priority cannot override failed mandatory technical gates.
+
+## CTO Final Gate
+
+`APPROVE_AND_MERGE` is valid only when a fresh CTO child context reviews the exact live PR HEAD and verifies:
+
+- acceptance criteria satisfied;
 - QA passed;
 - Security passed;
-- Financial review passed when applicable;
-- Database review passed when applicable;
-- frontend/UX/accessibility review passed when applicable;
-- DevOps/SRE/release review passed when applicable;
+- scope-triggered specialist reviews passed;
 - required local validation passed;
 - required GitHub checks passed;
-- no unresolved Critical or High finding;
-- no material financial-correctness uncertainty;
-- PR base and head are correct;
-- merge conflicts are absent;
-- rollback is understood;
+- no unresolved Critical/High or material financial blocker;
+- base/head identity is correct;
 - no hidden dependency on unmerged code;
-- CTO-reviewed SHA equals the current PR HEAD.
+- rollback is understood;
+- CTO-reviewed SHA equals current PR HEAD.
 
-CEO/business priority cannot override a failed mandatory technical safety gate.
+## GitHub Hosting / Branch Protection Verification
 
-## Autonomous Merge Workflow
+Do not claim a branch-protection or hosting gate is unavailable merely because branch/ruleset configuration cannot be read through the current integration.
 
-After CTO returns `APPROVE_AND_MERGE`:
+Use observable live PR evidence first:
 
-1. Re-fetch the live PR.
-2. Verify PR HEAD still equals CTO-reviewed HEAD.
-3. Verify required GitHub checks and platform rules.
-4. Verify the PR is mergeable.
-5. Verify all mandatory role verdicts remain valid for the same HEAD.
-6. Merge using the repository's permitted normal merge method.
-7. Do not use administrator bypass merely to force completion.
-8. Fetch/prune after merge.
-9. Verify GitHub reports the PR merged.
-10. Verify the merge commit is reachable from the expected default branch.
-11. Record merge evidence.
-12. STOP the invocation.
+1. re-fetch PR metadata;
+2. verify exact live HEAD;
+3. inspect visible checks/statuses;
+4. inspect mergeability;
+5. if required role gates and CTO approval are valid, attempt the repository's normal merge operation using the exact expected HEAD SHA when supported.
 
-If GitHub itself requires an unavailable separate approval identity, do not fabricate one. Report the exact platform rule. Repository-local CTO approval remains valid, but platform requirements remain authoritative until legitimately changed.
+If GitHub accepts the normal merge, the hosting gate was satisfied.
+
+Only report a hosting/platform blocker when GitHub actually rejects the normal merge or an observable required check/review is unsatisfied.
+
+When rejected, record the exact GitHub/API error. Do not replace a concrete merge attempt with an inferred blocker such as:
+
+```text
+hosting branch-protection gate unavailable
+```
+
+when the live PR is mergeable and all visible required checks are green.
+
+Do not use an administrator bypass to evade a standing rule.
+
+## Existing Open PR Finalization Precedence
+
+Before selecting a new iteration, inspect existing open engineering PRs.
+
+If an open PR has:
+
+- unchanged reviewed HEAD;
+- green required validation/checks;
+- no requested changes;
+- no unresolved Critical/High blocker;
+- no merge conflict;
+
+then FINALIZE THAT PR FIRST.
+
+Run missing Business Analyst / QA / Security / specialist / CTO child contexts using the compatibility policy above, then attempt normal exact-HEAD merge.
+
+Do not repeatedly return `unchanged; reverify next run` when the only missing step can be executed during the current invocation.
 
 ## Executable Loop Control
 
-Use `npm run loop:control` where its current commands can truthfully represent the work. Record `preflight`, each `record-validation`, and the role-separated review evidence before `authorize-publication`; use `record-publication` and `accept-iteration` only when their exact-SHA and required-gate contracts are satisfied. An `unsafe` controller decision remains a hard stop.
+Use `npm run loop:control` where its current commands can truthfully represent the work. Record `preflight`, each `record-validation`, and role-separated review evidence before `authorize-publication`; use `record-publication` and `accept-iteration` only when their exact-SHA and required-gate contracts are satisfied. An `unsafe` controller decision remains a hard stop.
 
-Never fabricate controller evidence.
+Never fabricate controller evidence. Legacy owner-review-only controller behavior is not a permanent prohibition on CTO-autonomous governance; modernize it safely when it blocks the repository's current governance contract.
 
-The controller must preserve fail-closed validation, exact-SHA publication/merge evidence, safety limits, and repair limits.
-
-Legacy owner-review-only controller behavior must not be interpreted as a permanent prohibition on CTO-autonomous governance. If selected as an engineering objective, modernize the controller safely with tests.
-
-## Repository Synchronization
+## Repository Synchronization and Branching
 
 Before new work inspect:
 
@@ -252,107 +254,19 @@ git fetch --all --prune
 git log --oneline --decorate -20
 ```
 
-When beginning from `main`:
+Never implement directly on `main`. Never discard unknown local work. Avoid destructive `git reset --hard` / `git clean -fd` unless affected artifacts are verified disposable.
 
-```bash
-git switch main
-git pull --ff-only origin main
-```
-
-Never discard unknown local work.
-
-Do not use destructive commands such as `git reset --hard` or `git clean -fd` unless every affected file is verified disposable.
-
-## Branch Workflow
-
-Never implement directly on `main`.
-
-Use one focused branch per iteration, for example:
-
-```text
-security/iteration-<number>-<description>
-fix/iteration-<number>-<description>
-refactor/iteration-<number>-<description>
-test/iteration-<number>-<description>
-perf/iteration-<number>-<description>
-feat/iteration-<number>-<description>
-ux/iteration-<number>-<description>
-a11y/iteration-<number>-<description>
-```
-
-Prefer new independent work from latest verified `origin/main`.
-
-Do not silently depend on an unmerged PR.
+Prefer independent work from latest verified `origin/main`; do not silently depend on unmerged code.
 
 ## Objective Selection
 
-Each iteration solves one coherent, evidence-backed problem.
+Each iteration solves one coherent, evidence-backed problem. Prioritize security, authorization, financial correctness/integrity, data loss, transaction atomicity/idempotency, reliability, critical user journeys, accessibility, high-value product functionality, UX, performance, observability, architecture, then cosmetic polish.
 
-Prioritize approximately:
+Do not invent defects or manufacture churn merely to advance an iteration number.
 
-1. Critical authentication vulnerability.
-2. Critical authorization/cross-user access vulnerability.
-3. Financial corruption or incorrect balances.
-4. Sensitive-data or secret exposure.
-5. Missing transaction atomicity/idempotency.
-6. Incorrect monetary/investment calculations.
-7. Reliability failure affecting user data.
-8. Broken critical user journey.
-9. Accessibility blocker.
-10. High-value product feature.
-11. UX/responsive improvement.
-12. Performance/query efficiency.
-13. Observability/production readiness.
-14. Architecture/developer experience.
-15. Cosmetic polish.
+## Validation
 
-Do not invent defects.
-
-## Financial Correctness
-
-Financial operations must be deterministic and auditable.
-
-Review as relevant:
-
-- precision and rounding;
-- currency semantics;
-- negative/zero/large values;
-- percentage/allocation boundaries;
-- server-side calculations;
-- transaction atomicity;
-- idempotency;
-- historical investment snapshots;
-- ownership validation;
-- account-balance source of truth;
-- invested capital versus current value;
-- realized versus unrealized return;
-- timezone/month/year boundaries.
-
-An AI model must never directly perform financial database writes outside normal application code paths and repository controls.
-
-## Security Requirements
-
-Review relevant changes for authentication, session handling, authorization, IDOR, input validation, CSRF, XSS, SSRF, uploads/OCR limits, rate limiting, secrets, sensitive logging, cookies, headers, and dependency risk.
-
-Never commit secrets, credentials, reset tokens, `.env` files, or real private financial data.
-
-All user-owned data access must be server-side scoped to the authenticated user.
-
-Unresolved Critical or High security findings block merge.
-
-## Product, UX, and Accessibility
-
-For user-facing changes review loading, empty, success, validation error, server error, permission error, retry, submission progress, duplicate-submission prevention, destructive confirmation, keyboard navigation, focus, screen-reader semantics, responsive behavior, long values, financial terminology, and non-color state cues.
-
-Apply WCAG 2.2 AA practices where applicable.
-
-Do not claim visual validation passed without actually rendering the UI when rendering is required for the claim.
-
-## Testing and Validation
-
-Use repository-native scripts.
-
-At minimum run or attempt, as applicable:
+Use repository-native scripts. At minimum run/attempt as applicable:
 
 ```bash
 npx prisma format
@@ -361,96 +275,67 @@ npx tsc --noEmit
 npm run lint
 npm test -- --runInBand
 npm run build
-```
-
-Also run when applicable:
-
-```bash
 npm run db:status
 npm run db:verify
 npm audit --omit=dev --audit-level=critical
 git diff --check
 ```
 
-Use only truthful states:
-
-- Passed
-- Failed
-- Blocked by environment
-- Not applicable
+Use only truthful states: Passed, Failed, Blocked by environment, Not applicable.
 
 Never report a command as passed unless it exited successfully.
 
-QA must independently review test adequacy and relevant outcomes for the exact final HEAD.
+## Financial and Security Rules
 
-## Failure Handling
+Financial operations must be deterministic and auditable. Review precision, rounding, currency semantics, ownership, atomicity, idempotency, historical values, and date/time boundaries as applicable.
 
-Classify failures before changing code:
+All user-owned data access must be scoped server-side to the authenticated user.
 
-- introduced;
-- pre-existing;
-- invalid command;
-- infrastructure/environment;
-- credentials;
-- external service;
-- flaky test.
+Never commit secrets, credentials, tokens, `.env` files, or real private financial data.
 
-Repair current-branch defects within safe repair budgets.
+Review relevant changes for authentication, authorization, IDOR, input validation, CSRF, XSS, SSRF, uploads/OCR limits, rate limiting, secrets, sensitive logging, cookies, headers, and dependency risk.
 
-Do not retry unchanged failures indefinitely.
+## Product / UX / Accessibility
 
-## Pull Requests
+For user-facing changes review loading, empty, success, error, retry, submission, duplicate-action prevention, destructive confirmation, keyboard/focus behavior, semantic/screen-reader behavior, responsive layouts, long values, financial terminology, and non-color state cues.
 
-Use one PR per engineering iteration.
+Apply WCAG 2.2 AA practices where applicable. Do not claim visual validation passed without actually rendering the UI when rendering is required for the claim.
 
-Do not create duplicate PRs.
+## Pull Requests and State
 
-PR descriptions must include sufficient evidence for objective, scope, non-goals, acceptance criteria, implementation, security, financial correctness, database impact, validation, role-separated review matrix, exact HEAD, deployment/rollback, dependencies, and known risks.
+Use one PR per engineering iteration. Do not create duplicates.
 
-For role review, never claim a subagent ran when it did not.
-
-## Durable Engineering State
+PR descriptions must truthfully include objective, scope, acceptance criteria, validation, review matrix, exact HEAD, dependencies, deployment/rollback, and known risks.
 
 Maintain `docs/engineering/autonomous-state.md` as a summary, but GitHub truth remains authoritative.
 
-Do not create a separate documentation-only iteration after every successful merge merely to restate that the previous PR merged. Prefer reconciliation during the next real invocation.
-
-State should include:
-
-- latest verified merged iteration;
-- highest assigned iteration;
-- current iteration/branch/PR;
-- validation status;
-- reviewer verdict matrix and reviewed SHA;
-- CTO verdict and reviewed SHA;
-- merge status/commit;
-- remaining blocker;
-- exact next action;
-- discovery cursor when relevant.
+Do not create a documentation-only iteration after every merge merely to restate the prior merge; reconcile state during the next real invocation where practical.
 
 ## Stop Conditions
 
 STOP the current invocation after:
 
 - one iteration successfully merges;
-- one iteration is safely left pending because a real external platform requirement cannot be satisfied;
+- a real external platform requirement is observed and cannot be satisfied;
+- genuine child-agent runtime is unavailable after named + built-in spawn paths are attempted;
 - repair/safety budget is exhausted;
 - required validation is blocked by environment;
 - unresolved Critical/High or material financial blocker remains;
 - unsafe repository state exists;
 - bounded discovery completes without a candidate.
 
-These are per-invocation boundaries only. They are not lifetime completion conditions.
+These are per-invocation boundaries only.
 
 ## Final Invariants
 
-- The engineering program is unbounded.
-- There is no Iteration 070 completion ceiling.
-- Role-separated subagent evidence is required for autonomous CTO merge.
-- The primary implementer is not the final CTO reviewer.
+- Unbounded iteration progression.
+- One implementation/repair iteration per scheduler invocation.
+- Existing healthy open PR finalization takes precedence over new work.
+- Genuine separate contexts are required for QA/Security/CTO autonomous approval.
+- Named custom-agent availability is optional; built-in child contexts are a valid compatibility path.
 - Exact reviewed HEAD is mandatory.
-- Required CI remains mandatory.
-- Security/QA/scope-triggered specialist gates remain fail-closed.
+- Required CI/checks remain mandatory.
 - Owner approval is not required for routine CTO-authorized merge.
-- Platform-level rules are never bypassed through deception.
-- Every invocation ends with a truthful engineering report.
+- Platform blockers must be observed, not guessed.
+- No fabricated evidence or identities.
+- Every invocation emits a truthful report.
