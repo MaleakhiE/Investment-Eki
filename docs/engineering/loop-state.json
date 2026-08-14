@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-067-merged-evidence-regressions",
-  "targetIteration": 70,
-  "latestCompletedIteration": 66,
-  "currentIteration": 67,
-  "branch": "test/iteration-067-merged-evidence-regressions",
+  "runId": "iteration-095-gold-price-envelope-validation",
+  "targetIteration": 95,
+  "latestCompletedIteration": 94,
+  "currentIteration": 95,
+  "branch": "fix/iteration-095-model-selection-fallback",
   "baseBranch": "main",
-  "baseCommit": "6788016c5f090fccd909754a5f0765000fead1d0",
-  "phase": "review",
+  "baseCommit": "313a35a6b232a0a4be97ce513bc09aa5a82480a0",
+  "phase": "preflight",
   "terminalState": null,
-  "nextAction": "review",
+  "nextAction": "preflight",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
-  "startedAt": "2026-08-10T16:20:00.000Z",
-  "deadlineAt": "2026-08-10T20:20:00.000Z",
+  "startedAt": "2026-08-14T04:00:00.000Z",
+  "deadlineAt": "2026-08-14T06:00:00.000Z",
   "limits": {
     "maxRepairAttempts": 3,
     "maxIterations": 18,
-    "maxElapsedMinutes": 240,
+    "maxElapsedMinutes": 120,
     "validationTimeoutMinutes": 30,
     "maxNetworkRetries": 2,
     "maxChildAgents": 6,
@@ -28,132 +28,9 @@
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
   "lastFailure": null,
-  "validations": [
-    {
-      "command": [
-        "npm",
-        "test",
-        "--",
-        "--runInBand"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Full Jest suite passed: 108 suites, 1044 tests."
-    },
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "format"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma format passed."
-    },
-    {
-      "command": [
-        "npx",
-        "prisma",
-        "validate"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Prisma validation passed."
-    },
-    {
-      "command": [
-        "npx",
-        "tsc",
-        "--noEmit"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "TypeScript passed."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "lint"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Lint passed."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "build"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Build passed."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "db:status"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Database status passed."
-    },
-    {
-      "command": [
-        "npm",
-        "run",
-        "db:verify"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Database replay passed."
-    },
-    {
-      "command": [
-        "git",
-        "diff",
-        "--check"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Diff check passed."
-    },
-    {
-      "command": [
-        "npm",
-        "audit",
-        "--omit=dev",
-        "--audit-level=critical"
-      ],
-      "required": true,
-      "status": "Passed",
-      "classification": "unknown",
-      "repairable": false,
-      "summary": "Audit passed at critical threshold."
-    }
-  ],
+  "validations": [],
   "review": null,
   "authorizedCommit": null,
   "publication": null,
-  "blocker": "Owner review pending for PR #65; independent review unavailable. Controller authorization and acceptance are intentionally not claimed."
+  "blocker": null
 }

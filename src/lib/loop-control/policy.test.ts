@@ -15,6 +15,7 @@ import {
   type PreflightEvidence,
   type PublicationReadiness,
 } from '../../../scripts/loop-control/policy';
+import { parseLoopState } from '../../../scripts/loop-control/state';
 
 const COMMIT_SHA = '8ee03c4f6fb8749bdbabc2a35cb7ad78f53f3ed9';
 const ACCEPTANCE_HASH = '77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d';
@@ -403,6 +404,19 @@ test.each([
     pullRequestState: 'MERGED',
     ...change,
   }, publicationVerification).terminalState).toBe('blocked');
+});
+
+test('repository durable loop state remains parseable by the controller', () => {
+  const durableState = JSON.parse(readFileSync(path.join(process.cwd(), 'docs/engineering/loop-state.json'), 'utf8')) as unknown;
+
+  expect(() => parseLoopState(durableState)).not.toThrow();
+});
+
+test('repository autonomous state documents the active branch and current iteration', () => {
+  const autonomousState = readFileSync(path.join(process.cwd(), 'docs/engineering/autonomous-state.md'), 'utf8');
+
+  expect(autonomousState).toContain('Current branch: `fix/iteration-095-model-selection-fallback`.');
+  expect(autonomousState).toContain('Current iteration: 095');
 });
 
 test('legacy target metadata does not stop unbounded continuation', () => {
