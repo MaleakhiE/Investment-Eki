@@ -5,7 +5,7 @@ export interface GoldPriceResponseData {
 }
 
 export function parseGoldPriceResponse(value: unknown): GoldPriceResponseData | null {
-  if (!value || typeof value !== 'object' || !('responseDetails' in value)) return null;
+  if (!value || typeof value !== 'object' || !('responseStatus' in value) || value.responseStatus !== 'SUCCESS' || !('responseDetails' in value)) return null;
   const details = value.responseDetails;
   if (!details || typeof details !== 'object') return null;
   const { sell_price, source, updated_at } = details as Record<string, unknown>;
