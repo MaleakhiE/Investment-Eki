@@ -20,6 +20,16 @@ interface BudgetWithSpent {
 
 const EXPENSE_CATEGORIES = ['Rent', 'Living', 'Food', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Education', 'Investment', 'Other'];
 
+function isBudgetWithSpent(value: unknown): value is BudgetWithSpent {
+  if (typeof value !== 'object' || value === null) return false;
+  const budget = value as Partial<BudgetWithSpent>;
+  return typeof budget.id === 'string'
+    && typeof budget.category === 'string'
+    && typeof budget.period === 'string'
+    && typeof budget.isOverBudget === 'boolean'
+    && [budget.amount, budget.spent, budget.remaining, budget.percentage].every(Number.isFinite);
+}
+
 export default function BudgetPage() {
   useSession();
   const { showFeedback, confirmAction } = useFeedback();
@@ -42,8 +52,11 @@ export default function BudgetPage() {
     try {
       const res = await fetch('/api/budgets');
       if (!res.ok) throw new Error('Budgets unavailable');
-      const data = await res.json();
-      setBudgets(data.responseDetails || []);
+      const data = await res.json() as { responseStatus?: unknown; responseDetails?: unknown };
+      if (data.responseStatus !== 'SUCCESS' || !Array.isArray(data.responseDetails) || !data.responseDetails.every(isBudgetWithSpent)) {
+        throw new Error('Budgets unavailable');
+      }
+      setBudgets(data.responseDetails);
     } catch { setError('Budget data is unavailable.'); } finally { setIsLoading(false); }
   }
 

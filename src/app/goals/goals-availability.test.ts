@@ -6,6 +6,10 @@ const source = fs.readFileSync(path.join(process.cwd(), 'src/app/goals/page.tsx'
 describe('goals availability contract', () => {
   it('fails closed with an accessible retry when goal data cannot load', () => {
     expect(source).toContain('if (!goalsRes.ok || !summaryRes.ok)');
+    expect(source).toContain("goalsData.responseStatus !== 'SUCCESS'");
+    expect(source).toContain('goalsData.responseDetails.every(isFinancialGoal)');
+    expect(source).toContain("summaryData.responseStatus !== 'SUCCESS'");
+    expect(source).toContain('isGoalsSummary(summaryData.responseDetails)');
     expect(source).toContain('Financial goal data is unavailable');
     expect(source).toContain('Retry loading financial goals');
     expect(source).toContain('{error ? (');
