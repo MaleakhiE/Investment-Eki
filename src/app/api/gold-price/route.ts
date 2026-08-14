@@ -23,6 +23,26 @@ const CACHE_DURATION = 5 * 60 * 1000;
 // Default Indonesian gold price (updated periodically as fallback)
 const DEFAULT_GOLD_PRICE = 1550000; // Rp per gram (Jan 2026 estimate)
 
+function isPositiveFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function buildGoldPrice(usdToIdr: unknown, source: string): GoldPriceResponse | null {
+  if (!isPositiveFiniteNumber(usdToIdr)) return null;
+
+  const pricePerGram = 85 * usdToIdr;
+  const sellPrice = Math.round(pricePerGram * 1.12);
+  const buyPrice = Math.round(pricePerGram * 0.98);
+  if (!isPositiveFiniteNumber(pricePerGram) || !isPositiveFiniteNumber(sellPrice) || !isPositiveFiniteNumber(buyPrice)) return null;
+
+  return {
+    sell_price: sellPrice,
+    buy_price: buyPrice,
+    source,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 async function fetchGoldPrice(): Promise<GoldPriceResponse> {
   // Return cached if valid
   if (cachedPrice && Date.now() - cacheTime < CACHE_DURATION) {
@@ -85,19 +105,7 @@ async function fetchFromFrankfurter(): Promise<GoldPriceResponse | null> {
     const data = await res.json();
     const usdToIdr = data.rates?.IDR;
     
-    if (!usdToIdr) return null;
-
-    // International gold price ~$85/gram (spot price per troy oz ~$2650 / 31.1g)
-    // Indonesian retail gold (Antam) has ~15-20% premium over spot
-    const goldUsdPerGram = 85;
-    const pricePerGram = goldUsdPerGram * usdToIdr;
-
-    return {
-      sell_price: Math.round(pricePerGram * 1.12), // Add Indonesian retail premium (~12%)
-      buy_price: Math.round(pricePerGram * 0.98),
-      source: 'frankfurter.app',
-      updated_at: new Date().toISOString(),
-    };
+    return buildGoldPrice(usdToIdr, 'frankfurter.app');
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;
@@ -120,19 +128,7 @@ async function fetchFromExchangeRateAPI(): Promise<GoldPriceResponse | null> {
     const data = await res.json();
     const usdToIdr = data.rates?.IDR;
     
-    if (!usdToIdr) return null;
-
-    // International gold price ~$85/gram
-    // Indonesian retail gold has premium
-    const goldUsdPerGram = 85;
-    const pricePerGram = goldUsdPerGram * usdToIdr;
-
-    return {
-      sell_price: Math.round(pricePerGram * 1.12),
-      buy_price: Math.round(pricePerGram * 0.98),
-      source: 'open.er-api.com',
-      updated_at: new Date().toISOString(),
-    };
+    return buildGoldPrice(usdToIdr, 'open.er-api.com');
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;

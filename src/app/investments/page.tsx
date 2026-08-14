@@ -9,6 +9,7 @@ import { DecisionContext } from '@/components/finance/DecisionContext';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { parseInvestmentHistories } from './investment-history';
 import { getInvestmentReturnPresentation } from './investment-presentation';
+import { parseGoldPriceResponse } from './gold-price-response';
 
 interface InvestmentSnapshot {
   id: string;
@@ -71,15 +72,14 @@ export default function InvestmentsPage() {
     setGoldPriceLoading(true);
     try {
       const res = await fetch('/api/gold-price', { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.responseDetails) {
-          setGoldPriceData(data.responseDetails);
-          setGoldPrice(data.responseDetails.sell_price.toString());
-        }
-      }
+      if (!res.ok) throw new Error('Gold price unavailable');
+      const data = parseGoldPriceResponse(await res.json());
+      if (!data) throw new Error('Gold price response is invalid');
+      setGoldPriceData(data);
+      setGoldPrice(data.sell_price.toString());
     } catch {
-      setGoldPrice('1450000');
+      setGoldPriceData(null);
+      setGoldPrice('');
     } finally {
       setGoldPriceLoading(false);
     }
