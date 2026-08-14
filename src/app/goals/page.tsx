@@ -43,6 +43,25 @@ const CATEGORIES = [
   { value: 'OTHER', label: 'Other' },
 ];
 
+function isFinancialGoal(value: unknown): value is FinancialGoal {
+  if (typeof value !== 'object' || value === null) return false;
+  const goal = value as Partial<FinancialGoal>;
+  return typeof goal.id === 'string'
+    && typeof goal.name === 'string'
+    && typeof goal.category === 'string'
+    && typeof goal.is_completed === 'boolean'
+    && (typeof goal.deadline === 'string' || goal.deadline === null)
+    && [goal.target_amount, goal.current_amount, goal.priority, goal.percentage, goal.remaining].every(Number.isFinite)
+    && (goal.days_left === null || Number.isFinite(goal.days_left))
+    && (goal.monthly_needed === null || Number.isFinite(goal.monthly_needed));
+}
+
+function isGoalsSummary(value: unknown): value is GoalsSummary {
+  if (typeof value !== 'object' || value === null) return false;
+  const summary = value as Partial<GoalsSummary>;
+  return [summary.total_goals, summary.active_goals, summary.completed_goals, summary.total_target, summary.total_current, summary.overall_progress].every(Number.isFinite);
+}
+
 export default function GoalsPage() {
   useSession();
   const { showFeedback, confirmAction } = useFeedback();
@@ -76,8 +95,18 @@ export default function GoalsPage() {
         fetch('/api/goals?summary=true'),
       ]);
       if (!goalsRes.ok || !summaryRes.ok) throw new Error('Goals unavailable');
-      const [goalsData, summaryData] = await Promise.all([goalsRes.json(), summaryRes.json()]);
-      setGoals(goalsData.responseDetails || []);
+      const [goalsData, summaryData] = await Promise.all([
+        goalsRes.json() as Promise<{ responseStatus?: unknown; responseDetails?: unknown }>,
+        summaryRes.json() as Promise<{ responseStatus?: unknown; responseDetails?: unknown }>,
+      ]);
+      if (
+        goalsData.responseStatus !== 'SUCCESS'
+        || !Array.isArray(goalsData.responseDetails)
+        || !goalsData.responseDetails.every(isFinancialGoal)
+        || summaryData.responseStatus !== 'SUCCESS'
+        || !isGoalsSummary(summaryData.responseDetails)
+      ) throw new Error('Goals unavailable');
+      setGoals(goalsData.responseDetails);
       setSummary(summaryData.responseDetails);
     } catch { setError('Financial goal data is unavailable.'); } finally { setIsLoading(false); }
   }
