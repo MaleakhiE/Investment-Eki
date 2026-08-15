@@ -25,7 +25,7 @@ interface CurrencyInputProps {
 
 export function formatNumber(value: number | string): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num) || num === 0) return '';
+  if (isNaN(num)) return '';
   return new Intl.NumberFormat('id-ID').format(num);
 }
 

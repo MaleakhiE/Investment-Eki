@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "runId": "iteration-095-gold-price-envelope-validation",
+  "runId": "iteration-095-gold-price-trust-boundary-hardening",
   "targetIteration": 95,
   "latestCompletedIteration": 94,
   "currentIteration": 95,
@@ -10,7 +10,7 @@
   "phase": "review",
   "terminalState": null,
   "nextAction": "review",
-  "repairAttempts": 0,
+  "repairAttempts": 1,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-14T04:00:00.000Z",
   "deadlineAt": "2026-08-14T06:00:00.000Z",
@@ -110,12 +110,7 @@
       "summary": "No critical vulnerabilities found."
     }
   ],
-  "review": {
-    "independent": true,
-    "approved": true,
-    "baseCommitIsAncestor": true,
-    "summary": "Role-separated reviews in progress; branch validated locally."
-  },
+  "review": null,
   "authorizedCommit": null,
   "publication": null,
   "blocker": null

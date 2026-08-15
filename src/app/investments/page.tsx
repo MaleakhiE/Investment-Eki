@@ -27,6 +27,7 @@ interface GoldPrice {
   sell_price: number;
   source: string;
   updated_at: string;
+  is_verified: boolean;
 }
 
 type InvestmentType = 'GOLD' | 'MUTUAL_FUND';
@@ -77,9 +78,15 @@ export default function InvestmentsPage() {
       if (!data) throw new Error('Gold price response is invalid');
       setGoldPriceData(data);
       setGoldPrice(data.sell_price.toString());
+      setUseGoldCalc(data.is_verified);
+      if (!data.is_verified) {
+        setCurrentValue('');
+      }
     } catch {
       setGoldPriceData(null);
       setGoldPrice('');
+      setUseGoldCalc(false);
+      setCurrentValue('');
     } finally {
       setGoldPriceLoading(false);
     }
@@ -92,8 +99,10 @@ export default function InvestmentsPage() {
     return () => clearInterval(interval);
   }, [fetchGoldPrice]);
 
+  const canUseGoldCalc = selectedType === 'GOLD' && useGoldCalc && !!goldPriceData && !goldPriceLoading;
+
   useEffect(() => {
-    if (selectedType === 'GOLD' && useGoldCalc) {
+    if (canUseGoldCalc) {
       const invested = parseFloat(investedAmount) || 0;
       const p = parseFloat(goldPrice) || 0;
       if (invested > 0 && p > 0) {
@@ -101,15 +110,15 @@ export default function InvestmentsPage() {
         setGoldGrams(grams.toFixed(4));
       }
     }
-  }, [investedAmount, goldPrice, selectedType, useGoldCalc]);
+  }, [canUseGoldCalc, investedAmount, goldPrice]);
 
   useEffect(() => {
-    if (selectedType === 'GOLD' && useGoldCalc) {
+    if (canUseGoldCalc) {
       const g = parseFloat(goldGrams) || 0;
       const p = parseFloat(goldPrice) || 0;
       setCurrentValue(g * p > 0 ? Math.round(g * p).toString() : '');
     }
-  }, [goldGrams, goldPrice, selectedType, useGoldCalc]);
+  }, [canUseGoldCalc, goldGrams, goldPrice]);
 
   useEffect(() => {
     if (selectedType === 'MUTUAL_FUND' && useMfCalc) {
@@ -354,15 +363,15 @@ export default function InvestmentsPage() {
                         <button type="button" onClick={fetchGoldPrice} disabled={goldPriceLoading} className="min-h-11 rounded-full px-2 text-xs font-semibold text-[#9a6d08] hover:bg-[#fff2c8] hover:text-[#704e05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98512] disabled:cursor-not-allowed disabled:opacity-50">
                           {goldPriceLoading ? 'Loading...' : 'Refresh'}
                         </button>
-                        <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} label="Use gold calculator" />
+                        <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} disabled={!goldPriceData?.is_verified || goldPriceLoading} label="Use gold calculator" />
                       </div>
                     </div>
                     <DecisionContext
                       title="Sumber nilai emas"
-                      state={goldPriceData ? 'verified' : 'unavailable'}
+                      state={goldPriceData?.is_verified ? 'verified' : 'manual'}
                       source={goldPriceData?.source || 'Gold price provider'}
                       observedAt={goldPriceData ? formatSourceTimestamp(goldPriceData.updated_at) : undefined}
-                      description={goldPriceData ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : 'A current gold price could not be verified. Enter a value manually or try again.'}
+                      description={goldPriceData?.is_verified ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : 'A current gold price could not be verified. Enter a value manually or try again. This keeps manual currentValue entry available so zero-value gold snapshots cannot be submitted from a failed fetch.'}
                     >
                       {goldPriceData && <p className="mt-3 font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram</p>}
                     </DecisionContext>
