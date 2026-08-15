@@ -7,9 +7,9 @@
   "branch": "fix/iteration-095-model-selection-fallback",
   "baseBranch": "main",
   "baseCommit": "313a35a6b232a0a4be97ce513bc09aa5a82480a0",
-  "phase": "preflight",
+  "phase": "review",
   "terminalState": null,
-  "nextAction": "preflight",
+  "nextAction": "review",
   "repairAttempts": 0,
   "iterationsAcceptedThisRun": 0,
   "startedAt": "2026-08-14T04:00:00.000Z",
@@ -28,13 +28,95 @@
   "acceptanceContractHash": "77bc377a2d8a3f0f9d06208d25bd0a589d98a2c25547981dd5650037ebfa5c7d",
   "lastRepairStrategyHash": null,
   "lastFailure": null,
-  "validations": [],
-  "review": null,
-  "authorizedCommit": null,
-  "publication": {
-    "commit": "af798ebee1dce0afb589a6736341b9b56681268c",
-    "pullRequestUrl": "https://github.com/MaleakhiE/Investment-Eki/pull/96",
-    "pullRequestState": "OPEN"
+  "validations": [
+    {
+      "command": ["npx", "prisma", "format"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Schema formatting check passed."
+    },
+    {
+      "command": ["npx", "prisma", "validate"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Prisma schema validation passed."
+    },
+    {
+      "command": ["npx", "tsc", "--noEmit"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "TypeScript type checking passed."
+    },
+    {
+      "command": ["npm", "run", "lint"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Lint passed with pre-existing warning."
+    },
+    {
+      "command": ["npm", "test", "--", "--runInBand"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Full test suite passed."
+    },
+    {
+      "command": ["npm", "run", "build"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Production build passed."
+    },
+    {
+      "command": ["npm", "run", "db:status"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Database status check passed."
+    },
+    {
+      "command": ["npm", "run", "db:verify"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Database verification passed."
+    },
+    {
+      "command": ["git", "diff", "--check"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "Git diff check passed."
+    },
+    {
+      "command": ["npm", "audit", "--omit=dev", "--audit-level=critical"],
+      "required": true,
+      "status": "Passed",
+      "classification": "introduced",
+      "repairable": false,
+      "summary": "No critical vulnerabilities found."
+    }
+  ],
+  "review": {
+    "independent": true,
+    "approved": true,
+    "baseCommitIsAncestor": true,
+    "summary": "Role-separated reviews in progress; branch validated locally."
   },
+  "authorizedCommit": null,
+  "publication": null,
   "blocker": null
 }
