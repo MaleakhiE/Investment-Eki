@@ -31,6 +31,10 @@
   "validations": [],
   "review": null,
   "authorizedCommit": null,
-  "publication": null,
+  "publication": {
+    "commit": "af798ebee1dce0afb589a6736341b9b56681268c",
+    "pullRequestUrl": "https://github.com/MaleakhiE/Investment-Eki/pull/96",
+    "pullRequestState": "OPEN"
+  },
   "blocker": null
 }

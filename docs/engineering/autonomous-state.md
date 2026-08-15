@@ -8,8 +8,8 @@ Latest verified merged iteration: 094 — PR #95 merged at `313a35a`.
 Current branch: `fix/iteration-095-model-selection-fallback`.
 Current iteration: 095 — require successful gold price envelopes.
 Base branch: `main`.
-Pull request: #95 (`https://github.com/MaleakhiE/Investment-Eki/pull/95`).
-Pull-request state: MERGED.
+Pull request: #96 (`https://github.com/MaleakhiE/Investment-Eki/pull/96`).
+Pull-request state: OPEN.
 
 ## Reconciliation
 
