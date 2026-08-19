@@ -27,6 +27,20 @@ function jsonResponse(responseDetails: unknown) {
   } as Response;
 }
 
+const verifiedGoldResponse = jsonResponse({
+  sell_price: 1523200,
+  source: 'frankfurter.app',
+  updated_at: '2026-08-19T05:00:00.000Z',
+  is_verified: true,
+});
+
+const unverifiedGoldResponse = jsonResponse({
+  sell_price: 1550000,
+  source: 'default (offline)',
+  updated_at: '2026-08-19T05:00:00.000Z',
+  is_verified: false,
+});
+
 function setNativeValue(element: HTMLInputElement, value: string) {
   const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   const prototype = Object.getPrototypeOf(element);
@@ -36,6 +50,32 @@ function setNativeValue(element: HTMLInputElement, value: string) {
   } else {
     valueSetter?.call(element, value);
   }
+}
+
+type GoldFetchResult = Response | Error | Promise<Response>;
+
+function configureFetch(goldResults: GoldFetchResult[]) {
+  const pendingGoldResults = [...goldResults];
+  global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+    const url = input.toString();
+    if (url === '/api/gold-price') {
+      const nextResult = pendingGoldResults.shift();
+      if (!nextResult) throw new Error('unexpected gold price request');
+      const resolved = await nextResult;
+      if (resolved instanceof Error) throw resolved;
+      return resolved;
+    }
+    if (url === '/api/investments/GOLD/history' || url === '/api/investments/MUTUAL_FUND/history') {
+      return jsonResponse([]);
+    }
+    throw new Error(`Unexpected fetch URL: ${url}`);
+  }) as typeof fetch;
+}
+
+async function flushEffects() {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 describe('investments page manual-entry preservation', () => {
@@ -54,17 +94,6 @@ describe('investments page manual-entry preservation', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
-
-    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
-      const url = input.toString();
-      if (url === '/api/gold-price') {
-        throw new Error('gold price unavailable');
-      }
-      if (url === '/api/investments/GOLD/history' || url === '/api/investments/MUTUAL_FUND/history') {
-        return jsonResponse([]);
-      }
-      throw new Error(`Unexpected fetch URL: ${url}`);
-    }) as typeof fetch;
   });
 
   afterEach(() => {
@@ -81,11 +110,11 @@ describe('investments page manual-entry preservation', () => {
   });
 
   it('preserves a manually entered current value across a failed gold refresh', async () => {
+    configureFetch([new Error('gold price unavailable'), new Error('gold price unavailable')]);
+
     await act(async () => {
       root.render(React.createElement(InvestmentsPage));
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await flushEffects();
     });
 
     const currentValue = container.querySelector<HTMLInputElement>('#investment-current-value');
@@ -111,5 +140,56 @@ describe('investments page manual-entry preservation', () => {
     });
 
     expect(currentValue!.value).toBe('12.345');
+  });
+
+  it('keeps currentValue editable when gold price returns unverified', async () => {
+    // Unverified response should not enable calculator and should allow manual entry
+    configureFetch([unverifiedGoldResponse]);
+
+    await act(async () => {
+      root.render(React.createElement(InvestmentsPage));
+      await flushEffects();
+    });
+
+    const currentValue = container.querySelector<HTMLInputElement>('#investment-current-value');
+    expect(currentValue).not.toBeNull();
+    expect(currentValue?.disabled).toBe(false);
+
+    // The calculator inputs should not be visible because useGoldCalc starts false
+    const calculatorInputs = container.querySelectorAll('#gold-price, #gold-grams');
+    expect(calculatorInputs.length).toBe(0);
+
+    // The toggle should be disabled because the price is unverified
+    const toggle = container.querySelector('button[role="switch"]') as HTMLButtonElement | undefined;
+    expect(toggle).toBeDefined();
+    expect(toggle?.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('user can toggle calculator when price becomes verified', async () => {
+    // First load: unverified
+    // Then: verified (allowing toggle enablement)
+    configureFetch([unverifiedGoldResponse, verifiedGoldResponse]);
+
+    // Initial load with unverified price
+    await act(async () => {
+      root.render(React.createElement(InvestmentsPage));
+      await flushEffects();
+    });
+
+    // Toggle is disabled while unverified
+    const toggle = container.querySelector('button[role="switch"]') as HTMLButtonElement | undefined;
+    expect(toggle?.hasAttribute('disabled')).toBe(true);
+
+    // Trigger a refresh (simulating user click)
+    const refreshButton = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Refresh');
+    expect(refreshButton).toBeDefined();
+
+    await act(async () => {
+      refreshButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await flushEffects();
+    });
+
+    // After loading verified price, toggle becomes enabled
+    expect(toggle?.hasAttribute('disabled')).toBe(false);
   });
 });

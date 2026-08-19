@@ -23,14 +23,15 @@ const CACHE_DURATION = 5 * 60 * 1000;
 
 // Default Indonesian gold price (updated periodically as fallback)
 const DEFAULT_GOLD_PRICE = 1550000; // Rp per gram (Jan 2026 estimate)
-const MAX_REASONABLE_USD_TO_IDR = 100_000;
+const MIN_REASONABLE_USD_TO_IDR = 10_000;
+const MAX_REASONABLE_USD_TO_IDR = 30_000;
 
 function isPositiveFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
 
 function isReasonableExchangeRate(value: unknown): value is number {
-  return isPositiveFiniteNumber(value) && value <= MAX_REASONABLE_USD_TO_IDR;
+  return isPositiveFiniteNumber(value) && value >= MIN_REASONABLE_USD_TO_IDR && value <= MAX_REASONABLE_USD_TO_IDR;
 }
 
 function buildFallbackGoldPrice(source: string): GoldPriceResponse {
@@ -49,7 +50,7 @@ function buildVerifiedGoldPrice(sellPrice: number, buyPrice: number, source: str
     buy_price: buyPrice,
     source,
     updated_at: new Date().toISOString(),
-    is_verified: true,
+    is_verified: false,
   };
 }
 

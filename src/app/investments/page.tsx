@@ -60,7 +60,7 @@ export default function InvestmentsPage() {
   const [currentValue, setCurrentValue] = useState('');
   const [goldGrams, setGoldGrams] = useState('');
   const [goldPrice, setGoldPrice] = useState('');
-  const [useGoldCalc, setUseGoldCalc] = useState(true);
+  const [useGoldCalc, setUseGoldCalc] = useState(false);
   const [goldPriceData, setGoldPriceData] = useState<GoldPrice | null>(null);
   const [goldPriceLoading, setGoldPriceLoading] = useState(false);
   const [mfPlatform, setMfPlatform] = useState('bibit');
@@ -367,11 +367,11 @@ export default function InvestmentsPage() {
                       state={goldPriceData?.is_verified ? 'verified' : 'manual'}
                       source={goldPriceData?.source || 'Gold price provider'}
                       observedAt={goldPriceData ? formatSourceTimestamp(goldPriceData.updated_at) : undefined}
-                      description={goldPriceData?.is_verified ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : 'A current gold price could not be verified. Enter a value manually or try again. This keeps manual currentValue entry available so zero-value gold snapshots cannot be submitted from a failed fetch.'}
+                      description={goldPriceData?.is_verified ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : (goldPriceLoading ? 'Updating gold price context...' : 'A current gold price could not be verified. Enter a value manually or try again. This keeps manual currentValue entry available so zero-value gold snapshots cannot be submitted from a failed fetch.')}
                     >
                       {goldPriceData && <p className="mt-3 font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram</p>}
                     </DecisionContext>
-                    {useGoldCalc && (
+                    {useGoldCalc && !goldPriceLoading && (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                           <label htmlFor="gold-price" className="mb-1 block text-xs font-medium text-[#5e4712]">Harga/gram</label>

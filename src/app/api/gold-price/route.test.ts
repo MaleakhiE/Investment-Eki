@@ -28,7 +28,7 @@ describe('gold-price route trust boundary', () => {
     jest.restoreAllMocks();
   });
 
-  it('marks sane provider data as verified', async () => {
+  it('marks an exchange-rate-derived estimate as unverified', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValueOnce(jsonResponse({ rates: { IDR: 16_000 } }) as Response);
 
     const { GET } = await import('./route');
@@ -39,7 +39,7 @@ describe('gold-price route trust boundary', () => {
     expect(body.responseStatus).toBe('SUCCESS');
     expect(body.responseDetails).toEqual(expect.objectContaining({
       source: 'frankfurter.app',
-      is_verified: true,
+      is_verified: false,
       sell_price: expect.any(Number),
       buy_price: expect.any(Number),
     }));
@@ -47,10 +47,13 @@ describe('gold-price route trust boundary', () => {
     expect(body.responseDetails.buy_price).toBeGreaterThan(0);
   });
 
-  it('falls back to unverified offline pricing when providers return implausible data', async () => {
+  it.each([
+    ['too low', 1_000],
+    ['too high', 1_000_000],
+  ])('falls back to unverified offline pricing when the exchange rate is %s', async (_label, rate) => {
     jest.spyOn(global, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ rates: { IDR: 1_000_000 } }) as Response)
-      .mockResolvedValueOnce(jsonResponse({ rates: { IDR: 1_000_000 } }) as Response);
+      .mockResolvedValueOnce(jsonResponse({ rates: { IDR: rate } }) as Response)
+      .mockResolvedValueOnce(jsonResponse({ rates: { IDR: rate } }) as Response);
 
     const { GET } = await import('./route');
     const response = await GET();
