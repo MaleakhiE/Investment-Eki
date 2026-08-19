@@ -8,5 +8,6 @@ describe('dashboard empty states accessibility', () => {
     expect(source).toContain('Belum ada transaksi');
     expect(source).toContain('role="status"');
     expect(source).toContain('aria-live="polite"');
+    expect(source).toContain('border-dashed');
   });
 });
