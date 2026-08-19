@@ -399,11 +399,11 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 rounded-full bg-[#f5fbf9] flex items-center justify-center mx-auto mb-3">
-                </div>
-                <p className="text-zinc-500 text-sm mb-3">No transactions yet</p>
-                <Link href="/cashflow" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
+              <div className="rounded-2xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-6 text-center" role="status" aria-live="polite">
+                <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">💸</div>
+                <h3 className="font-semibold text-[#16332f]">Belum ada transaksi</h3>
+                <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat transaksi pertama Anda untuk mulai melihat ringkasan keuangan.</p>
+                <Link href="/cashflow" className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
                   Add transaction
                 </Link>
               </div>
