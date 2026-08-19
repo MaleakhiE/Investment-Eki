@@ -1,67 +1,63 @@
-# Iteration 063 — shared decision context and accessible financial evidence
+# Iteration 063 — Settings custom alerts empty state
 
 ## Category
 
-Product trust, accessibility, and financial presentation.
+UX, UI, and accessibility.
 
 ## Executive summary
 
-This iteration turns the market research recommendation into a small shared UI contract. Dashboard recurring rules, Analytics cashflow, and Investments gold pricing now identify the source and whether the context is verified, manual, or unavailable. Analytics also exposes a concise text summary alongside the visual trend while retaining its structured table.
+Iteration 063 improves the settings "Custom alerts" empty state by replacing the plain "No custom alerts yet" text with an accessible, visually consistent onboarding card.
 
-## User problem and repository evidence
+## User or operational problem
 
-Users need to know whether a financial value is live, manually recorded, or unavailable before acting on it. The app had page-specific source copy and chart text alternatives, but no reusable decision-context presentation. Existing recurring rules are planning data, not investment execution.
+When a user has no custom alerts, the settings page shows a tiny plain text string with no structure. This is inconsistent with the onboarding-card pattern used in Goals (059), Investments (060), Cashflow (061), and Accounts (062).
+
+## Repository evidence
+
+- `src/app/settings/page.tsx` line 255: `: !showCustomAlertForm && <p className="text-[10px] text-zinc-500 text-center py-2">No custom alerts yet</p>}`.
 
 ## Scope
 
-- Add `DecisionContext` for source, state, observation time, and non-advice descriptions.
-- Add a pure cashflow trend summarizer with explicit empty-data behavior.
-- Reuse the context on Dashboard recurring planning, Analytics cashflow, and Investments gold pricing.
-- Keep existing calculations, routes, storage, and provider boundaries unchanged.
-- Preserve the Hallmark Split Studio tokens and responsive rules.
+- Implement an accessible empty state card for the custom alerts list.
+- Ensure consistency with the other onboarding cards.
+- Add `src/app/settings/settings-alerts-empty-state.test.ts` asserting the empty state contract.
 
 ## Non-goals
 
-No bank credential aggregation, trade execution, new market-data provider, new database table, individualized recommendation, or full-app CSS rewrite.
+- No changes to alert creation, toggle, or deletion logic.
 
 ## Acceptance criteria
 
-- Verified/manual/unavailable states are communicated with text and a non-color indicator.
-- Source and observed time are visible when supplied.
-- Empty trend data produces an explicit unavailable summary rather than zero values.
-- Existing investment, analytics, and responsive tests remain green.
-- No display-formatted value is used as a calculation input.
+- Custom alerts list shows an onboarding card when empty.
+- Empty state uses `role="status"` and `aria-live="polite"`.
+- Source-level regression test covers the new empty state copy.
 
 ## Implementation details
 
-- `src/components/finance/DecisionContext.tsx` provides the shared semantic `<section>` and `<dl>` contract.
-- `src/components/finance/chart-summary.ts` provides deterministic cashflow summary text.
-- `src/app/analytics/page.tsx` adds the summary and shared context to the cashflow visual.
-- `src/app/investments/page.tsx` replaces page-specific source markup with the shared context.
-- `src/app/dashboard/page.tsx` labels recurring rules as planning-only context.
-- `src/services/analytics.service.ts` returns decrypted income, total expense, and net cashflow fields matching the chart contract.
-- `src/app/globals.css` adds compact context styling using existing tokens.
+In `src/app/settings/page.tsx`:
+- Replace the plain `<p>` with a structured card (icon, heading, descriptive copy, dashed border, `role="status"` + `aria-live="polite"`).
 
-## Security, financial correctness, and compatibility
+In `src/app/settings/settings-alerts-empty-state.test.ts`:
+- Assert "Belum ada alarm kustom", `custom_alerts.length`, `role="status"`, and `aria-live="polite"`.
 
-No new trust boundary or persistence path was introduced. Source values are descriptive only. The summarizer consumes numeric domain values before formatting. Existing user ownership, session checks, API envelopes, and encrypted storage are unchanged.
+## Product and UX impact
 
-## Accessibility and responsive behavior
+Reduces friction by explaining what custom alerts are for new users.
 
-The context uses a labelled section and definition list, keeps source/status text available to assistive technology, and preserves the existing chart table. Layout uses flex wrapping and existing mobile overflow rules; no new fixed-width control is introduced.
+## Accessibility impact
 
-## Validation
+Uses `role="status"` so screen readers announce the empty state.
 
-- Focused Jest (3 suites, 6 tests): Passed, including the analytics service contract and decision-context parser.
-- Full Jest (105 suites, 1033 tests): Passed.
-- `npx tsc --noEmit`: Passed.
-- `npm run lint`: Passed with one pre-existing warning in `src/lib/loop-control/state.test.ts`.
-- `npm run build` plus OCR trace: Passed.
-- `npx prisma format` and `npx prisma validate`: Passed.
-- `npm run db:status` and `npm run db:verify`: Passed against disposable MySQL 8.4.
-- `npm audit --omit=dev --audit-level=critical`: Passed at the critical threshold; existing high/moderate advisories remain.
-- `git diff --check`: Passed.
+## Validation commands and results
 
-## Rollback and follow-up
+- `npx jest --runTestsByPath src/app/settings/settings-alerts-empty-state.test.ts`
+- `npx tsc --noEmit`
+- `npm run lint`
 
-Rollback is a frontend-only revert; no data migration is required. Follow-up candidates are duplicate-aware CSV import and fee/cost-basis provenance, each as separate bounded iterations.
+## Deployment notes
+
+Standard frontend deployment.
+
+## Rollback procedure
+
+Revert to the previous commit or restore the original plain `<p>`.
