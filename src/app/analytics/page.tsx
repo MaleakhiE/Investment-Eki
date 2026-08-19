@@ -111,7 +111,6 @@ export default function AnalyticsPage() {
   const getRiskLabel = (p: string) => ({ conservative: 'Konservatif', moderate: 'Moderat', aggressive: 'Agresif' }[p] || p);
   const getRiskColor = (p: string) => ({ conservative: 'bg-green-500/20 text-green-400', moderate: 'bg-blue-500/20 text-blue-400', aggressive: 'bg-orange-500/20 text-orange-400' }[p] || 'bg-[#e9f5f2] text-zinc-300');
 
-  // Calculations
   const totalIncome = trend.reduce((s, t) => s + safe(t.income), 0);
   const totalExpense = trend.reduce((s, t) => s + safe(t.expense), 0);
   const avgIncome = trend.length > 0 ? totalIncome / trend.length : 0;
@@ -152,7 +151,6 @@ export default function AnalyticsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Tabs */}
         <div role="tablist" aria-label="Analytics views" className="mb-4 flex max-w-full gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm sm:w-fit">
           {ANALYTICS_TABS.map(tab => (
             <button key={tab} id={`analytics-tab-${tab}`} type="button" role="tab" aria-selected={activeTab === tab} aria-controls={`analytics-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1} onKeyDown={(event) => handleTabKeyDown(event, tab)} onClick={() => setActiveTab(tab)} className={`min-h-11 shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2 ${activeTab === tab ? 'bg-[#00d4aa] text-[#16332f]' : 'text-zinc-600 hover:bg-[#e9f5f2]'}`}>
@@ -161,13 +159,9 @@ export default function AnalyticsPage() {
           ))}
         </div>
 
-            {ANALYTICS_TABS.filter((tab) => tab !== activeTab).map((tab) => (
-              <div key={tab} id={`analytics-panel-${tab}`} role="tabpanel" aria-labelledby={`analytics-tab-${tab}`} hidden />
-            ))}
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div id="analytics-panel-overview" role="tabpanel" aria-labelledby="analytics-tab-overview" tabIndex={0} className="space-y-4">
-                {/* Summary Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Avg Monthly Income</p>
@@ -187,7 +181,6 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
 
-                {/* AI Recommendation */}
                 {!settings?.ai_recommendation_enabled ? (
                   <div className="card rounded-xl p-6 text-center">
                         <h3 className="font-semibold text-[#16332f] mb-1 text-sm">Scenario analysis disabled</h3>
@@ -260,7 +253,7 @@ export default function AnalyticsPage() {
                           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-400"></span>Expense</span>
                         </div>
                       </>
-                    ) : <p className="text-xs text-zinc-500 text-center py-8">No data</p>}
+                    ) : <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-8 text-center" role="status" aria-live="polite"><div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-lg">📈</div><p className="text-sm font-semibold text-[#16332f]">Belum ada data arus kas</p><p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat transaksi untuk melihat tren pemasukan dan pengeluaran bulanan.</p></div>}
                     <DecisionContext
                       title="Cashflow trend"
                       state={trend.length > 0 ? 'verified' : 'unavailable'}
@@ -405,7 +398,7 @@ export default function AnalyticsPage() {
                         </div>
                       </div>
                     </div>
-                  ) : <p className="text-xs text-zinc-500 text-center py-8">No investment data</p>}
+                  ) : <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-8 text-center" role="status" aria-live="polite"><div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-lg">📊</div><p className="text-sm font-semibold text-[#16332f]">Belum ada data investasi</p><p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat snapshot investasi emas atau reksa dana untuk melihat alokasi aset.</p></div>}
                 </div>
               </div>
             )}
