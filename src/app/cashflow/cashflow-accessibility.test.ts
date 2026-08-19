@@ -18,4 +18,10 @@ describe('cashflow entry and filter accessibility', () => {
       expect(source).toContain(`aria-label="${label}"`);
     }
   });
+
+  it('renders accessible onboarding cards when transactions list is empty', () => {
+    expect(source).toContain('Belum ada transaksi');
+    expect(source).toContain('role="status"');
+    expect(source).toContain('aria-live="polite"');
+  });
 });

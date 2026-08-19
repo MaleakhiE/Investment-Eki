@@ -403,7 +403,13 @@ export default function CashflowPage() {
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">{searchQuery || filterCategory !== 'all' || filterType !== 'all' ? 'No results' : 'No transactions yet'}</p>}
+                ) : (
+                  <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-6 text-center" role="status" aria-live="polite">
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#00d4aa]/10 text-[#00d4aa] text-lg" aria-hidden="true">💸</div>
+                    <p className="text-sm font-semibold text-[#16332f]">Belum ada transaksi</p>
+                    <p className="mt-1 text-xs text-zinc-500">Catat pemasukan atau pengeluaran pertama Anda untuk mulai memantau cashflow bulanan.</p>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
