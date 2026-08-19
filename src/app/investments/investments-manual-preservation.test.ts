@@ -9,6 +9,7 @@ describe('investment gold manual-entry preservation', () => {
     expect(source).toContain("setUseGoldCalc(false)");
     expect(source).toContain("state={goldPriceData?.is_verified ? 'verified' : 'manual'}");
     expect(source).toContain('disabled={!goldPriceData?.is_verified || goldPriceLoading}');
+    expect(source).toContain('disabled={canUseGoldCalc || (selectedType === \'MUTUAL_FUND\' && useMfCalc)}');
     expect(source).toContain('Nilai saat ini');
     expect(source).toContain('manual currentValue entry');
   });

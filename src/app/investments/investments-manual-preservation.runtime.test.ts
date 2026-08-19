@@ -165,6 +165,45 @@ describe('investments page manual-entry preservation', () => {
     expect(toggle?.hasAttribute('disabled')).toBe(true);
   });
 
+  it('keeps currentValue editable while a verified price refresh is loading', async () => {
+    let resolveRefresh!: (value: Response) => void;
+    const refreshPromise = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    configureFetch([verifiedGoldResponse, refreshPromise]);
+
+    await act(async () => {
+      root.render(React.createElement(InvestmentsPage));
+      await flushEffects();
+    });
+
+    const currentValue = container.querySelector<HTMLInputElement>('#investment-current-value');
+    expect(currentValue).not.toBeNull();
+    expect(currentValue?.disabled).toBe(true);
+
+    const refreshButton = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Refresh') as HTMLButtonElement | undefined;
+    expect(refreshButton).toBeDefined();
+
+    await act(async () => {
+      refreshButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelectorAll('#gold-price, #gold-grams').length).toBe(0);
+    expect(currentValue?.disabled).toBe(false);
+    const toggle = container.querySelector('button[role="switch"]') as HTMLButtonElement | undefined;
+    expect(toggle?.hasAttribute('disabled')).toBe(true);
+
+    await act(async () => {
+      resolveRefresh(unverifiedGoldResponse);
+      await flushEffects();
+    });
+
+    expect(currentValue?.disabled).toBe(false);
+    expect(toggle?.hasAttribute('disabled')).toBe(true);
+  });
+
   it('user can toggle calculator when price becomes verified', async () => {
     // First load: unverified
     // Then: verified (allowing toggle enablement)

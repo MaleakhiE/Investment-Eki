@@ -45,6 +45,7 @@ describe('investment history availability UX', () => {
     expect(source).toContain("state={goldPriceData?.is_verified ? 'verified' : 'manual'}");
     expect(source).toContain('A current gold price could not be verified. Enter a value manually or try again.');
     expect(source).toContain('disabled={!goldPriceData?.is_verified || goldPriceLoading}');
+    expect(source).toContain('disabled={canUseGoldCalc || (selectedType === \'MUTUAL_FUND\' && useMfCalc)}');
     expect(source).toContain('Use gold calculator');
     expect(source).toContain('Nilai saat ini');
     expect(source).toContain('manual currentValue entry');

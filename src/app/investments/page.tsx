@@ -425,7 +425,7 @@ export default function InvestmentsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
                     <label htmlFor="investment-current-value" className="block text-sm font-medium mb-1">Nilai saat ini</label>
-                    <CurrencyInput id="investment-current-value" value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
+                    <CurrencyInput id="investment-current-value" value={currentValue} onChange={setCurrentValue} required disabled={canUseGoldCalc || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${(canUseGoldCalc || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
                   </div>
                   <div className="bg-[#f5fbf9] rounded-xl p-3">
                     <p className="text-xs text-zinc-600 mb-1">Gain/Loss Preview</p>
