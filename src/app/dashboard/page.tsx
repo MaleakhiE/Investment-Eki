@@ -267,9 +267,11 @@ export default function DashboardPage() {
                 <Link href="/budget" className="mt-2 inline-block font-semibold underline underline-offset-2">Retry in Budgets</Link>
               </div>
             ) : budgets.length === 0 && budgetStatus === 'ready' ? (
-              <div className="rounded-2xl bg-[#f5fbf9] p-4 text-sm text-zinc-600">
-                <p>You have no active budgets yet.</p>
-                <Link href="/budget" className="mt-2 inline-block font-semibold text-[#008f78] underline underline-offset-2">Set up your first budget</Link>
+              <div className="rounded-2xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-6 text-center" role="status" aria-live="polite">
+                <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">🎯</div>
+                <h3 className="font-semibold text-[#16332f]">Belum ada anggaran aktif</h3>
+                <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Buat batas pengeluaran untuk menjaga keuangan Anda tetap terkendali.</p>
+                <Link href="/budget" className="mt-3 inline-block font-semibold text-[#008f78] underline underline-offset-2">Set up your first budget</Link>
               </div>
             ) : (
               <div className="space-y-3" aria-live="polite">
