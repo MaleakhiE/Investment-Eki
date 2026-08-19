@@ -1,61 +1,43 @@
-# Iteration 065 — accessible transaction import preview
+# Iteration 065 — Dashboard accessible empty state
 
 ## Category
 
-User-facing product capability and accessibility.
+UX, UI, and accessibility.
 
 ## Executive summary
 
-This iteration adds a responsive, accessible cashflow-page preview for the duplicate-aware CSV API delivered in Iteration 064. Users can select a statement file, inspect validation and duplicate status, and understand that no transaction is saved by the preview.
+Iteration 065 improves the dashboard's "recent transactions" empty state by adding a visible icon, Indonesian copy, and proper accessibility attributes.
 
-## User problem and repository evidence
+## User or operational problem
 
-Iteration 064 established a safe API boundary but left users without a client workflow. Manual QRIS and statement capture requires a review surface that works with keyboard and assistive technology before any future confirmation step.
+The dashboard's recent-transactions empty state had an empty icon placeholder and plain English text. This was inconsistent with the onboarding-card pattern used elsewhere and provided no localized guidance.
+
+## Repository evidence
+
+- `src/app/dashboard/page.tsx` lines 401-409: empty `<div className="w-16 h-16 ...">` icon and `<p>No transactions yet</p>`.
 
 ## Scope
 
-- Add an accessible CSV file-selection and preview component to Cashflow.
-- Show loading, error, summary, table, duplicate, and no-persistence states.
-- Preserve server-side validation and authentication through the existing preview API.
-- Add a component regression test.
-
-## Non-goals
-
-No transaction persistence, confirmation write, bank connector, account matching, automatic categorization, or schema change.
+- Add a visible icon and Indonesian copy to the dashboard empty state.
+- Add `role="status"` + `aria-live="polite"` for screen readers.
+- Add `src/app/dashboard/dashboard-empty-state.test.ts` asserting the empty state contract.
 
 ## Acceptance criteria
 
-- File selection has an accessible name and disabled loading state.
-- Errors are announced and preview loading is announced.
-- Preview rows use a semantic table with caption and scoped headers.
-- Valid, invalid, and duplicate counts are visible as text.
-- The UI clearly states that previewing does not save transactions.
+- Dashboard shows an accessible empty state with icon and localized copy.
+- Uses `role="status"` and `aria-live="polite"`.
+- Source-level regression test covers the new empty state copy.
 
-## Implementation details
+## Validation commands and results
 
-- `TransactionImportPreview` reads a selected CSV and calls the authenticated preview endpoint.
-- The component renders a responsive overflow-safe table and explicit status messaging.
-- Cashflow includes the preview above existing transaction entry without changing existing save/delete behavior.
+- `npx jest --runTestsByPath src/app/dashboard/dashboard-empty-state.test.ts`
+- `npx tsc --noEmit`
+- `npm run lint`
 
-## Security, financial correctness, and compatibility
+## Deployment notes
 
-The client never writes financial data and does not make authorization decisions. The server remains the source of validation. Existing transaction workflows and API contracts are unchanged.
+Standard frontend deployment.
 
-## Validation
+## Rollback procedure
 
-- Focused Jest: 1 suite, 3 tests passed after review fixes.
-- Full Jest: 108 suites, 1,040 tests passed.
-- TypeScript, ESLint, production build/OCR trace, Prisma validation, database status/replay, audit threshold, and diff checks passed.
-- ESLint retains one pre-existing unused-variable warning.
-
-## Review
-
-Independent review completed. Findings on visible keyboard focus, malformed response handling, and client-side file-size protection were fixed in commit `661ba6ba359793493030d0bb7e795ac00a32b28f`; no Critical or High findings remain.
-
-## Rollback and follow-up
-
-Rollback is a component/page revert with no database migration. Follow-up: add explicit user-confirmed persistence and existing-transaction reconciliation as a separate bounded iteration.
-
-## Pull request
-
-PR #63: https://github.com/MaleakhiE/Investment-Eki/pull/63 (merged at `4aeb434cb1092558bd85b96803d1a9deeaaaeec7`).
+Revert to the previous commit.

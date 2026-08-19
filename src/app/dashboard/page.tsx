@@ -399,10 +399,9 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 rounded-full bg-[#f5fbf9] flex items-center justify-center mx-auto mb-3">
-                </div>
-                <p className="text-zinc-500 text-sm mb-3">No transactions yet</p>
+              <div className="text-center py-8" role="status" aria-live="polite">
+                <div aria-hidden="true" className="w-16 h-16 rounded-full bg-[#f5fbf9] flex items-center justify-center mx-auto mb-3 text-2xl">💸</div>
+                <p className="text-zinc-500 text-sm mb-3">Belum ada transaksi</p>
                 <Link href="/cashflow" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
                   Add transaction
                 </Link>
