@@ -203,7 +203,7 @@ export default function BudgetPage() {
             <div className="card rounded-xl p-5">
               <h3 className="font-semibold text-[#16332f] mb-4">Budgets by category</h3>
               {budgets.length === 0 ? (
-                <div className="text-center py-10">
+                <div className="text-center py-10" role="status" aria-live="polite">
                   <div className="mx-auto mb-4 w-20 h-20 rounded-3xl bg-[#00d4aa]/10 border border-[#00d4aa]/30 flex items-center justify-center">
                     <svg className="w-10 h-10 text-[#00a88a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
