@@ -218,6 +218,20 @@ when the live PR is mergeable and all visible required checks are green.
 
 Do not use an administrator bypass to evade a standing rule.
 
+## Engineering Documentation Reconciliation Under Branch Protection
+
+`docs/engineering/*` (including `autonomous-state.md` and `loop-state.json`) is reconciled after a merge, but `main` is a protected branch that requires passing status checks (CodeRabbit, Vercel) which only run on pull requests — not on direct pushes. Therefore documentation reconciliation **never pushes directly to `main`**.
+
+After a merge, when doc state needs updating:
+
+1. Reset local `main` to `origin/main` (`git reset --hard origin/main`); do not carry doc commits onto `main`.
+2. Create a feature branch named `docs/iteration-NNN-<slug>` from `origin/main`.
+3. Commit only the `docs/engineering/*` changes there.
+4. Open a PR and wait for the required status checks to pass.
+5. Merge the PR normally (squash) once checks are green; let GitHub delete the branch.
+
+This keeps the autonomous loop fully self-driving while respecting the protected-branch gate. Direct `git push origin main` for documentation is prohibited and will be rejected by the branch-protection hook.
+
 ## Existing Open PR Finalization Precedence
 
 Before selecting a new iteration, inspect existing open engineering PRs.
