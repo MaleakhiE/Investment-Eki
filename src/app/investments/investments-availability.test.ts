@@ -49,4 +49,12 @@ describe('investment history availability UX', () => {
     expect(source).toContain('Nilai saat ini');
     expect(source).toContain('manual currentValue entry');
   });
+
+  it('preserves manually entered current value when gold price refresh fails', () => {
+    expect(source).not.toContain("setCurrentValue('');\n    } catch {");
+    expect(source).not.toContain("setCurrentValue('');\n    if (!data.is_verified) {");
+    expect(source).toContain('setUseGoldCalc(data.is_verified)');
+    expect(source).toContain('setGoldPrice(');
+    expect(source).toContain('setGoldPriceData(null)');
+  });
 });

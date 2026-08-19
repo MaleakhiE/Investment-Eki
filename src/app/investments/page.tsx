@@ -79,14 +79,10 @@ export default function InvestmentsPage() {
       setGoldPriceData(data);
       setGoldPrice(data.sell_price.toString());
       setUseGoldCalc(data.is_verified);
-      if (!data.is_verified) {
-        setCurrentValue('');
-      }
     } catch {
       setGoldPriceData(null);
       setGoldPrice('');
       setUseGoldCalc(false);
-      setCurrentValue('');
     } finally {
       setGoldPriceLoading(false);
     }
