@@ -13,6 +13,7 @@ interface GoldPriceResponse {
   buy_price: number;
   source: string;
   updated_at: string;
+  is_verified: boolean;
 }
 
 // Cache the price for 5 minutes
@@ -22,6 +23,47 @@ const CACHE_DURATION = 5 * 60 * 1000;
 
 // Default Indonesian gold price (updated periodically as fallback)
 const DEFAULT_GOLD_PRICE = 1550000; // Rp per gram (Jan 2026 estimate)
+const MIN_REASONABLE_USD_TO_IDR = 10_000;
+const MAX_REASONABLE_USD_TO_IDR = 30_000;
+
+function isPositiveFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function isReasonableExchangeRate(value: unknown): value is number {
+  return isPositiveFiniteNumber(value) && value >= MIN_REASONABLE_USD_TO_IDR && value <= MAX_REASONABLE_USD_TO_IDR;
+}
+
+function buildFallbackGoldPrice(source: string): GoldPriceResponse {
+  return {
+    sell_price: DEFAULT_GOLD_PRICE,
+    buy_price: Math.round(DEFAULT_GOLD_PRICE * 0.93),
+    source,
+    updated_at: new Date().toISOString(),
+    is_verified: false,
+  };
+}
+
+function buildVerifiedGoldPrice(sellPrice: number, buyPrice: number, source: string): GoldPriceResponse {
+  return {
+    sell_price: sellPrice,
+    buy_price: buyPrice,
+    source,
+    updated_at: new Date().toISOString(),
+    is_verified: false,
+  };
+}
+
+function buildGoldPrice(usdToIdr: unknown, source: string): GoldPriceResponse | null {
+  if (!isReasonableExchangeRate(usdToIdr)) return null;
+
+  const pricePerGram = 85 * usdToIdr;
+  const sellPrice = Math.round(pricePerGram * 1.12);
+  const buyPrice = Math.round(pricePerGram * 0.98);
+  if (!isPositiveFiniteNumber(pricePerGram) || !isPositiveFiniteNumber(sellPrice) || !isPositiveFiniteNumber(buyPrice)) return null;
+
+  return buildVerifiedGoldPrice(sellPrice, buyPrice, source);
+}
 
 async function fetchGoldPrice(): Promise<GoldPriceResponse> {
   // Return cached if valid
@@ -39,12 +81,7 @@ async function fetchGoldPrice(): Promise<GoldPriceResponse> {
   }
 
   // Return default/fallback price
-  return {
-    sell_price: DEFAULT_GOLD_PRICE,
-    buy_price: Math.round(DEFAULT_GOLD_PRICE * 0.93),
-    source: 'default (offline)',
-    updated_at: new Date().toISOString(),
-  };
+  return buildFallbackGoldPrice('default (offline)');
 }
 
 async function tryFetchFromAPIs(): Promise<GoldPriceResponse | null> {
@@ -85,19 +122,7 @@ async function fetchFromFrankfurter(): Promise<GoldPriceResponse | null> {
     const data = await res.json();
     const usdToIdr = data.rates?.IDR;
     
-    if (!usdToIdr) return null;
-
-    // International gold price ~$85/gram (spot price per troy oz ~$2650 / 31.1g)
-    // Indonesian retail gold (Antam) has ~15-20% premium over spot
-    const goldUsdPerGram = 85;
-    const pricePerGram = goldUsdPerGram * usdToIdr;
-
-    return {
-      sell_price: Math.round(pricePerGram * 1.12), // Add Indonesian retail premium (~12%)
-      buy_price: Math.round(pricePerGram * 0.98),
-      source: 'frankfurter.app',
-      updated_at: new Date().toISOString(),
-    };
+    return buildGoldPrice(usdToIdr, 'frankfurter.app');
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;
@@ -120,19 +145,7 @@ async function fetchFromExchangeRateAPI(): Promise<GoldPriceResponse | null> {
     const data = await res.json();
     const usdToIdr = data.rates?.IDR;
     
-    if (!usdToIdr) return null;
-
-    // International gold price ~$85/gram
-    // Indonesian retail gold has premium
-    const goldUsdPerGram = 85;
-    const pricePerGram = goldUsdPerGram * usdToIdr;
-
-    return {
-      sell_price: Math.round(pricePerGram * 1.12),
-      buy_price: Math.round(pricePerGram * 0.98),
-      source: 'open.er-api.com',
-      updated_at: new Date().toISOString(),
-    };
+    return buildGoldPrice(usdToIdr, 'open.er-api.com');
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;
@@ -147,14 +160,9 @@ export async function GET() {
     );
   } catch {
     console.error('gold_price_fallback_used');
-    // Return default price even on error
+    // Return a clearly unverified fallback price even on error
     return NextResponse.json(
-      successResponse({
-        sell_price: DEFAULT_GOLD_PRICE,
-        buy_price: Math.round(DEFAULT_GOLD_PRICE * 0.93),
-        source: 'default (error fallback)',
-        updated_at: new Date().toISOString(),
-      }, 'Gold price fetched (fallback)')
+      successResponse(buildFallbackGoldPrice('default (error fallback)'), 'Gold price fetched (fallback)')
     );
   }
 }

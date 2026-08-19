@@ -39,4 +39,23 @@ describe('investment history availability UX', () => {
     expect(source).toContain('mfSnapshots[0]');
     expect(source).not.toContain('investment-native-type');
   });
+
+  it('forces manual gold entry when the gold price cannot be verified', () => {
+    expect(source).toContain('setUseGoldCalc(false)');
+    expect(source).toContain("state={goldPriceData?.is_verified ? 'verified' : 'manual'}");
+    expect(source).toContain('A current gold price could not be verified. Enter a value manually or try again.');
+    expect(source).toContain('disabled={!goldPriceData?.is_verified || goldPriceLoading}');
+    expect(source).toContain('disabled={canUseGoldCalc || (selectedType === \'MUTUAL_FUND\' && useMfCalc)}');
+    expect(source).toContain('Use gold calculator');
+    expect(source).toContain('Nilai saat ini');
+    expect(source).toContain('manual currentValue entry');
+  });
+
+  it('preserves manually entered current value when gold price refresh fails', () => {
+    expect(source).not.toContain("setCurrentValue('');\n    } catch {");
+    expect(source).not.toContain("setCurrentValue('');\n    if (!data.is_verified) {");
+    expect(source).toContain('setUseGoldCalc(data.is_verified)');
+    expect(source).toContain('setGoldPrice(');
+    expect(source).toContain('setGoldPriceData(null)');
+  });
 });

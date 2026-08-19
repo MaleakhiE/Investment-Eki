@@ -9,6 +9,7 @@ import { DecisionContext } from '@/components/finance/DecisionContext';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { parseInvestmentHistories } from './investment-history';
 import { getInvestmentReturnPresentation } from './investment-presentation';
+import { parseGoldPriceResponse } from './gold-price-response';
 
 interface InvestmentSnapshot {
   id: string;
@@ -26,6 +27,7 @@ interface GoldPrice {
   sell_price: number;
   source: string;
   updated_at: string;
+  is_verified: boolean;
 }
 
 type InvestmentType = 'GOLD' | 'MUTUAL_FUND';
@@ -58,7 +60,7 @@ export default function InvestmentsPage() {
   const [currentValue, setCurrentValue] = useState('');
   const [goldGrams, setGoldGrams] = useState('');
   const [goldPrice, setGoldPrice] = useState('');
-  const [useGoldCalc, setUseGoldCalc] = useState(true);
+  const [useGoldCalc, setUseGoldCalc] = useState(false);
   const [goldPriceData, setGoldPriceData] = useState<GoldPrice | null>(null);
   const [goldPriceLoading, setGoldPriceLoading] = useState(false);
   const [mfPlatform, setMfPlatform] = useState('bibit');
@@ -71,15 +73,16 @@ export default function InvestmentsPage() {
     setGoldPriceLoading(true);
     try {
       const res = await fetch('/api/gold-price', { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.responseDetails) {
-          setGoldPriceData(data.responseDetails);
-          setGoldPrice(data.responseDetails.sell_price.toString());
-        }
-      }
+      if (!res.ok) throw new Error('Gold price unavailable');
+      const data = parseGoldPriceResponse(await res.json());
+      if (!data) throw new Error('Gold price response is invalid');
+      setGoldPriceData(data);
+      setGoldPrice(data.sell_price.toString());
+      setUseGoldCalc(data.is_verified);
     } catch {
-      setGoldPrice('1450000');
+      setGoldPriceData(null);
+      setGoldPrice('');
+      setUseGoldCalc(false);
     } finally {
       setGoldPriceLoading(false);
     }
@@ -92,8 +95,10 @@ export default function InvestmentsPage() {
     return () => clearInterval(interval);
   }, [fetchGoldPrice]);
 
+  const canUseGoldCalc = selectedType === 'GOLD' && useGoldCalc && !!goldPriceData && !goldPriceLoading;
+
   useEffect(() => {
-    if (selectedType === 'GOLD' && useGoldCalc) {
+    if (canUseGoldCalc) {
       const invested = parseFloat(investedAmount) || 0;
       const p = parseFloat(goldPrice) || 0;
       if (invested > 0 && p > 0) {
@@ -101,15 +106,15 @@ export default function InvestmentsPage() {
         setGoldGrams(grams.toFixed(4));
       }
     }
-  }, [investedAmount, goldPrice, selectedType, useGoldCalc]);
+  }, [canUseGoldCalc, investedAmount, goldPrice]);
 
   useEffect(() => {
-    if (selectedType === 'GOLD' && useGoldCalc) {
+    if (canUseGoldCalc) {
       const g = parseFloat(goldGrams) || 0;
       const p = parseFloat(goldPrice) || 0;
       setCurrentValue(g * p > 0 ? Math.round(g * p).toString() : '');
     }
-  }, [goldGrams, goldPrice, selectedType, useGoldCalc]);
+  }, [canUseGoldCalc, goldGrams, goldPrice]);
 
   useEffect(() => {
     if (selectedType === 'MUTUAL_FUND' && useMfCalc) {
@@ -354,19 +359,19 @@ export default function InvestmentsPage() {
                         <button type="button" onClick={fetchGoldPrice} disabled={goldPriceLoading} className="min-h-11 rounded-full px-2 text-xs font-semibold text-[#9a6d08] hover:bg-[#fff2c8] hover:text-[#704e05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98512] disabled:cursor-not-allowed disabled:opacity-50">
                           {goldPriceLoading ? 'Loading...' : 'Refresh'}
                         </button>
-                        <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} label="Use gold calculator" />
+                        <ToggleSwitch tone="gold" checked={useGoldCalc} onChange={setUseGoldCalc} disabled={!goldPriceData?.is_verified || goldPriceLoading} label="Use gold calculator" />
                       </div>
                     </div>
                     <DecisionContext
                       title="Sumber nilai emas"
-                      state={goldPriceData ? 'verified' : 'unavailable'}
+                      state={goldPriceData?.is_verified ? 'verified' : 'manual'}
                       source={goldPriceData?.source || 'Gold price provider'}
                       observedAt={goldPriceData ? formatSourceTimestamp(goldPriceData.updated_at) : undefined}
-                      description={goldPriceData ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : 'A current gold price could not be verified. Enter a value manually or try again.'}
+                      description={goldPriceData?.is_verified ? 'Use this provider value as calculator context only; saved snapshots remain user-owned records.' : (goldPriceLoading ? 'Updating gold price context...' : 'A current gold price could not be verified. Enter a value manually or try again. This keeps manual currentValue entry available so zero-value gold snapshots cannot be submitted from a failed fetch.')}
                     >
                       {goldPriceData && <p className="mt-3 font-bold tabular-nums text-[#9a6d08]">Rp {formatNumber(goldPriceData.sell_price)}/gram</p>}
                     </DecisionContext>
-                    {useGoldCalc && (
+                    {useGoldCalc && !goldPriceLoading && (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                           <label htmlFor="gold-price" className="mb-1 block text-xs font-medium text-[#5e4712]">Harga/gram</label>
@@ -420,7 +425,7 @@ export default function InvestmentsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
                     <label htmlFor="investment-current-value" className="block text-sm font-medium mb-1">Nilai saat ini</label>
-                    <CurrencyInput id="investment-current-value" value={currentValue} onChange={setCurrentValue} required disabled={(selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${((selectedType === 'GOLD' && useGoldCalc) || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
+                    <CurrencyInput id="investment-current-value" value={currentValue} onChange={setCurrentValue} required disabled={canUseGoldCalc || (selectedType === 'MUTUAL_FUND' && useMfCalc)} className={`${inputClass} ${(canUseGoldCalc || (selectedType === 'MUTUAL_FUND' && useMfCalc)) ? 'bg-[#e9f5f2]' : ''}`} />
                   </div>
                   <div className="bg-[#f5fbf9] rounded-xl p-3">
                     <p className="text-xs text-zinc-600 mb-1">Gain/Loss Preview</p>

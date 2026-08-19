@@ -20,4 +20,16 @@ describe('CurrencyInput accessibility contract', () => {
     expect(html).toContain('aria-describedby="amount-help"');
     expect(html).toContain('aria-invalid="true"');
   });
+
+  it('keeps zero visible so zero-value snapshots can be entered', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(CurrencyInput, {
+        id: 'current-value',
+        value: '0',
+        onChange: () => undefined,
+      }),
+    );
+
+    expect(html).toContain('value="0"');
+  });
 });
