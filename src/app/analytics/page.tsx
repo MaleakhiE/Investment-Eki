@@ -159,6 +159,10 @@ export default function AnalyticsPage() {
           ))}
         </div>
 
+        {ANALYTICS_TABS.filter((tab) => tab !== activeTab).map((tab) => (
+          <div key={tab} id={`analytics-panel-${tab}`} role="tabpanel" aria-labelledby={`analytics-tab-${tab}`} hidden />
+        ))}
+
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div id="analytics-panel-overview" role="tabpanel" aria-labelledby="analytics-tab-overview" tabIndex={0} className="space-y-4">
