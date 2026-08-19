@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
@@ -403,7 +404,20 @@ export default function CashflowPage() {
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs sm:text-sm text-zinc-500 text-center py-6">{searchQuery || filterCategory !== 'all' || filterType !== 'all' ? 'No results' : 'No transactions yet'}</p>}
+                ) : searchQuery || filterCategory !== 'all' || filterType !== 'all' ? (
+                  <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-8 text-center" role="status" aria-live="polite">
+                    <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">🔍</div>
+                    <h3 className="font-semibold text-[#16332f]">Tidak ada hasil</h3>
+                    <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Coba ubah kata kunci pencarian atau filter kategori/jenis transaksi.</p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-8 text-center" role="status" aria-live="polite">
+                    <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">💸</div>
+                    <h3 className="font-semibold text-[#16332f]">Belum ada transaksi</h3>
+                    <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat transaksi pertama Anda untuk mulai melihat riwayat keuangan.</p>
+                    <Link href="/cashflow" className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">Add transaction</Link>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
