@@ -415,8 +415,8 @@ test('repository durable loop state remains parseable by the controller', () => 
 test('repository autonomous state documents the active branch and current iteration', () => {
   const autonomousState = readFileSync(path.join(process.cwd(), 'docs/engineering/autonomous-state.md'), 'utf8');
 
-  expect(autonomousState).toContain('Current branch: `docs/iteration-106-107-reconciliation`');
-  expect(autonomousState).toContain('Current iteration: 107');
+  expect(autonomousState).toContain('Current branch: `docs/iteration-108-109-reconciliation`');
+  expect(autonomousState).toContain('Current iteration: 109');
 });
 
 test('legacy target metadata does not stop unbounded continuation', () => {
