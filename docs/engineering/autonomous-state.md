@@ -1,38 +1,52 @@
 # Autonomous engineering state
 
-Last updated: 2026-08-19
+Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 095 — PR #96 merged at `e397fe6`.
-Current branch: `fix/iteration-095-model-selection-fallback`.
-Current iteration: 095 — require successful gold price envelopes and prevent zero-value gold snapshots.
+Latest verified merged iteration: 107 — PR #117 merged at `e061d62`.
+Current branch: `docs/iteration-106-107-reconciliation` (documentation reconciliation only).
+Current iteration: 107 — raise gain/loss color contrast to WCAG AA.
 Base branch: `main`.
-Pull request: #96 (`https://github.com/MaleakhiE/Investment-Eki/pull/96`).
-Pull-request state: MERGED.
 
 ## Reconciliation
 
-GitHub verifies that PR #93 (iteration 092), PR #94 (iteration 093), PR #95 (iteration 094), and PR #96 (iteration 095) are merged. The default branch currently points to merge commit `e397fe6` for PR #96.
+GitHub verifies the default branch (`main`) advanced through:
 
-Iteration 095 hardened the gold-price trust boundary:
-- Route marks exchange-rate-derived and offline-fallback gold prices as `is_verified: false`.
-- Investments page defaults the gold calculator to off, disables it while loading/unverified, and preserves manual `currentValue` entry across failed or unverified refreshes.
-- Runtime and source-level regression tests cover manual-preservation, unverified-success, and loading-state behavior.
+- PR #116 (iteration 106) — semantic HTML tables for investment snapshot history — merged at `68807e2`.
+- PR #117 (iteration 107) — raise gain/loss color contrast to WCAG AA — merged at `e061d62`.
 
-Role-separated reviews (Business Analyst APPROVE, QA PASSED, Security Verified, CTO APPROVE_AND_MERGE) were obtained on exact branch head `d2076522d611dad0bfdcaeb45e92814763f88653` before merge. PR #96 was merged via squash into `e397fe6`.
+`main` currently points to merge commit `e061d62` for PR #117.
+
+Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
+
+Iteration 107 resolved the accessibility reviewer's non-blocking advisory from PR #116: the gain/loss numeric cells still used low-contrast `text-green-400` / `text-red-400` shades (≈1.66:1 / 2.64:1 against the light table background). They were replaced with the design system's accessible tokens `#087f6b` (accent-dark, ≈4.71:1) and `#b84c49` (danger, ≈4.81:1) plus `font-semibold`, preserving the `+`/`-` sign prefix so meaning is never conveyed by color alone. WCAG 1.4.3 / 1.4.1.
 
 ## Durable loop policy
 
-Role registry mode is `MULTI_AGENT_AUTONOMOUS_ORG` with unbounded continuation, `autoMergeRequested: true`, and `ownerApprovalRequired: false`. Routine autonomous merges require exact-SHA QA, Security, Business Analyst, and fresh CTO evidence, plus all applicable specialist gates and required checks.
+Role registry mode is `MULTI_AGENT_AUTONOMOUS_ORG` with unbounded continuation, `autoMergeRequested: true`, and `ownerApprovalRequired: false`. Routine autonomous merges require exact-SHA QA, Security, Business Analyst, and fresh CTO evidence, plus all applicable specialist gates and required checks. The iteration number is unbounded; historical `targetIteration: 70` is compatibility metadata only.
 
-## Review evidence (iteration 095)
+## Review evidence (iteration 106)
 
-- Business Analyst — APPROVE (exact SHA `d2076522d611dad0bfdcaeb45e92814763f88653`)
-- QA / Test Engineer — PASSED (121 suites, 1093 tests, no regressions)
-- Security Engineer — Verified (trust boundary, malformed-rate rejection, error privacy)
+Reviewed SHA `65bbe71962e4d78f9ad27edf1f919c182d57bdf0`:
+
+- Business Analyst — APPROVE
+- QA / Test Engineer — APPROVE (133 suites passed, 3 DB-env-blocked, 1112 tests)
+- Security Engineer — APPROVE (no XSS/injection, no auth/data-scope change)
+- UX Designer — APPROVE
+- Accessibility Reviewer — APPROVE (WCAG 1.4.1 / 2.4.3; noted color-contrast follow-up)
+- Frontend Engineer — APPROVE
+- CTO / Principal Engineer — APPROVE_AND_MERGE
+
+## Review evidence (iteration 107)
+
+Reviewed SHA `c4189ff5164dd96f39761d989b8e7d6b9bc8cfa5`:
+
+- Accessibility Reviewer — APPROVE (contrast now 4.71:1 / 4.81:1 ≥ AA; sign prefix preserved)
+- QA / Test Engineer — APPROVE (135 suites, 1116 tests; 3 DB-env-blocked)
+- Security Engineer — APPROVE (presentation-only class-name change)
 - CTO / Principal Engineer — APPROVE_AND_MERGE
 
 ## Exact next action
 
-Iteration 095 is merged. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1) and begin a fresh reconcile → branch → implement → validate → review → merge cycle.
+Iteration 107 is merged. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 108) and begin a fresh reconcile → branch → implement → validate → review → merge cycle.
