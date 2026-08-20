@@ -274,7 +274,7 @@ export default function GoalsPage() {
                 </div>
                 <div className="card rounded-xl p-4">
                   <p className="text-xs text-zinc-600 mb-1">Current Total</p>
-                  <p className="text-2xl font-bold text-green-400">{fmtC(summary.total_current)}</p>
+                  <p className="text-2xl font-bold text-[#087f6b]">{fmtC(summary.total_current)}</p>
                 </div>
                 <div className="card rounded-xl p-4">
                   <p className="text-xs text-zinc-600 mb-1">Overall Progress</p>
@@ -391,7 +391,7 @@ export default function GoalsPage() {
                           <div className="flex items-center justify-between text-xs mt-1">
                             <span className="text-zinc-500">Deadline: {new Date(goal.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                             {goal.days_left !== null && (
-                              <span className={goal.days_left < 0 || goal.days_left < 30 ? 'text-red-400' : 'text-zinc-500'}>
+                              <span className={goal.days_left < 0 || goal.days_left < 30 ? 'text-[#b84c49]' : 'text-zinc-500'}>
                                 {goal.days_left < 0 ? 'Deadline passed' : `${goal.days_left} days left`}
                               </span>
                             )}
@@ -438,7 +438,7 @@ export default function GoalsPage() {
                         <div className="flex items-center gap-2">
                           <div>
                             <p className="font-medium text-[#16332f] line-through opacity-70">{goal.name}</p>
-                            <p className="text-xs text-green-400">{fmt(goal.target_amount)} selesai</p>
+                            <p className="text-xs text-[#087f6b]">{fmt(goal.target_amount)} selesai</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

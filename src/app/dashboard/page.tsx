@@ -196,7 +196,7 @@ export default function DashboardPage() {
                   <p className="mt-1">Your dashboard could not verify this period&apos;s totals. Refresh to try again.</p>
                 </div>
               ) : <>
-              <p className={`text-4xl lg:text-5xl font-bold mb-1 ${net >= 0 ? 'gradient-text' : 'text-red-400'}`}>
+              <p className={`text-4xl lg:text-5xl font-bold mb-1 ${net >= 0 ? 'gradient-text' : 'text-[#b84c49]'}`}>
                 {formatCurrency(net)}
               </p>
               <p className="text-xs text-zinc-500 mb-6">{periodLabel || 'Periode gajian aktif'}</p>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                 <div className="mt-4">
                   <div className="flex justify-between text-xs mb-2">
                     <span className="text-zinc-400">Tingkat Tabungan</span>
-                    <span className={savingsRate >= 20 ? 'text-[#00d4aa]' : savingsRate >= 0 ? 'text-amber-400' : 'text-red-400'}>{savingsRate.toFixed(0)}%</span>
+                    <span className={savingsRate >= 20 ? 'text-[#00d4aa]' : savingsRate >= 0 ? 'text-amber-700' : 'text-[#b84c49]'}>{savingsRate.toFixed(0)}%</span>
                   </div>
                   <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-1000 ${savingsRate >= 20 ? 'bg-[#00d4aa]' : savingsRate >= 0 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${Math.min(Math.max(savingsRate, 0), 100)}%` }}></div>
@@ -340,7 +340,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-3xl font-bold text-[#16332f]">{formatCurrency(currentVal)}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#00d4aa]' : 'text-red-400'}`}>
+                    <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#00d4aa]' : 'text-[#b84c49]'}`}>
                       {gainLoss >= 0 ? 'Untung' : 'Rugi'} {formatCurrency(Math.abs(gainLoss))}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${gainLoss >= 0 ? 'bg-[#00d4aa]/10 text-[#00d4aa]' : 'bg-red-500/10 text-red-400'}`}>
