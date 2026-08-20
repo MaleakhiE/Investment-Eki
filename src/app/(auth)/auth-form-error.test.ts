@@ -32,7 +32,8 @@ it('allows a custom className without losing the alert semantics', () => {
   const html = renderToStaticMarkup(
     React.createElement(
       FormError,
-      { className: 'my-custom-error', children: React.createElement('p', null, 'Invalid token') },
+      { className: 'my-custom-error' },
+      React.createElement('p', null, 'Invalid token'),
     ),
   );
 
