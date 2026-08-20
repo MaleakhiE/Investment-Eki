@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 110 — PR #122 merged at `dc5fde5`.
-Current branch: `docs/iteration-110-reconciliation` (documentation reconciliation only).
-Current iteration: 110 — non-text & identity color contrast audit to WCAG 1.4.11 / 1.4.3.
+Latest verified merged iteration: 111 — PR #124 merged at `59ccf64`.
+Current branch: `docs/iteration-111-reconciliation` (documentation reconciliation only).
+Current iteration: 111 — global keyboard focus-visible indicator (WCAG 2.4.7).
 Base branch: `main`.
 
 ## Reconciliation
@@ -18,10 +18,12 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #119 (iteration 108) — raise analytics financial-status color contrast to WCAG AA — merged at `176ddc1`.
 - PR #120 (iteration 109) — complete the financial-status contrast sweep across dashboard, budget, cashflow, goals, settings, and register — merged at `d2e5d9d`.
 - PR #122 (iteration 110) — non-text & identity color contrast audit (charts, meters, legends, donut, identity accents) to WCAG 1.4.11 / 1.4.3 — merged at `dc5fde5`.
+- PR #124 (iteration 111) — global keyboard focus-visible indicator (WCAG 2.4.7) — merged at `59ccf64`.
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 - PR #121 — documentation reconciliation for iterations 108–109 — merged.
+- PR #123 — documentation reconciliation for iteration 110 — merged at `8df4f9a`.
 
-`main` currently points to merge commit `dc5fde5` for PR #122.
+`main` currently points to merge commit `59ccf64` for PR #124.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
@@ -83,6 +85,15 @@ Reviewed SHA `b48288da0b339805273118812d765b6e05012fc4`:
 - Frontend Engineer — APPROVE (className/stroke-hex-only; all conditional thresholds byte-for-byte preserved; gradient-text positive branch intact; Tailwind v4 syntax valid)
 - CTO / Principal Engineer — APPROVE_AND_MERGE (purely presentational; no financial/threshold/currency logic changed; GitHub checks green; mergeable CLEAN; no hidden dependency)
 
+## Review evidence (iteration 111)
+
+Reviewed SHA `b1af8f5f4a952a9aacf40be612a636f8d59e0527`:
+
+- Accessibility Reviewer — APPROVE (focus ring #087f6b ≥3:1 on light surfaces: background 4.58:1, card 4.93:1, mint 4.34:1; noted it measures 2.68:1 against the dark --ink #17352f surfaces — flagged as follow-up)
+- QA / Test Engineer — APPROVE (139 suites / 1130 tests; a11y-regression-gate still green; mutation-tested the regression test — corrupting the block makes it fail, restored clean)
+- Frontend Engineer — verified cascade correct (later-source `:focus-visible` wins over un-`!important` `outline:none`); requested two Low-severity refinements — components with `focus:outline-none` should pair a `focus-visible` ring, and `[tabindex]:focus-visible` should not target `tabIndex={-1}` programmatic-focus elements
+- CTO / Principal Engineer — APPROVE_AND_MERGE (purely presentational; cascade confirmed functional not a no-op; all required GitHub checks SUCCESS; frontend refinements judged Low-severity polish, not blockers, deferred to iteration 112)
+
 ## Exact next action
 
-Iteration 110 is merged at `dc5fde5`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 111) and begin a fresh reconcile → branch → implement → validate → review → merge cycle. Candidates: WCAG 2.4.7 (focus-visible outlines on all interactive controls), 1.3.1 (explicit form-label associations / fieldset-legend grouping), or 2.5.8 (target size) — pick the highest-value gap surfaced by a fresh code audit. The one remaining sub-3:1 token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
+Iteration 111 is merged at `59ccf64`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 112). Strong candidates carried from iteration 111 review: (a) refine the focus-visible selector so `[tabindex="-1"]` programmatic-focus targets (AccessibleDialog container, the investment form-title h2) do not get an unwanted ring, and add a dark-surface focus-ring variant (light ring) for controls over --ink #17352f (auth story panel, brand mark) where #087f6b only reaches 2.68:1; (b) WCAG 1.3.1 explicit form-label associations / fieldset-legend grouping; (c) WCAG 2.5.8 target size. Pick the highest-value gap from a fresh audit. The one remaining sub-3:1 non-text token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
