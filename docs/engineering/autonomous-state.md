@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 109 — PR #120 merged at `d2e5d9d`.
-Current branch: `docs/iteration-108-109-reconciliation` (documentation reconciliation only).
-Current iteration: 109 — complete financial status color-contrast sweep to WCAG AA.
+Latest verified merged iteration: 110 — PR #122 merged at `dc5fde5`.
+Current branch: `docs/iteration-110-reconciliation` (documentation reconciliation only).
+Current iteration: 110 — non-text & identity color contrast audit to WCAG 1.4.11 / 1.4.3.
 Base branch: `main`.
 
 ## Reconciliation
@@ -17,9 +17,11 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #117 (iteration 107) — raise gain/loss color contrast to WCAG AA — merged at `e061d62`.
 - PR #119 (iteration 108) — raise analytics financial-status color contrast to WCAG AA — merged at `176ddc1`.
 - PR #120 (iteration 109) — complete the financial-status contrast sweep across dashboard, budget, cashflow, goals, settings, and register — merged at `d2e5d9d`.
+- PR #122 (iteration 110) — non-text & identity color contrast audit (charts, meters, legends, donut, identity accents) to WCAG 1.4.11 / 1.4.3 — merged at `dc5fde5`.
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
+- PR #121 — documentation reconciliation for iterations 108–109 — merged.
 
-`main` currently points to merge commit `d2e5d9d` for PR #120.
+`main` currently points to merge commit `dc5fde5` for PR #122.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
@@ -72,6 +74,15 @@ Reviewed SHA `e171c7e32f9bb6bc57d712af5675297c751c5a77`:
 - Frontend Engineer — APPROVE (className-only; all conditional thresholds preserved; gradient-text positive branch intact)
 - CTO / Principal Engineer — APPROVE_AND_MERGE (no calculation/threshold/currency logic changed)
 
+## Review evidence (iteration 110)
+
+Reviewed SHA `b48288da0b339805273118812d765b6e05012fc4`:
+
+- Accessibility Reviewer — APPROVE (all data-encoding graphics ≥3:1 and identity-accent text ≥4.5:1; retained brand mint `#00d4aa` and `hover:text-red-400` affordances judged defensible non-goals)
+- QA / Test Engineer — APPROVE (138 suites, 1126 tests; 3 DB-env-blocked; mutation-tested the new regression test — reverting a token makes it fail)
+- Frontend Engineer — APPROVE (className/stroke-hex-only; all conditional thresholds byte-for-byte preserved; gradient-text positive branch intact; Tailwind v4 syntax valid)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (purely presentational; no financial/threshold/currency logic changed; GitHub checks green; mergeable CLEAN; no hidden dependency)
+
 ## Exact next action
 
-Iteration 109 is merged. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 110) and begin a fresh reconcile → branch → implement → validate → review → merge cycle. A dedicated WCAG 1.4.11 (non-text contrast) audit of badge/chip backgrounds, progress-bar fills, and category-identity accents is a strong candidate.
+Iteration 110 is merged at `dc5fde5`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 111) and begin a fresh reconcile → branch → implement → validate → review → merge cycle. Candidates: WCAG 2.4.7 (focus-visible outlines on all interactive controls), 1.3.1 (explicit form-label associations / fieldset-legend grouping), or 2.5.8 (target size) — pick the highest-value gap surfaced by a fresh code audit. The one remaining sub-3:1 token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
