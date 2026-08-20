@@ -158,7 +158,8 @@ export default function BudgetPage() {
               </div>
               <div className="card rounded-xl p-4">
                 <p className="text-xs text-zinc-600 mb-1">Remaining</p>
-                <p className={`text-2xl font-bold ${totalBudget - totalSpent >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmtC(Math.max(0, totalBudget - totalSpent))}</p>
+                <p className={`text-2xl font-bold ${totalBudget - totalSpent >= 0 ? 'text-green-400' : 'text-red-400'}`}>{fmtC(totalBudget - totalSpent)}</p>
+                <p className="mt-1 text-xs text-zinc-500">{totalBudget - totalSpent >= 0 ? 'On track' : 'Over budget'}</p>
               </div>
               <div className="card rounded-xl p-4">
                 <p className="text-xs text-zinc-600 mb-1">Alerts</p>
@@ -233,7 +234,14 @@ export default function BudgetPage() {
                         </button>
                       </div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="flex-1 h-3 bg-[#e9f5f2] rounded-full overflow-hidden">
+                        <div
+                          className="flex-1 h-3 bg-[#e9f5f2] rounded-full overflow-hidden"
+                          role="progressbar"
+                          aria-valuenow={Math.min(100, Math.round(budget.percentage))}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`Budget usage for ${budget.category}: ${budget.percentage.toFixed(0)}%${budget.isOverBudget ? ', over budget' : budget.percentage >= 80 ? ', nearing limit' : ''}`}
+                        >
                           <div className={`h-full rounded-full transition-all ${budget.isOverBudget ? 'bg-red-500' : budget.percentage >= 80 ? 'bg-amber-500' : budget.percentage >= 50 ? 'bg-blue-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, budget.percentage)}%` }}></div>
                         </div>
                         <span className={`text-sm font-bold w-14 text-right ${budget.isOverBudget ? 'text-red-400' : 'text-zinc-300'}`}>{budget.percentage.toFixed(0)}%</span>
@@ -241,7 +249,10 @@ export default function BudgetPage() {
                       <div className="flex items-center justify-between text-xs text-zinc-400">
                         <span>Spent: {fmt(budget.spent)}</span>
                         <span>Budget: {fmt(budget.amount)}</span>
-                        <span className={budget.remaining > 0 ? 'text-green-400' : 'text-red-400'}>
+                        <span
+                          className={budget.remaining > 0 ? 'text-green-400' : 'text-red-400'}
+                          aria-label={budget.remaining > 0 ? `Still within budget, remaining ${fmtC(budget.remaining)}` : `Over budget by ${fmtC(Math.abs(budget.remaining))}`}
+                        >
                           {budget.remaining > 0 ? `Remaining: ${fmtC(budget.remaining)}` : `Over: ${fmtC(Math.abs(budget.remaining))}`}
                         </span>
                       </div>
