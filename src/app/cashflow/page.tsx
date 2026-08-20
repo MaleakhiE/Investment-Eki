@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
+import PageHeader from '@/components/ui/PageHeader';
 import { AccountTransferLabel, type AccountSummary } from '@/components/accounts/AccountCard';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { getOcrProgressMessage, OCR_REQUEST_TIMEOUT_MS, prepareReceiptForOcr } from '@/lib/receipt-image-client';
@@ -263,10 +264,11 @@ export default function CashflowPage() {
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
       <main className="app-page activity-page lg:ml-64 p-3 sm:p-4 lg:p-6">
-        <div className="mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#16332f]">Transactions</h2>
-          <p className="text-xs sm:text-sm text-zinc-600">Track income and expenses</p>
-        </div>
+        <PageHeader
+          eyebrow="Activity"
+          title="Transactions"
+          description="Track income and expenses"
+        />
         <div className="mb-4"><TransactionImportPreview /></div>
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-3 sm:space-y-4">
