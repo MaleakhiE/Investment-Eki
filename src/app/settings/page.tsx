@@ -208,13 +208,13 @@ export default function SettingsPage() {
           title="Settings"
           description="Manage your preferences"
         />
-        {error && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-red-400">{error}</div>}
+        {error && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-[#b84c49]">{error}</div>}
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div className="card rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1"><h3 className="font-semibold text-[#16332f] text-sm mb-1">AI Recommendation</h3><p className="text-xs text-zinc-600 mb-2">Enable AI-powered investment recommendations.</p><p className="text-xs"><span className="text-zinc-500">Status: </span><span className={`font-medium ${settings?.ai_recommendation_enabled ? 'text-green-400' : 'text-zinc-500'}`}>{settings?.ai_recommendation_enabled ? 'Active' : 'Inactive'}</span></p></div>
+                  <div className="flex-1"><h3 className="font-semibold text-[#16332f] text-sm mb-1">AI Recommendation</h3><p className="text-xs text-zinc-600 mb-2">Enable AI-powered investment recommendations.</p><p className="text-xs"><span className="text-zinc-500">Status: </span><span className={`font-medium ${settings?.ai_recommendation_enabled ? 'text-[#087f6b]' : 'text-zinc-500'}`}>{settings?.ai_recommendation_enabled ? 'Active' : 'Inactive'}</span></p></div>
                   <ToggleSwitch checked={settings?.ai_recommendation_enabled ?? false} onChange={() => { void toggleAI(); }} label="Enable AI recommendations" disabled={isSaving} />
                 </div>
               </div>
