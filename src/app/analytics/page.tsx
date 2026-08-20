@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
   const formatCompact = (v: number) => v >= 1e9 ? `${(v/1e9).toFixed(1)}M` : v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
   const safe = (v: number | null | undefined) => (v === undefined || v === null || isNaN(v)) ? 0 : v;
   const getRiskLabel = (p: string) => ({ conservative: 'Konservatif', moderate: 'Moderat', aggressive: 'Agresif' }[p] || p);
-  const getRiskColor = (p: string) => ({ conservative: 'bg-green-500/20 text-green-400', moderate: 'bg-blue-500/20 text-blue-400', aggressive: 'bg-orange-500/20 text-orange-400' }[p] || 'bg-[#e9f5f2] text-zinc-300');
+  const getRiskColor = (p: string) => ({ conservative: 'bg-green-500/20 text-[#087f6b]', moderate: 'bg-blue-500/20 text-blue-700', aggressive: 'bg-orange-500/20 text-orange-700' }[p] || 'bg-[#e9f5f2] text-zinc-600');
 
   const totalIncome = trend.reduce((s, t) => s + safe(t.income), 0);
   const totalExpense = trend.reduce((s, t) => s + safe(t.expense), 0);
@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
                     </div>
                     {recommendation.warnings.length > 0 && (
                       <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg p-2 mb-3">
-                        <p className="text-xs text-amber-400">{recommendation.warnings[0]}</p>
+                        <p className="text-xs text-amber-700">{recommendation.warnings[0]}</p>
                       </div>
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -218,12 +218,12 @@ export default function AnalyticsPage() {
                         <p className="text-lg font-bold text-[#16332f]">{formatCompact(recommendation.investable_amount)}</p>
                       </div>
                       <div className="bg-amber-500/10 rounded-lg p-3 text-center">
-                        <p className="text-xs text-amber-400">Gold</p>
-                        <p className="text-lg font-bold text-amber-400">{recommendation.gold_percentage}%</p>
+                        <p className="text-xs text-amber-700">Gold</p>
+                        <p className="text-lg font-bold text-amber-700">{recommendation.gold_percentage}%</p>
                       </div>
                       <div className="bg-blue-500/10 rounded-lg p-3 text-center">
-                        <p className="text-xs text-blue-400">Mutual Fund</p>
-                        <p className="text-lg font-bold text-blue-400">{recommendation.mutual_fund_percentage}%</p>
+                        <p className="text-xs text-blue-700">Mutual Fund</p>
+                        <p className="text-lg font-bold text-blue-700">{recommendation.mutual_fund_percentage}%</p>
                       </div>
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">{recommendation.reasoning}</p>
@@ -247,16 +247,16 @@ export default function AnalyticsPage() {
                           {trend.map((t, i) => (
                             <div key={i} className="flex-1 flex flex-col items-center">
                               <div className="w-full flex gap-0.5 items-end justify-center h-32">
-                                <div className="w-3 bg-green-400 rounded-t transition-all" style={{ height: `${Math.max((safe(t.income) / trendMax) * 100, t.income > 0 ? 8 : 0)}%` }}></div>
-                                <div className="w-3 bg-red-400 rounded-t transition-all" style={{ height: `${Math.max((safe(t.expense) / trendMax) * 100, t.expense > 0 ? 8 : 0)}%` }}></div>
+                                <div className="w-3 bg-[#087f6b] rounded-t transition-all" style={{ height: `${Math.max((safe(t.income) / trendMax) * 100, t.income > 0 ? 8 : 0)}%` }}></div>
+                                <div className="w-3 bg-[#b84c49] rounded-t transition-all" style={{ height: `${Math.max((safe(t.expense) / trendMax) * 100, t.expense > 0 ? 8 : 0)}%` }}></div>
                               </div>
                               <p className="text-[10px] text-zinc-600 mt-1">{new Date(t.month + '-01').toLocaleDateString('id-ID', { month: 'short' })}</p>
                             </div>
                           ))}
                         </div>
                         <div role="group" className="flex justify-center gap-4 mt-3 text-xs" aria-label="Chart legend">
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-green-400"></span>Income</span>
-                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-400"></span>Expense</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#087f6b]"></span>Income</span>
+                          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#b84c49]"></span>Expense</span>
                         </div>
                       </>
                     ) : <div className="rounded-xl border border-dashed border-[#dcece8] bg-[#f5fbf9] p-8 text-center" role="status" aria-live="polite"><div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-lg">📈</div><p className="text-sm font-semibold text-[#16332f]">Belum ada data arus kas</p><p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat transaksi untuk melihat tren pemasukan dan pengeluaran bulanan.</p></div>}
@@ -289,7 +289,7 @@ export default function AnalyticsPage() {
                             <div key={i} className="flex items-center gap-2">
                               <span className="text-xs text-zinc-600 w-12">{new Date(t.month + '-01').toLocaleDateString('id-ID', { month: 'short' })}</span>
                               <div className="flex-1 h-4 bg-[#e9f5f2] rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full ${safe(t.net_cashflow) >= 0 ? 'bg-green-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }}></div>
+                                <div className={`h-full rounded-full ${safe(t.net_cashflow) >= 0 ? 'bg-[#087f6b]' : 'bg-[#b84c49]'}`} style={{ width: `${pct}%` }}></div>
                               </div>
                               <span className={`text-xs font-medium w-16 text-right ${safe(t.net_cashflow) >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{formatCompact(safe(t.net_cashflow))}</span>
                             </div>
@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
                       <div className="flex gap-4">
                         <div>
                           <p className="text-xs text-zinc-600">Invested</p>
-                          <p className="text-sm font-semibold text-zinc-300">{formatCurrency(totalInvested)}</p>
+                          <p className="text-sm font-semibold text-zinc-600">{formatCurrency(totalInvested)}</p>
                         </div>
                         <div>
                           <p className="text-xs text-zinc-600">Gain/Loss</p>
@@ -350,16 +350,16 @@ export default function AnalyticsPage() {
                   {/* Gold */}
                   <div className="bg-amber-500/10 rounded-xl shadow-sm p-5 border border-amber-500/20">
                     <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-semibold text-amber-400 text-sm">Gold</h3>
+                      <h3 className="font-semibold text-amber-700 text-sm">Gold</h3>
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-amber-400/70">Current Value</p>
-                        <p className="text-xl font-bold text-amber-400">{formatCurrency(goldVal)}</p>
+                        <p className="text-xs text-amber-700/70">Current Value</p>
+                        <p className="text-xl font-bold text-amber-700">{formatCurrency(goldVal)}</p>
                       </div>
                       <div className="flex gap-4 text-xs">
-                        <div><span className="text-amber-400/70">Invested:</span> <span className="font-medium text-amber-400">{formatCompact(goldInvested)}</span></div>
-                        <div><span className="text-amber-400/70">Return:</span> <span className={`font-medium ${goldGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{goldInvested > 0 ? ((goldGain / goldInvested) * 100).toFixed(1) : 0}%</span></div>
+                        <div><span className="text-amber-700/70">Invested:</span> <span className="font-medium text-amber-700">{formatCompact(goldInvested)}</span></div>
+                        <div><span className="text-amber-700/70">Return:</span> <span className={`font-medium ${goldGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{goldInvested > 0 ? ((goldGain / goldInvested) * 100).toFixed(1) : 0}%</span></div>
                       </div>
                     </div>
                   </div>
@@ -367,16 +367,16 @@ export default function AnalyticsPage() {
                   {/* Mutual Fund */}
                   <div className="bg-blue-500/10 rounded-xl shadow-sm p-5 border border-blue-500/20">
                     <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-semibold text-blue-400 text-sm">Mutual Fund</h3>
+                      <h3 className="font-semibold text-blue-700 text-sm">Mutual Fund</h3>
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-blue-400/70">Current Value</p>
-                        <p className="text-xl font-bold text-blue-400">{formatCurrency(mfVal)}</p>
+                        <p className="text-xs text-blue-700/70">Current Value</p>
+                        <p className="text-xl font-bold text-blue-700">{formatCurrency(mfVal)}</p>
                       </div>
                       <div className="flex gap-4 text-xs">
-                        <div><span className="text-blue-400/70">Invested:</span> <span className="font-medium text-blue-400">{formatCompact(mfInvested)}</span></div>
-                        <div><span className="text-blue-400/70">Return:</span> <span className={`font-medium ${mfGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{mfInvested > 0 ? ((mfGain / mfInvested) * 100).toFixed(1) : 0}%</span></div>
+                        <div><span className="text-blue-700/70">Invested:</span> <span className="font-medium text-blue-700">{formatCompact(mfInvested)}</span></div>
+                        <div><span className="text-blue-700/70">Return:</span> <span className={`font-medium ${mfGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{mfInvested > 0 ? ((mfGain / mfInvested) * 100).toFixed(1) : 0}%</span></div>
                       </div>
                     </div>
                   </div>
@@ -389,17 +389,17 @@ export default function AnalyticsPage() {
                     <div className="flex flex-col sm:flex-row items-center gap-6">
                       <div className="relative w-32 h-32">
                         <svg viewBox="0 0 100 100" aria-hidden="true" className="w-full h-full transform -rotate-90">
-                          <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F59E0B" strokeWidth="20" strokeDasharray={`${(goldVal / totalPortfolio) * 251} 251`} />
-                          <circle cx="50" cy="50" r="40" fill="transparent" stroke="#3B82F6" strokeWidth="20" strokeDasharray={`${(mfVal / totalPortfolio) * 251} 251`} strokeDashoffset={`${-(goldVal / totalPortfolio) * 251}`} />
+                          <circle cx="50" cy="50" r="40" fill="transparent" stroke="#B45309" strokeWidth="20" strokeDasharray={`${(goldVal / totalPortfolio) * 251} 251`} />
+                          <circle cx="50" cy="50" r="40" fill="transparent" stroke="#2563EB" strokeWidth="20" strokeDasharray={`${(mfVal / totalPortfolio) * 251} 251`} strokeDashoffset={`${-(goldVal / totalPortfolio) * 251}`} />
                         </svg>
                       </div>
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-2 text-sm text-zinc-300"><span className="w-3 h-3 rounded bg-amber-400"></span>Gold</span>
+                          <span className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-3 h-3 rounded bg-amber-700"></span>Gold</span>
                           <span className="text-sm font-bold text-[#16332f]">{((goldVal / totalPortfolio) * 100).toFixed(0)}%</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-2 text-sm text-zinc-300"><span className="w-3 h-3 rounded bg-blue-500"></span>Mutual Fund</span>
+                          <span className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-3 h-3 rounded bg-blue-600"></span>Mutual Fund</span>
                           <span className="text-sm font-bold text-[#16332f]">{((mfVal / totalPortfolio) * 100).toFixed(0)}%</span>
                         </div>
                       </div>
@@ -414,7 +414,7 @@ export default function AnalyticsPage() {
               <Link href="/investments" className="flex items-center justify-center gap-2 p-4 bg-[#00d4aa] hover:bg-[#00a88a] text-[#16332f] font-medium rounded-xl text-sm transition-colors">
                 Manage Investments
               </Link>
-              <Link href="/cashflow" className="flex items-center justify-center gap-2 p-4 border border-[#dcece8] text-zinc-300 hover:bg-[#f5fbf9] font-medium rounded-xl text-sm transition-colors">
+              <Link href="/cashflow" className="flex items-center justify-center gap-2 p-4 border border-[#dcece8] text-zinc-600 hover:bg-[#f5fbf9] font-medium rounded-xl text-sm transition-colors">
                 Update Cashflow
               </Link>
             </div>

@@ -397,30 +397,30 @@ export default function InvestmentsPage() {
                 {selectedType === 'MUTUAL_FUND' && (
                   <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-blue-400">Mutual Fund Details</h4>
-                      <label className="flex items-center text-sm text-blue-400 cursor-pointer">
+                      <h4 className="font-medium text-blue-700">Mutual Fund Details</h4>
+                      <label className="flex items-center text-sm text-blue-700 cursor-pointer">
                         <input type="checkbox" checked={useMfCalc} onChange={(e) => setUseMfCalc(e.target.checked)} className="mr-2" />Auto calculate
                       </label>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label htmlFor="mutual-fund-platform" className="block text-xs text-blue-400 mb-1">Platform</label>
+                        <label htmlFor="mutual-fund-platform" className="block text-xs text-blue-700 mb-1">Platform</label>
                         <select id="mutual-fund-platform" value={mfPlatform} onChange={(e) => setMfPlatform(e.target.value)} className={`${inputClassWithPadding} border-blue-500/30`}>
                           {PLATFORMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                         </select>
                       </div>
                       <div className="col-span-2 md:col-span-1">
-                        <label htmlFor="mutual-fund-product" className="block text-xs text-blue-400 mb-1">Product Name</label>
+                        <label htmlFor="mutual-fund-product" className="block text-xs text-blue-700 mb-1">Product Name</label>
                         <input id="mutual-fund-product" type="text" value={mfProduct} onChange={(e) => setMfProduct(e.target.value)} placeholder="Mutual fund name" className={`${inputClassWithPadding} border-blue-500/30`} />
                       </div>
                       {useMfCalc && (
                         <>
                           <div>
-                            <label htmlFor="mutual-fund-units" className="block text-xs text-blue-400 mb-1">Units</label>
+                            <label htmlFor="mutual-fund-units" className="block text-xs text-blue-700 mb-1">Units</label>
                             <input id="mutual-fund-units" type="number" value={mfUnits} onChange={(e) => setMfUnits(e.target.value)} step="0.0001" placeholder="0.0000" className={`${inputClassWithPadding} border-blue-500/30`} />
                           </div>
                           <div>
-                            <label htmlFor="mutual-fund-nav" className="block text-xs text-blue-400 mb-1">NAV/Unit</label>
+                            <label htmlFor="mutual-fund-nav" className="block text-xs text-blue-700 mb-1">NAV/Unit</label>
                             <CurrencyInput id="mutual-fund-nav" value={mfNav} onChange={setMfNav} className={`${inputClass} border-blue-500/30`} />
                           </div>
                         </>
@@ -448,7 +448,7 @@ export default function InvestmentsPage() {
               {/* Gold History */}
               <div className="card rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-4 h-4 rounded-full bg-amber-400"></div>
+                  <div className="w-4 h-4 rounded-full bg-amber-700"></div>
                   <h3 className="font-semibold text-[#16332f]">Gold (Emas)</h3>
                 </div>
                 {goldSnapshots.length === 0 ? (
@@ -462,7 +462,7 @@ export default function InvestmentsPage() {
                     <table className="min-w-full text-left text-xs text-zinc-600">
                       <caption className="sr-only">Gold investment snapshots</caption>
                       <thead className="bg-[#f5fbf9] text-[#16332f]"><tr><th scope="col" className="px-3 py-2 font-semibold">Month</th><th scope="col" className="px-3 py-2 font-semibold">Invested</th><th scope="col" className="px-3 py-2 font-semibold">Current value</th><th scope="col" className="px-3 py-2 font-semibold">Gain/Loss</th><th scope="col" className="px-3 py-2 font-semibold">Actions</th></tr></thead>
-                      <tbody>{goldSnapshots.map((s) => (<tr key={s.id} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{formatMonth(s.month)}</th><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.invested_amount)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.current_value)}</td><td className={`whitespace-nowrap px-3 py-2 font-semibold ${s.gain_loss >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}</td><td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => loadSnapshot(s, 'GOLD')} className="text-xs text-[#00d4aa] hover:underline">Edit</button><button onClick={() => handleDelete(s.id, 'GOLD')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">{isDeleting === s.id ? '...' : 'Delete'}</button></div></td></tr>))}</tbody>
+                      <tbody>{goldSnapshots.map((s) => (<tr key={s.id} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{formatMonth(s.month)}</th><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.invested_amount)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.current_value)}</td><td className={`whitespace-nowrap px-3 py-2 font-semibold ${s.gain_loss >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}</td><td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => loadSnapshot(s, 'GOLD')} className="text-xs text-[#00d4aa] hover:underline">Edit</button><button onClick={() => handleDelete(s.id, 'GOLD')} disabled={isDeleting === s.id} className="text-xs text-[#b84c49] hover:underline disabled:opacity-50">{isDeleting === s.id ? '...' : 'Delete'}</button></div></td></tr>))}</tbody>
                     </table>
                   </div>
                 )}
@@ -485,7 +485,7 @@ export default function InvestmentsPage() {
                     <table className="min-w-full text-left text-xs text-zinc-600">
                       <caption className="sr-only">Mutual fund investment snapshots</caption>
                       <thead className="bg-[#f5fbf9] text-[#16332f]"><tr><th scope="col" className="px-3 py-2 font-semibold">Product</th><th scope="col" className="px-3 py-2 font-semibold">Platform</th><th scope="col" className="px-3 py-2 font-semibold">Month</th><th scope="col" className="px-3 py-2 font-semibold">Invested</th><th scope="col" className="px-3 py-2 font-semibold">Current value</th><th scope="col" className="px-3 py-2 font-semibold">Gain/Loss</th><th scope="col" className="px-3 py-2 font-semibold">Actions</th></tr></thead>
-                      <tbody>{mfSnapshots.map((s) => (<tr key={s.id} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{s.product_name || formatMonth(s.month)}</th><td className="whitespace-nowrap px-3 py-2">{s.platform}</td><td className="whitespace-nowrap px-3 py-2">{formatMonth(s.month)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.invested_amount)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.current_value)}</td><td className={`whitespace-nowrap px-3 py-2 font-semibold ${s.gain_loss >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}</td><td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => loadSnapshot(s, 'MUTUAL_FUND')} className="text-xs text-[#00d4aa] hover:underline">Edit</button><button onClick={() => handleDelete(s.id, 'MUTUAL_FUND')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">{isDeleting === s.id ? '...' : 'Delete'}</button></div></td></tr>))}</tbody>
+                      <tbody>{mfSnapshots.map((s) => (<tr key={s.id} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{s.product_name || formatMonth(s.month)}</th><td className="whitespace-nowrap px-3 py-2">{s.platform}</td><td className="whitespace-nowrap px-3 py-2">{formatMonth(s.month)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.invested_amount)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.current_value)}</td><td className={`whitespace-nowrap px-3 py-2 font-semibold ${s.gain_loss >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}</td><td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => loadSnapshot(s, 'MUTUAL_FUND')} className="text-xs text-[#00d4aa] hover:underline">Edit</button><button onClick={() => handleDelete(s.id, 'MUTUAL_FUND')} disabled={isDeleting === s.id} className="text-xs text-[#b84c49] hover:underline disabled:opacity-50">{isDeleting === s.id ? '...' : 'Delete'}</button></div></td></tr>))}</tbody>
                     </table>
                   </div>
                 )}
