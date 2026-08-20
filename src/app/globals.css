@@ -328,6 +328,32 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
 }
 
+/* WCAG 2.4.7 Focus Visible — every keyboard-focusable control gets a clear,
+ * high-contrast indicator. Uses :focus-visible so pointer clicks stay clean
+ * while keyboard/AT navigation always shows where focus is. The 2px
+ * var(--accent-dark) (#087f6b) outline is >=3:1 against the light surfaces
+ * (WCAG 1.4.11 non-text contrast). */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="switch"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="link"]:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 1px;
+}
+
 main h1, main h2, main h3 { letter-spacing: -.025em; }
 main h1, main > div > div:first-child h2 { color: var(--ink); }
 main button, main a { -webkit-tap-highlight-color: transparent; }
