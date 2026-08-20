@@ -337,7 +337,7 @@ export default function GoalsPage() {
             <div className="card rounded-xl p-5">
               <h3 className="font-semibold text-[#16332f] mb-4">Active Goals ({activeGoals.length})</h3>
               {activeGoals.length === 0 ? (
-                <div role="status" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-6 text-center">
+                <div role="status" aria-live="polite" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-6 text-center">
                   <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">🎯</div>
                   <h4 className="font-semibold text-[#16332f]">No financial goals yet</h4>
                   <p className="mx-auto mt-1 max-w-sm text-sm text-zinc-500">Set a target to make your progress visible and keep your next milestone in sight.</p>
