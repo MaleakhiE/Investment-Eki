@@ -11,6 +11,13 @@ import { parseInvestmentHistories } from './investment-history';
 import { getInvestmentReturnPresentation } from './investment-presentation';
 import { parseGoldPriceResponse } from './gold-price-response';
 
+// Conveys investment gain/loss state with text (not color alone) per WCAG 1.4.1.
+function toneWord(tone: 'neutral' | 'positive' | 'negative'): string {
+  if (tone === 'positive') return 'Untung';
+  if (tone === 'negative') return 'Rugi';
+  return 'Netral';
+}
+
 interface InvestmentSnapshot {
   id: string;
   month: string;
@@ -306,7 +313,7 @@ export default function InvestmentsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-600">Invested: {formatCurrency(goldInvested)}</span>
                   <span className={`investment-return is-${goldReturn.tone}`}>
-                    {goldReturn.percentage === null ? 'Belum ada data' : `${goldReturn.amountPrefix}${formatCurrency(Math.abs(goldGainLoss))} (${goldReturn.percentage}%)`}
+                    {goldReturn.percentage === null ? 'Belum ada data' : `${toneWord(goldReturn.tone)}: ${goldReturn.amountPrefix}${formatCurrency(Math.abs(goldGainLoss))} (${goldReturn.percentage}%)`}
                   </span>
                 </div>
               </article>
@@ -320,7 +327,7 @@ export default function InvestmentsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-600">Invested: {formatCurrency(mfInvested)}</span>
                   <span className={`investment-return is-${mfReturn.tone}`}>
-                    {mfReturn.percentage === null ? 'Belum ada data' : `${mfReturn.amountPrefix}${formatCurrency(Math.abs(mfGainLoss))} (${mfReturn.percentage}%)`}
+                    {mfReturn.percentage === null ? 'Belum ada data' : `${toneWord(mfReturn.tone)}: ${mfReturn.amountPrefix}${formatCurrency(Math.abs(mfGainLoss))} (${mfReturn.percentage}%)`}
                   </span>
                 </div>
               </article>
@@ -429,7 +436,7 @@ export default function InvestmentsPage() {
                   </div>
                   <div className="bg-[#f5fbf9] rounded-xl p-3">
                     <p className="text-xs text-zinc-600 mb-1">Gain/Loss Preview</p>
-                    <p className={`investment-return is-${previewPresentation.tone}`}>{previewPresentation.percentage === null ? 'Belum ada data' : `${previewPresentation.amountPrefix}Rp ${formatNumber(Math.abs(previewGL))} (${previewPresentation.percentage}%)`}</p>
+                    <p className={`investment-return is-${previewPresentation.tone}`}>{previewPresentation.percentage === null ? 'Belum ada data' : `${toneWord(previewPresentation.tone)}: ${previewPresentation.amountPrefix}Rp ${formatNumber(Math.abs(previewGL))} (${previewPresentation.percentage}%)`}</p>
                   </div>
                   <button type="submit" disabled={isSaving} className="py-3 px-4 bg-[#00d4aa] hover:bg-[#00a88a] disabled:bg-blue-400 text-[#16332f] font-medium rounded-xl transition-colors text-sm">{isSaving ? 'Saving...' : 'Save Snapshot'}</button>
                 </div>
