@@ -1,0 +1,19 @@
+{
+  "pr": 109,
+  "iteration": 100,
+  "headSha": "d0c20fef280f7df73df28bc513b117cfd8f11669",
+  "verdict": "APPROVE_AND_MERGE",
+  "checks": {
+    "acceptance": "PASS",
+    "tsc": "PASS",
+    "lint": "PASS",
+    "jest": "PASS",
+    "security_a11y": "PASS",
+    "ux_accessibility": "APPROVE",
+    "base_head_identity": "PASS",
+    "no_unmerged_deps": "PASS",
+    "rollback_understood": "PASS",
+    "sha_matches": "PASS"
+  },
+  "notes": "Pure frontend UI change: cashflow list empty/filtered states split into accessible cards (role=status, aria-live=polite, aria-hidden icons) with Link CTA. tsc exit 0; lint 0 errors (1 pre-existing warning in unrelated state.test.ts); jest 1/1 pass. Single commit on origin/main (514e301); no hidden unmerged deps — only next/link + existing styling tokens reused. Revert commit d0c20fe to rollback."
+}

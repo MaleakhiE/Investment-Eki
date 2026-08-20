@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
+import FormError from '@/components/ui/FormError';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { validatePassword } from '@/lib/validation';
 
@@ -80,9 +81,9 @@ function ResetPasswordForm() {
   return (
     <>
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+        <FormError>
           <p className="text-sm text-red-500 text-center">{error}</p>
-        </div>
+        </FormError>
       )}
 
       {!token ? (

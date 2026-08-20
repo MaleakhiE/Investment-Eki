@@ -1,0 +1,53 @@
+{
+  "reviewed_iterations": "062-100",
+  "reviewed_scope": "Accessible onboarding/filtered empty states added to accounts, analytics, budget, cashflow, dashboard, goals, investments, settings; live-region pattern (role=status + aria-live=polite) standardized across the empty-state surface.",
+  "generated_for": "Product Manager / Orchestrator — next engineering objectives",
+  "method": "Grep/lint over src/app + src/components, cross-checked against docs/engineering/current-state.md and opportunity-backlog.md, and against the merged iteration-096/100 patterns.",
+  "objectives": [
+    {
+      "id": "OBJ-101",
+      "title": "Align the Goals empty state with the established aria-live pattern",
+      "category": "Accessibility / consistency",
+      "priority": "High",
+      "effort": "Small",
+      "evidence": "src/app/goals/page.tsx:340 renders the empty state as `<div role=\"status\" className=\"rounded-2xl border border-dashed ...\">` but is the ONLY empty state missing `aria-live=\"polite\"` — every other one (accounts, analytics, budget, cashflow, dashboard, settings) pairs role=status with aria-live=polite. It is exactly the regression class fixed in iterations 062-100 (cf. iteration-096.md: 'diverges from the accessibility pattern used across Goals/Investments/Cashflow/Accounts/Settings/Analytics/Dashboard').",
+      "implementation_plan": "Add `aria-live=\"polite\"` to the goals empty-state container at line 340. Add `src/app/goals/goals-empty-state.test.ts` asserting role=status + aria-live=polite (mirrors accounts-empty-state.test.ts / settings-alerts-empty-state.test.ts). Validate with tsc, lint, jest, and a source-level grep asserting no `role=\"status\"` lacks `aria-live` in page.tsx files."
+    },
+    {
+      "id": "OBJ-102",
+      "title": "Announce client-side form-validation errors to assistive technology",
+      "category": "Accessibility / form validation UX",
+      "priority": "High",
+      "effort": "Medium",
+      "evidence": "src/app/(auth)/register/page.tsx:79-80 and src/app/(auth)/reset-password/page.tsx:83 render validation failures inside a plain `<div className=\"...bg-red-500/10...\"><p>{error}</p></div>` with NO `role=\"alert\"` and NO `aria-live`, so screen readers do not announce 'Passwords do not match' or bcrypt-boundary errors. This diverges from the established contract where settings/cashflow/accounts error regions correctly use `role=\"alert\"` (e.g. settings/page.tsx:227, cashflow/page.tsx:273).",
+      "implementation_plan": "Convert the register/reset-password (and login if added) error containers to `role=\"alert\" aria-live=\"assertive\"` (or reuse a shared `FormError` component). Add focused tests asserting the error node carries role=alert and the message text. Keep the visual styling. Validate via tsc/lint/jest; no API or calculation change."
+    },
+    {
+      "id": "OBJ-103",
+      "title": "Guarantee one top-level h1 per page for screen-reader navigation",
+      "category": "Accessibility / semantic structure",
+      "priority": "High",
+      "effort": "Medium",
+      "evidence": "Grep for `<h1` across page.tsx shows budget, goals, analytics, cashflow, settings, all four auth pages, and the root app/page.tsx have ZERO `<h1>` elements, while dashboard/accounts/investments/smtp already expose a single h1 (via PageHeader or inline). Pages with no h1 break AT heading navigation and the document outline, and most of these pages also lack a visible page title element for non-sighted users.",
+      "implementation_plan": "Standardize every app route on the existing `PageHeader`/`h1` contract: wrap budget/goals/analytics/cashflow/settings headers in PageHeader (eyebrow+title+description), and give the auth pages a single h1 (currently AuthShell renders only a title prop, not an h1). Add a lightweight lint/test asserting exactly one h1 per route module. Validate with tsc/lint/jest; no behavioral change."
+    },
+    {
+      "id": "OBJ-104",
+      "title": "Convey financial status without relying on color alone (WCAG 1.4.1)",
+      "category": "Accessibility / perceivable status",
+      "priority": "Medium",
+      "effort": "Medium",
+      "evidence": "src/app/budget/page.tsx communicates state through color only in several places: the progress bar fill uses `bg-red-500`/`bg-amber-500`/`bg-blue-500`/`bg-green-500` (line 235) with no text alternative; remaining/over-budget text switches `text-green-400` vs `text-red-400` (lines 159, 242); investments/page.tsx renders return tone via the color-only class `is-${previewPresentation.tone}` (line 432). Color-blind users cannot distinguish these states. Some labels exist ('Over Budget!', 'All good') but the bar ratio and remaining amounts are color-only.",
+      "implementation_plan": "Add text/icon equivalents alongside color cues: an accessible label on the progress bar (e.g. `aria-label` '82% of budget used, over by Rp X' or a visible percentage + state word), and ensure remaining/over amounts include a textual state token, not just a color class. Verify the `is-${tone}` investment class also carries a text label. Add component tests for the textual alternatives. Validate via tsc/lint/jest; no financial-calculation change."
+    },
+    {
+      "id": "OBJ-105",
+      "title": "Add an automated accessibility regression gate (axe) to the validation pipeline",
+      "category": "Quality / operational gap",
+      "priority": "Medium",
+      "effort": "Medium",
+      "evidence": "docs/engineering/current-state.md explicitly lists as Operational gaps: 'There is no GitHub Actions workflow, browser E2E stack, axe coverage, enforced coverage threshold, or successful disposable migration replay in this environment.' Iterations 062-100 added a11y surface manually with per-page source tests, but there is no automated rule-based a11y check (axe/jest-axe) to catch regressions like OBJ-101/102/103/104 reappearing.",
+      "implementation_plan": "Add `jest-axe` and a shared `toHaveNoViolations` helper; add a smoke render test per primary route (or a single app-tree render) asserting zero axe violations on the default/empty states. Wire it into the existing jest run and document it in the iteration validation commands. Optionally add a GitHub Actions workflow running lint+tsc+jest (axe) so the gate is enforced. Validate via the full jest suite."
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthShell from '@/components/auth/AuthShell';
+import FormError from '@/components/ui/FormError';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 import { validatePassword } from '@/lib/validation';
 
@@ -76,9 +77,9 @@ export default function RegisterPage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+          <FormError>
             <p className="text-sm text-red-400 text-center">{error}</p>
-          </div>
+          </FormError>
         )}
 
         {/* Form */}
