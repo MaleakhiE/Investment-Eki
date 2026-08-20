@@ -80,7 +80,7 @@ function ResetPasswordForm() {
   return (
     <>
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+        <div role="alert" aria-live="assertive" className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
           <p className="text-sm text-red-500 text-center">{error}</p>
         </div>
       )}
