@@ -7,6 +7,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { DecisionContext } from '@/components/finance/DecisionContext';
 import { parseCashflowTrend, summarizeCashflowTrend } from '@/components/finance/chart-summary';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
+import PageHeader from '@/components/ui/PageHeader';
 import { ANALYTICS_TABS, nextAnalyticsTab, type AnalyticsTab } from './tab-navigation';
 
 interface Recommendation {
@@ -133,10 +134,11 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
       <main className="app-page analytics-page lg:ml-64 p-4 lg:p-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-[#16332f]">Analytics</h2>
-          <p className="text-sm text-zinc-600">Insights & scenario analysis</p>
-        </div>
+        <PageHeader
+          eyebrow="Insights"
+          title="Analytics"
+          description="Insights & scenario analysis"
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div>

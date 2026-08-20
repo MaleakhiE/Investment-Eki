@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import PageHeader from '@/components/ui/PageHeader';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface UserSettings { ai_recommendation_enabled: boolean; }
@@ -202,7 +203,11 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
       <main className="app-page settings-page lg:ml-64 p-3 sm:p-4 lg:p-8">
-        <div className="mb-4"><h2 className="text-xl font-bold text-[#16332f]">Settings</h2><p className="text-xs text-zinc-600">Manage your preferences</p></div>
+        <PageHeader
+          eyebrow="Account"
+          title="Settings"
+          description="Manage your preferences"
+        />
         {error && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-red-400">{error}</div>}
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">

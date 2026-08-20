@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Sidebar from '@/components/layout/Sidebar';
 import CurrencyInput from '@/components/ui/CurrencyInput';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
+import PageHeader from '@/components/ui/PageHeader';
 import { useFeedback } from '@/components/providers/FeedbackProvider';
 
 interface FinancialGoal {
@@ -236,13 +237,14 @@ export default function GoalsPage() {
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
       <main className="app-page goals-page lg:ml-64 p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-[#16332f]">Financial Goals</h2>
-            <p className="text-sm text-zinc-600">Track your savings targets</p>
-          </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">New Goal</button>
-        </div>
+        <PageHeader
+          eyebrow="Planning"
+          title="Financial Goals"
+          description="Track your savings targets"
+          action={
+            <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-[#00d4aa] text-[#16332f] rounded-xl text-sm font-medium hover:bg-[#00a88a]">New Goal</button>
+          }
+        />
 
         {error ? (
           <div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-700">
