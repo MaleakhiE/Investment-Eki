@@ -458,27 +458,12 @@ export default function InvestmentsPage() {
                     <button type="button" onClick={() => { setSelectedType('GOLD'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Add your first gold snapshot</button>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {goldSnapshots.map((s) => (
-                      <div key={s.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
-                        <div>
-                          <p className="text-sm font-medium text-[#16332f]">{formatMonth(s.month)}</p>
-                          <p className="text-xs text-zinc-600">Invested: {formatCurrency(s.invested_amount)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-[#16332f]">{formatCurrency(s.current_value)}</p>
-                          <p className={`text-xs ${s.gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 ml-3">
-                          <button onClick={() => loadSnapshot(s, 'GOLD')} className="text-xs text-[#00d4aa] hover:underline">Edit</button>
-                          <button onClick={() => handleDelete(s.id, 'GOLD')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">
-                            {isDeleting === s.id ? '...' : 'Delete'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto rounded-lg border border-[#dcece8] max-h-[300px] overflow-y-auto">
+                    <table className="min-w-full text-left text-xs text-zinc-600">
+                      <caption className="sr-only">Gold investment snapshots</caption>
+                      <thead className="bg-[#f5fbf9] text-[#16332f]"><tr><th scope="col" className="px-3 py-2 font-semibold">Month</th><th scope="col" className="px-3 py-2 font-semibold">Invested</th><th scope="col" className="px-3 py-2 font-semibold">Current value</th><th scope="col" className="px-3 py-2 font-semibold">Gain/Loss</th><th scope="col" className="px-3 py-2 font-semibold">Actions</th></tr></thead>
+                      <tbody>{goldSnapshots.map((s) => (<tr key={s.id} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{formatMonth(s.month)}</th><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.invested_amount)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.current_value)}</td><td className={`whitespace-nowrap px-3 py-2 ${s.gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>{s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}</td><td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => loadSnapshot(s, 'GOLD')} className="text-xs text-[#00d4aa] hover:underline">Edit</button><button onClick={() => handleDelete(s.id, 'GOLD')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">{isDeleting === s.id ? '...' : 'Delete'}</button></div></td></tr>))}</tbody>
+                    </table>
                   </div>
                 )}
               </div>
@@ -496,27 +481,12 @@ export default function InvestmentsPage() {
                     <button type="button" onClick={() => { setSelectedType('MUTUAL_FUND'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Add your first mutual fund snapshot</button>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {mfSnapshots.map((s) => (
-                      <div key={s.id} className="flex items-center justify-between p-3 bg-[#f5fbf9] rounded-xl">
-                        <div>
-                          <p className="text-sm font-medium text-[#16332f]">{s.product_name || formatMonth(s.month)}</p>
-                          <p className="text-xs text-zinc-600">{s.platform} • {formatMonth(s.month)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-[#16332f]">{formatCurrency(s.current_value)}</p>
-                          <p className={`text-xs ${s.gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 ml-3">
-                          <button onClick={() => loadSnapshot(s, 'MUTUAL_FUND')} className="text-xs text-[#00d4aa] hover:underline">Edit</button>
-                          <button onClick={() => handleDelete(s.id, 'MUTUAL_FUND')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">
-                            {isDeleting === s.id ? '...' : 'Delete'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto rounded-lg border border-[#dcece8] max-h-[300px] overflow-y-auto">
+                    <table className="min-w-full text-left text-xs text-zinc-600">
+                      <caption className="sr-only">Mutual fund investment snapshots</caption>
+                      <thead className="bg-[#f5fbf9] text-[#16332f]"><tr><th scope="col" className="px-3 py-2 font-semibold">Product</th><th scope="col" className="px-3 py-2 font-semibold">Platform</th><th scope="col" className="px-3 py-2 font-semibold">Month</th><th scope="col" className="px-3 py-2 font-semibold">Invested</th><th scope="col" className="px-3 py-2 font-semibold">Current value</th><th scope="col" className="px-3 py-2 font-semibold">Gain/Loss</th><th scope="col" className="px-3 py-2 font-semibold">Actions</th></tr></thead>
+                      <tbody>{mfSnapshots.map((s) => (<tr key={s.id} className="border-t border-[#dcece8]"><th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-[#16332f]">{s.product_name || formatMonth(s.month)}</th><td className="whitespace-nowrap px-3 py-2">{s.platform}</td><td className="whitespace-nowrap px-3 py-2">{formatMonth(s.month)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.invested_amount)}</td><td className="whitespace-nowrap px-3 py-2">{formatCurrency(s.current_value)}</td><td className={`whitespace-nowrap px-3 py-2 ${s.gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>{s.gain_loss >= 0 ? '+' : ''}{formatCurrency(s.gain_loss)}</td><td className="px-3 py-2"><div className="flex gap-2"><button onClick={() => loadSnapshot(s, 'MUTUAL_FUND')} className="text-xs text-[#00d4aa] hover:underline">Edit</button><button onClick={() => handleDelete(s.id, 'MUTUAL_FUND')} disabled={isDeleting === s.id} className="text-xs text-red-400 hover:underline disabled:opacity-50">{isDeleting === s.id ? '...' : 'Delete'}</button></div></td></tr>))}</tbody>
+                    </table>
                   </div>
                 )}
               </div>
