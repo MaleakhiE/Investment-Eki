@@ -1,6 +1,5 @@
+/* Ambient type shim for jest-axe@11 (ships no bundled .d.ts). */
 declare module 'jest-axe' {
-  import type { Matchers } from '@jest/expect';
-
   export interface AxeResults {
     violations: AxeViolation[];
     passes: AxeViolation[];
@@ -10,7 +9,7 @@ declare module 'jest-axe' {
 
   export interface AxeViolation {
     id: string;
-    impact: 'minor' | 'moderate' | 'serious' | 'critical';
+    impact: 'minor' | 'moderate' | 'serious' | 'critical' | null;
     tags: string[];
     description: string;
     help: string;
@@ -47,6 +46,6 @@ declare module 'jest-axe' {
   export function axe(container: Element, options?: AxeOptions): Promise<AxeResults>;
 
   export const toHaveNoViolations: {
-    (received: AxeResults): { pass: boolean; message: () => string };
+    toHaveNoViolations(results: AxeResults): { pass: boolean; message: () => string };
   };
 }
