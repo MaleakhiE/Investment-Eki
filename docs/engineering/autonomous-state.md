@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 107 — PR #117 merged at `e061d62`.
-Current branch: `docs/iteration-106-107-reconciliation` (documentation reconciliation only).
-Current iteration: 107 — raise gain/loss color contrast to WCAG AA.
+Latest verified merged iteration: 109 — PR #120 merged at `d2e5d9d`.
+Current branch: `docs/iteration-108-109-reconciliation` (documentation reconciliation only).
+Current iteration: 109 — complete financial status color-contrast sweep to WCAG AA.
 Base branch: `main`.
 
 ## Reconciliation
@@ -15,12 +15,19 @@ GitHub verifies the default branch (`main`) advanced through:
 
 - PR #116 (iteration 106) — semantic HTML tables for investment snapshot history — merged at `68807e2`.
 - PR #117 (iteration 107) — raise gain/loss color contrast to WCAG AA — merged at `e061d62`.
+- PR #119 (iteration 108) — raise analytics financial-status color contrast to WCAG AA — merged at `176ddc1`.
+- PR #120 (iteration 109) — complete the financial-status contrast sweep across dashboard, budget, cashflow, goals, settings, and register — merged at `d2e5d9d`.
+- PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 
-`main` currently points to merge commit `e061d62` for PR #117.
+`main` currently points to merge commit `d2e5d9d` for PR #120.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
 Iteration 107 resolved the accessibility reviewer's non-blocking advisory from PR #116: the gain/loss numeric cells still used low-contrast `text-green-400` / `text-red-400` shades (≈1.66:1 / 2.64:1 against the light table background). They were replaced with the design system's accessible tokens `#087f6b` (accent-dark, ≈4.71:1) and `#b84c49` (danger, ≈4.81:1) plus `font-semibold`, preserving the `+`/`-` sign prefix so meaning is never conveyed by color alone. WCAG 1.4.3 / 1.4.1.
+
+Iteration 108 applied the same token substitution to the 14 low-contrast financial-status values on `src/app/analytics/page.tsx` (income, expense, savings rate, portfolio return, totals, per-asset returns) and upgraded the savings-rate mid-state from `text-amber-400` to `text-amber-700`. WCAG 1.4.3 / 1.4.1.
+
+Iteration 109 completed the sweep across the remaining primary surfaces — dashboard, budget, cashflow, goals, settings, and the register form — replacing plain-text `text-green-400` / `text-red-400` status and error colors with `#087f6b` / `#b84c49`, upgrading the dashboard savings-rate mid-state to `text-amber-700`, and lifting two adjacent `text-zinc-300` neutrals to `text-zinc-600`. Non-color cues (Untung/Rugi label, `+`/`-` prefixes, budget `aria-label`s) were preserved. Interactive hover states, badge/chip colors on tinted backgrounds, and category-identity accents were documented as out of scope pending a dedicated WCAG 1.4.11 (non-text contrast) audit. WCAG 1.4.3 / 1.4.1.
 
 ## Durable loop policy
 
@@ -47,6 +54,24 @@ Reviewed SHA `c4189ff5164dd96f39761d989b8e7d6b9bc8cfa5`:
 - Security Engineer — APPROVE (presentation-only class-name change)
 - CTO / Principal Engineer — APPROVE_AND_MERGE
 
+## Review evidence (iteration 108)
+
+Reviewed SHA `73bea98d48c067641f26adbc7dbb7be6342564a3`:
+
+- Accessibility Reviewer — APPROVE (14 values now 4.71:1–5.04:1 ≥ AA)
+- QA / Test Engineer — APPROVE (136 suites, 1119 tests; mutation-tested the new regression test)
+- Frontend Engineer — APPROVE (className-only; thresholds intact)
+- CTO / Principal Engineer — APPROVE_AND_MERGE
+
+## Review evidence (iteration 109)
+
+Reviewed SHA `e171c7e32f9bb6bc57d712af5675297c751c5a77`:
+
+- Accessibility Reviewer — APPROVE (all plain-text status values ≥ AA; documented non-goals judged defensible, recommend follow-up 1.4.11 audit)
+- QA / Test Engineer — APPROVE (137 suites, 1122 tests; 3 DB-env-blocked)
+- Frontend Engineer — APPROVE (className-only; all conditional thresholds preserved; gradient-text positive branch intact)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (no calculation/threshold/currency logic changed)
+
 ## Exact next action
 
-Iteration 107 is merged. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 108) and begin a fresh reconcile → branch → implement → validate → review → merge cycle.
+Iteration 109 is merged. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 110) and begin a fresh reconcile → branch → implement → validate → review → merge cycle. A dedicated WCAG 1.4.11 (non-text contrast) audit of badge/chip backgrounds, progress-bar fills, and category-identity accents is a strong candidate.
