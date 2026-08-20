@@ -228,7 +228,7 @@ export default function GoalsPage() {
   const fmtC = (v: number) => v >= 1e9 ? `${(v/1e9).toFixed(1)}M` : v >= 1e6 ? `${(v/1e6).toFixed(1)}jt` : v >= 1e3 ? `${(v/1e3).toFixed(0)}rb` : v.toString();
   const getCat = (c: string) => CATEGORIES.find(x => x.value === c) || CATEGORIES[8];
   const getPriorityLabel = (p: number) => p === 1 ? 'High' : p === 2 ? 'Medium' : 'Low';
-  const getPriorityColor = (p: number) => p === 1 ? 'bg-red-500/20 text-red-400' : p === 2 ? 'bg-amber-500/20 text-amber-400' : 'bg-green-500/20 text-green-400';
+  const getPriorityColor = (p: number) => p === 1 ? 'bg-red-500/20 text-[#b84c49]' : p === 2 ? 'bg-amber-500/20 text-amber-800' : 'bg-green-500/20 text-[#087f6b]';
 
   const activeGoals = goals.filter(g => !g.is_completed);
   const completedGoals = goals.filter(g => g.is_completed);
@@ -379,9 +379,9 @@ export default function GoalsPage() {
                             aria-valuemax={100}
                             aria-valuenow={Math.round(Math.min(100, goal.percentage))}
                           >
-                            <div className={`h-full rounded-full transition-all ${goal.percentage >= 100 ? 'bg-green-500' : goal.percentage >= 75 ? 'bg-blue-500' : goal.percentage >= 50 ? 'bg-amber-500' : 'bg-zinc-400'}`} style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
+                            <div className={`h-full rounded-full transition-all ${goal.percentage >= 100 ? 'bg-[#087f6b]' : goal.percentage >= 75 ? 'bg-blue-600' : goal.percentage >= 50 ? 'bg-amber-700' : 'bg-zinc-600'}`} style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
                           </div>
-                          <span className="text-sm font-bold text-zinc-300 w-12 text-right">{goal.percentage.toFixed(0)}%</span>
+                          <span className="text-sm font-bold text-zinc-600 w-12 text-right">{goal.percentage.toFixed(0)}%</span>
                         </div>
                         <div className="flex items-center justify-between text-xs text-zinc-400">
                           <span>{fmt(goal.current_amount)} / {fmt(goal.target_amount)}</span>
@@ -415,8 +415,8 @@ export default function GoalsPage() {
                             </div>
                           ) : (
                             <>
-                              <button onClick={() => { setAddAmountId(goal.id); setAddAmountError(''); }} className="flex-1 py-2 bg-green-500/20 text-green-400 text-xs rounded-lg font-medium hover:bg-green-500/30">Add Amount</button>
-                              <button onClick={() => toggleComplete(goal)} className="px-3 py-2 bg-blue-500/20 text-blue-400 text-xs rounded-lg font-medium hover:bg-blue-500/30">Tandai Selesai</button>
+                              <button onClick={() => { setAddAmountId(goal.id); setAddAmountError(''); }} className="flex-1 py-2 bg-green-500/20 text-[#087f6b] text-xs rounded-lg font-medium hover:bg-green-500/30">Add Amount</button>
+                              <button onClick={() => toggleComplete(goal)} className="px-3 py-2 bg-blue-500/20 text-blue-700 text-xs rounded-lg font-medium hover:bg-blue-500/30">Tandai Selesai</button>
                             </>
                           )}
                         </div>

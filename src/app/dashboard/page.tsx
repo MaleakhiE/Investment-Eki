@@ -220,10 +220,10 @@ export default function DashboardPage() {
                 <div className="mt-4">
                   <div className="flex justify-between text-xs mb-2">
                     <span className="text-zinc-400">Tingkat Tabungan</span>
-                    <span className={savingsRate >= 20 ? 'text-[#00d4aa]' : savingsRate >= 0 ? 'text-amber-700' : 'text-[#b84c49]'}>{savingsRate.toFixed(0)}%</span>
+                    <span className={savingsRate >= 20 ? 'text-[#087f6b]' : savingsRate >= 0 ? 'text-amber-700' : 'text-[#b84c49]'}>{savingsRate.toFixed(0)}%</span>
                   </div>
                   <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all duration-1000 ${savingsRate >= 20 ? 'bg-[#00d4aa]' : savingsRate >= 0 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${Math.min(Math.max(savingsRate, 0), 100)}%` }}></div>
+                    <div className={`h-full rounded-full transition-all duration-1000 ${savingsRate >= 20 ? 'bg-[#00d4aa]' : savingsRate >= 0 ? 'bg-amber-700' : 'bg-[#b84c49]'}`} style={{ width: `${Math.min(Math.max(savingsRate, 0), 100)}%` }}></div>
                   </div>
                 </div>
               )}
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                   aria-valuemax={100}
                   aria-valuenow={Math.round(budgetPercent)}
                 >
-                  <div className={`h-full rounded-full transition-all ${overBudgetCount > 0 ? 'bg-red-400' : budgetPercent >= 80 ? 'bg-amber-400' : 'bg-[#00d4aa]'}`} style={{ width: `${budgetPercent}%` }} />
+                  <div className={`h-full rounded-full transition-all ${overBudgetCount > 0 ? 'bg-[#b84c49]' : budgetPercent >= 80 ? 'bg-amber-700' : 'bg-[#00d4aa]'}`} style={{ width: `${budgetPercent}%` }} />
                 </div>
                 <div className="flex flex-wrap justify-between gap-2 text-xs text-zinc-500">
                   <span>{budgetPercent.toFixed(0)}% used</span>
@@ -340,10 +340,10 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-3xl font-bold text-[#16332f]">{formatCurrency(currentVal)}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#00d4aa]' : 'text-[#b84c49]'}`}>
+                    <span className={`text-sm font-medium ${gainLoss >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>
                       {gainLoss >= 0 ? 'Untung' : 'Rugi'} {formatCurrency(Math.abs(gainLoss))}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${gainLoss >= 0 ? 'bg-[#00d4aa]/10 text-[#00d4aa]' : 'bg-red-500/10 text-red-400'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${gainLoss >= 0 ? 'bg-[#00d4aa]/10 text-[#087f6b]' : 'bg-red-500/10 text-[#b84c49]'}`}>
                       {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(1)}%
                     </span>
                   </div>
@@ -488,7 +488,7 @@ export default function DashboardPage() {
                   return (
                     <div key={cat}>
                       <div className="flex justify-between mb-2">
-                        <span className="text-sm text-zinc-300">{cat}</span>
+                        <span className="text-sm text-zinc-600">{cat}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-[#16332f]">{formatCompact(amt)}</span>
                           <span className="text-xs text-zinc-500">{pct.toFixed(0)}%</span>

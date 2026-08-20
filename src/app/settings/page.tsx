@@ -308,7 +308,7 @@ export default function SettingsPage() {
                 <button onClick={() => handleExport('json')} disabled={isExporting} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-[#00d4aa] px-3 py-2 text-xs font-medium text-[#16332f] hover:bg-[#00a88a] disabled:bg-blue-400 focus-visible:outline-2 focus-visible:outline-offset-2">
                   {isExporting ? '...' : 'JSON Data Export'}
                 </button>
-                <button onClick={() => handleExport('csv')} disabled={isExporting} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:bg-green-400 focus-visible:outline-2 focus-visible:outline-offset-2">
+                <button onClick={() => handleExport('csv')} disabled={isExporting} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:bg-green-500 focus-visible:outline-2 focus-visible:outline-offset-2">
                   {isExporting ? '...' : 'CSV Transactions'}
                 </button>
               </div>

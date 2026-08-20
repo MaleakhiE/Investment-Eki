@@ -308,16 +308,16 @@ export default function CashflowPage() {
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] sm:text-xs text-zinc-600">Weekly trend</p>
                     <div className="flex gap-2 text-[8px] sm:text-[10px]">
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-green-400"></span><span className="text-zinc-600">In</span></span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-400"></span><span className="text-zinc-600">Out</span></span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#087f6b]"></span><span className="text-zinc-600">In</span></span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#b84c49]"></span><span className="text-zinc-600">Out</span></span>
                     </div>
                   </div>
                   <div className="flex items-end gap-1 h-24 sm:h-28">
                     {weeks.map((w, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center">
                         <div className="w-full flex gap-0.5 items-end justify-center h-16 sm:h-20">
-                          <div className="w-2.5 sm:w-3 bg-green-400 rounded-t transition-all" style={{ height: `${Math.max((w.income / maxW) * 100, w.income > 0 ? 8 : 0)}%` }}></div>
-                          <div className="w-2.5 sm:w-3 bg-red-400 rounded-t transition-all" style={{ height: `${Math.max((w.expense / maxW) * 100, w.expense > 0 ? 8 : 0)}%` }}></div>
+                          <div className="w-2.5 sm:w-3 bg-[#087f6b] rounded-t transition-all" style={{ height: `${Math.max((w.income / maxW) * 100, w.income > 0 ? 8 : 0)}%` }}></div>
+                          <div className="w-2.5 sm:w-3 bg-[#b84c49] rounded-t transition-all" style={{ height: `${Math.max((w.expense / maxW) * 100, w.expense > 0 ? 8 : 0)}%` }}></div>
                         </div>
                         <p className="text-[9px] sm:text-[10px] text-zinc-600 mt-1 font-medium">{w.label}</p>
                         <p className="text-[7px] sm:text-[8px] text-zinc-500 leading-tight">{w.income > 0 || w.expense > 0 ? fmtC(w.expense) : '-'}</p>
@@ -433,11 +433,11 @@ export default function CashflowPage() {
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between mb-0.5">
-                            <span className="text-xs sm:text-sm text-zinc-300">{cat}</span>
+                            <span className="text-xs sm:text-sm text-zinc-600">{cat}</span>
                             <span className="text-xs sm:text-sm font-medium text-[#16332f]">{fmt(amt)}</span>
                           </div>
                           <div className="h-1 sm:h-1.5 bg-[#e9f5f2] rounded-full overflow-hidden">
-                            <div className="h-full bg-red-400 rounded-full" style={{ width: `${expense > 0 ? (amt / expense) * 100 : 0}%` }}></div>
+                            <div className="h-full bg-[#b84c49] rounded-full" style={{ width: `${expense > 0 ? (amt / expense) * 100 : 0}%` }}></div>
                           </div>
                         </div>
                       </div>

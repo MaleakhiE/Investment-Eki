@@ -165,7 +165,7 @@ export default function BudgetPage() {
                 <p className="text-xs text-zinc-600 mb-1">Alerts</p>
                 <div className="flex items-center gap-2">
                   {overBudgetCount > 0 && <span className="px-2 py-0.5 bg-red-500/20 text-[#b84c49] text-xs rounded-full">{overBudgetCount} over</span>}
-                  {warningCount > 0 && <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full">{warningCount} warning</span>}
+                  {warningCount > 0 && <span className="px-2 py-0.5 bg-amber-500/20 text-amber-800 text-xs rounded-full">{warningCount} warning</span>}
                   {overBudgetCount === 0 && warningCount === 0 && <span className="text-[#087f6b] text-sm">All good</span>}
                 </div>
               </div>
@@ -242,7 +242,7 @@ export default function BudgetPage() {
                           aria-valuemax={100}
                           aria-label={`Budget usage for ${budget.category}: ${budget.percentage.toFixed(0)}%${budget.isOverBudget ? ', over budget' : budget.percentage >= 80 ? ', nearing limit' : ''}`}
                         >
-                          <div className={`h-full rounded-full transition-all ${budget.isOverBudget ? 'bg-red-500' : budget.percentage >= 80 ? 'bg-amber-500' : budget.percentage >= 50 ? 'bg-blue-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, budget.percentage)}%` }}></div>
+                          <div className={`h-full rounded-full transition-all ${budget.isOverBudget ? 'bg-[#b84c49]' : budget.percentage >= 80 ? 'bg-amber-700' : budget.percentage >= 50 ? 'bg-blue-600' : 'bg-[#087f6b]'}`} style={{ width: `${Math.min(100, budget.percentage)}%` }}></div>
                         </div>
                         <span className={`text-sm font-bold w-14 text-right ${budget.isOverBudget ? 'text-[#b84c49]' : 'text-zinc-600'}`}>{budget.percentage.toFixed(0)}%</span>
                       </div>
