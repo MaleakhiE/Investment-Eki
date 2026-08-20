@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
           </div>
         ) : error && !recommendation ? (
           <div className="bg-red-500/20 border border-red-500/30 rounded-2xl p-6">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-[#b84c49] text-sm">{error}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -171,19 +171,19 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Avg Monthly Income</p>
-                    <p className="text-xl font-bold text-green-400">{formatCompact(avgIncome)}</p>
+                    <p className="text-xl font-bold text-[#087f6b]">{formatCompact(avgIncome)}</p>
                   </div>
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Avg Monthly Expense</p>
-                    <p className="text-xl font-bold text-red-400">{formatCompact(avgExpense)}</p>
+                    <p className="text-xl font-bold text-[#b84c49]">{formatCompact(avgExpense)}</p>
                   </div>
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Avg Savings Rate</p>
-                    <p className={`text-xl font-bold ${avgSavingsRate >= 20 ? 'text-green-400' : avgSavingsRate > 0 ? 'text-amber-400' : 'text-red-400'}`}>{avgSavingsRate.toFixed(0)}%</p>
+                    <p className={`text-xl font-bold ${avgSavingsRate >= 20 ? 'text-[#087f6b]' : avgSavingsRate > 0 ? 'text-amber-700' : 'text-[#b84c49]'}`}>{avgSavingsRate.toFixed(0)}%</p>
                   </div>
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Portfolio Return</p>
-                    <p className={`text-xl font-bold ${totalReturn >= 0 ? 'text-green-400' : 'text-red-400'}`}>{totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(1)}%</p>
+                    <p className={`text-xl font-bold ${totalReturn >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(1)}%</p>
                   </div>
                 </div>
 
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
                               <div className="flex-1 h-4 bg-[#e9f5f2] rounded-full overflow-hidden">
                                 <div className={`h-full rounded-full ${safe(t.net_cashflow) >= 0 ? 'bg-green-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }}></div>
                               </div>
-                              <span className={`text-xs font-medium w-16 text-right ${safe(t.net_cashflow) >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCompact(safe(t.net_cashflow))}</span>
+                              <span className={`text-xs font-medium w-16 text-right ${safe(t.net_cashflow) >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{formatCompact(safe(t.net_cashflow))}</span>
                             </div>
                           );
                         })}
@@ -304,19 +304,19 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Total Income ({trend.length}mo)</p>
-                    <p className="text-lg font-bold text-green-400">{formatCurrency(totalIncome)}</p>
+                    <p className="text-lg font-bold text-[#087f6b]">{formatCurrency(totalIncome)}</p>
                   </div>
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Total Expense ({trend.length}mo)</p>
-                    <p className="text-lg font-bold text-red-400">{formatCurrency(totalExpense)}</p>
+                    <p className="text-lg font-bold text-[#b84c49]">{formatCurrency(totalExpense)}</p>
                   </div>
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Total Savings</p>
-                    <p className={`text-lg font-bold ${totalIncome - totalExpense >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(totalIncome - totalExpense)}</p>
+                    <p className={`text-lg font-bold ${totalIncome - totalExpense >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{formatCurrency(totalIncome - totalExpense)}</p>
                   </div>
                   <div className="card rounded-xl p-4">
                     <p className="text-xs text-zinc-600 mb-1">Avg Monthly Savings</p>
-                    <p className={`text-lg font-bold ${avgSavings >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(avgSavings)}</p>
+                    <p className={`text-lg font-bold ${avgSavings >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{formatCurrency(avgSavings)}</p>
                   </div>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export default function AnalyticsPage() {
                         </div>
                         <div>
                           <p className="text-xs text-zinc-600">Gain/Loss</p>
-                          <p className={`text-sm font-semibold ${totalGain >= 0 ? 'text-green-400' : 'text-red-400'}`}>{totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain)}</p>
+                          <p className={`text-sm font-semibold ${totalGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain)}</p>
                         </div>
                       </div>
                     </div>
@@ -359,7 +359,7 @@ export default function AnalyticsPage() {
                       </div>
                       <div className="flex gap-4 text-xs">
                         <div><span className="text-amber-400/70">Invested:</span> <span className="font-medium text-amber-400">{formatCompact(goldInvested)}</span></div>
-                        <div><span className="text-amber-400/70">Return:</span> <span className={`font-medium ${goldGain >= 0 ? 'text-green-400' : 'text-red-400'}`}>{goldInvested > 0 ? ((goldGain / goldInvested) * 100).toFixed(1) : 0}%</span></div>
+                        <div><span className="text-amber-400/70">Return:</span> <span className={`font-medium ${goldGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{goldInvested > 0 ? ((goldGain / goldInvested) * 100).toFixed(1) : 0}%</span></div>
                       </div>
                     </div>
                   </div>
@@ -376,7 +376,7 @@ export default function AnalyticsPage() {
                       </div>
                       <div className="flex gap-4 text-xs">
                         <div><span className="text-blue-400/70">Invested:</span> <span className="font-medium text-blue-400">{formatCompact(mfInvested)}</span></div>
-                        <div><span className="text-blue-400/70">Return:</span> <span className={`font-medium ${mfGain >= 0 ? 'text-green-400' : 'text-red-400'}`}>{mfInvested > 0 ? ((mfGain / mfInvested) * 100).toFixed(1) : 0}%</span></div>
+                        <div><span className="text-blue-400/70">Return:</span> <span className={`font-medium ${mfGain >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>{mfInvested > 0 ? ((mfGain / mfInvested) * 100).toFixed(1) : 0}%</span></div>
                       </div>
                     </div>
                   </div>
