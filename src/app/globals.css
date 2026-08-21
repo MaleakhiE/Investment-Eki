@@ -332,16 +332,19 @@ input:focus, select:focus, textarea:focus {
  * high-contrast indicator. Uses :focus-visible so pointer clicks stay clean
  * while keyboard/AT navigation always shows where focus is. The 2px
  * var(--accent-dark) (#087f6b) outline is >=3:1 against the light surfaces
- * (WCAG 1.4.11 non-text contrast). */
-a:focus-visible,
-button:focus-visible,
-[role="button"]:focus-visible,
-[role="tab"]:focus-visible,
-[role="switch"]:focus-visible,
-[role="menuitem"]:focus-visible,
-[role="link"]:focus-visible,
-summary:focus-visible,
-[tabindex]:focus-visible {
+ * (WCAG 1.4.11 non-text contrast).
+ *
+ * Iteration 112 hardening (review follow-ups from iteration 111):
+ * 1. [tabindex="0"]:focus-visible — NOT the bare [tabindex] attribute selector,
+ *    which also matched tabIndex={-1} programmatic-focus targets
+ *    (AccessibleDialog container, investment form-title h2). tabindex="-1"
+ *    elements are focus() targets, not tab stops, and must never show a ring.
+ * 2. :where(...) keeps specificity at zero so component-level Tailwind
+ *    `focus-visible:ring-*` utilities keep winning without !important wars.
+ */
+:where(a, button, summary):focus-visible,
+:where([role="button"], [role="tab"], [role="switch"], [role="menuitem"], [role="link"]):focus-visible,
+:where([tabindex="0"]):focus-visible {
   outline: 2px solid var(--accent-dark);
   outline-offset: 2px;
   border-radius: 6px;
@@ -352,6 +355,16 @@ select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--accent-dark);
   outline-offset: 1px;
+}
+
+/* Dark-surface variant: controls sitting on --ink (#17352f) — the auth story
+ * panel and .app-brand-mark — where #087f6b only reaches 2.68:1 (<3:1).
+ * A light mint ring restores >=3:1 non-text contrast there (WCAG 1.4.11). */
+.auth-story :where(a, button, summary):focus-visible,
+.auth-story :where([role="button"], [role="tab"], [role="switch"], [role="menuitem"], [role="link"]):focus-visible,
+.auth-story :where([tabindex="0"]):focus-visible,
+.app-brand-mark:focus-visible {
+  outline-color: var(--accent-light);
 }
 
 main h1, main h2, main h3 { letter-spacing: -.025em; }
