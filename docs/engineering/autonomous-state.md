@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 111 — PR #124 merged at `59ccf64`.
-Current branch: `docs/iteration-111-reconciliation` (documentation reconciliation only).
-Current iteration: 111 — global keyboard focus-visible indicator (WCAG 2.4.7).
+Latest verified merged iteration: 112 — PR #126 merged at `c37fa20`.
+Current branch: `docs/iteration-112-reconciliation` (documentation reconciliation only).
+Current iteration: 112 — focus-ring hardening (tabindex=-1 exclusion + dark-surface variant).
 Base branch: `main`.
 
 ## Reconciliation
@@ -19,11 +19,13 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #120 (iteration 109) — complete the financial-status contrast sweep across dashboard, budget, cashflow, goals, settings, and register — merged at `d2e5d9d`.
 - PR #122 (iteration 110) — non-text & identity color contrast audit (charts, meters, legends, donut, identity accents) to WCAG 1.4.11 / 1.4.3 — merged at `dc5fde5`.
 - PR #124 (iteration 111) — global keyboard focus-visible indicator (WCAG 2.4.7) — merged at `59ccf64`.
+- PR #126 (iteration 112) — focus-ring hardening: exclude tabindex=-1 targets + dark-surface light-ring variant — merged at `c37fa20`.
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 - PR #121 — documentation reconciliation for iterations 108–109 — merged.
 - PR #123 — documentation reconciliation for iteration 110 — merged at `8df4f9a`.
+- PR #125 — documentation reconciliation for iteration 111 — merged at `dd3b33f`.
 
-`main` currently points to merge commit `59ccf64` for PR #124.
+`main` currently points to merge commit `c37fa20` for PR #126.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
