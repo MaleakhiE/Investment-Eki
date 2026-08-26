@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 116 — PR #134 merged at `3bd4d7a`.
-Current branch: `docs/iteration-116-reconciliation` (documentation reconciliation only).
-Current iteration: 116 — accent text/ring contrast token #008f78 → #087f6b (WCAG 1.4.3 / 1.4.11).
+Latest verified merged iteration: 119 — PR #139 merged at `6fcdc40`.
+Current branch: `ux/iteration-120-loop-close` (finalizing documentation reconciliation).
+Current iteration: 119 — swap secondary accent #00a88a text roles to accessible #087f6b (WCAG 1.4.3 / 1.4.11).
 Base branch: `main`.
 
 ## Reconciliation
