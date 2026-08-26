@@ -316,7 +316,7 @@ export default function DashboardPage() {
                 source="Saved recurring rules"
                 description="This is a planning view only. It does not place investment orders or connect to a provider."
               />
-              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{item.type === 'INCOME' ? 'Income' : 'Expenses'} · {new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#00a88a]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">No active recurring transactions.</p>}
+              {upcoming.length > 0 ? <div className="space-y-2">{upcoming.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-[#f5fbf9] p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#16332f]">{item.description || item.category}</p><p className="text-xs text-zinc-500">{item.type === 'INCOME' ? 'Income' : 'Expenses'} · {new Date(`${item.next_run}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p></div><p className={`text-sm font-bold ${item.type === 'INCOME' ? 'text-[#087f6b]' : 'text-red-500'}`}>{formatCompact(item.amount)}</p></div>)}</div> : <p className="text-sm text-zinc-500">No active recurring transactions.</p>}
             </section>
           </div>
 
@@ -388,13 +388,13 @@ export default function DashboardPage() {
                 {transactions.slice(0, 5).map((tx, i) => (
                   <div key={tx.id} className="flex items-center gap-4 p-3 rounded-2xl bg-[#f5fbf9] hover:bg-[#e9f5f2] transition-colors" style={{ animationDelay: `${0.1 * i}s` }}>
                     <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center ${tx.type === 'INCOME' ? 'bg-[#00d4aa]/10' : tx.type === 'TRANSFER' ? 'bg-blue-500/10' : 'bg-red-500/10'}`}>
-                      <span className={`text-[9px] font-semibold ${tx.type === 'INCOME' ? 'text-[#00a88a]' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'IN' : tx.type === 'TRANSFER' ? 'MOVE' : 'OUT'}</span>
+                      <span className={`text-[9px] font-semibold ${tx.type === 'INCOME' ? 'text-[#087f6b]' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? 'IN' : tx.type === 'TRANSFER' ? 'MOVE' : 'OUT'}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#16332f] truncate">{tx.category}</p>
                       <p className="text-xs text-zinc-500">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                     </div>
-                    <p className={`shrink-0 text-sm font-bold ${tx.type === 'INCOME' ? 'text-[#00a88a]' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>
+                    <p className={`shrink-0 text-sm font-bold ${tx.type === 'INCOME' ? 'text-[#087f6b]' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>
                       {tx.type === 'INCOME' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{formatCompact(tx.amount)}
                     </p>
                   </div>

@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <div className="mt-8 text-center">
-              <Link href="/login" className="font-medium text-[#00a88a] hover:underline">
+              <Link href="/login" className="font-medium text-[#087f6b] hover:underline">
                 Back to sign in
               </Link>
             </div>

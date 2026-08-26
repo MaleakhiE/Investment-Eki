@@ -330,7 +330,7 @@ export default function CashflowPage() {
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">{editingId ? 'Edit' : 'Add'} Activity</h3>
-                  <label className="cursor-pointer rounded-lg border border-[#00d4aa]/30 bg-[#00d4aa]/10 px-3 py-2 text-[10px] font-semibold text-[#00a88a] hover:bg-[#00d4aa]/20 sm:text-xs">
+                  <label className="cursor-pointer rounded-lg border border-[#00d4aa]/30 bg-[#00d4aa]/10 px-3 py-2 text-[10px] font-semibold text-[#087f6b] hover:bg-[#00d4aa]/20 sm:text-xs">
                     {isScanning ? `Scanning ${scanElapsed}s` : 'Scan receipt'}
                     <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={isScanning} onChange={(event) => { void handleReceiptScan(event.target.files?.[0]); event.target.value = ''; }} className="sr-only" />
                   </label>
@@ -352,7 +352,7 @@ export default function CashflowPage() {
                     <div><label htmlFor="transaction-amount" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Amount</label><CurrencyInput id="transaction-amount" value={amount} onChange={setAmount} placeholder="0" className="w-full py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
                   </div>
                   <div><label htmlFor="transaction-description" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Description</label><input id="transaction-description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional..." className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" /></div>
-                  <div><div className="mb-1 flex items-center justify-between gap-2"><label htmlFor="transaction-account" className="block text-[10px] sm:text-xs text-zinc-600">Account or wallet</label><a href="/accounts" className="text-[10px] font-semibold text-[#00a88a] sm:text-xs">Manage accounts</a></div><select id="transaction-account" required value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full min-w-0 px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm"><option value="" disabled>Select an account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {fmt(account.balance)}</option>)}</select>{accounts.length === 0 && <p className="mt-1 text-[10px] text-red-600">Create an account before adding activity.</p>}</div>
+                  <div><div className="mb-1 flex items-center justify-between gap-2"><label htmlFor="transaction-account" className="block text-[10px] sm:text-xs text-zinc-600">Account or wallet</label><a href="/accounts" className="text-[10px] font-semibold text-[#087f6b] sm:text-xs">Manage accounts</a></div><select id="transaction-account" required value={accountChoice} onChange={(e) => setAccountChoice(e.target.value)} className="w-full min-w-0 px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm"><option value="" disabled>Select an account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {fmt(account.balance)}</option>)}</select>{accounts.length === 0 && <p className="mt-1 text-[10px] text-red-600">Create an account before adding activity.</p>}</div>
                   {receiptImage && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt image will be saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   {editingId && !receiptImage && !receiptTouched && transactions.find((tx) => tx.id === editingId)?.has_receipt && <div className="flex items-center justify-between rounded-lg bg-[#00d4aa]/10 px-3 py-2 text-[10px] text-[#007f6d] sm:text-xs"><span>Receipt saved</span><button type="button" onClick={() => { setReceiptImage(null); setReceiptTouched(true); }} className="font-semibold hover:underline">Delete</button></div>}
                   <div className="flex gap-2">
@@ -395,7 +395,7 @@ export default function CashflowPage() {
                           </div>
                           <div>
                             <p className="text-xs sm:text-sm font-medium text-[#16332f]">{tx.category}</p>
-                            <p className="text-[10px] sm:text-xs text-zinc-500">{fmtD(tx.date)}{tx.type === 'TRANSFER' ? <span className="ml-1"><AccountTransferLabel source={tx.source_account_name || tx.account || 'Account'} destination={tx.destination_account_name || 'Account'} /></span> : tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
+                            <p className="text-[10px] sm:text-xs text-zinc-500">{fmtD(tx.date)}{tx.type === 'TRANSFER' ? <span className="ml-1"><AccountTransferLabel source={tx.source_account_name || tx.account || 'Account'} destination={tx.destination_account_name || 'Account'} /></span> : tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#087f6b]">{tx.account}</span>}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2">
@@ -468,7 +468,7 @@ export default function CashflowPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-[#16332f]">{tx.category}</p>
-                        <p className="text-xs text-zinc-500">{fmtD(tx.date)}{tx.description && ` • ${tx.description}`}{tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#00a88a]">{tx.account}</span>}</p>
+                        <p className="text-xs text-zinc-500">{fmtD(tx.date)}{tx.description && ` • ${tx.description}`}{tx.account && <span className="ml-1 rounded-full bg-[#00d4aa]/10 px-1.5 py-0.5 text-[#087f6b]">{tx.account}</span>}</p>
                       </div>
                     </div>
                     <p className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-600' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{fmt(tx.amount)}</p>

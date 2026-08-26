@@ -88,7 +88,7 @@ function ResetPasswordForm() {
       {!token ? (
             <div className="rounded-2xl border border-amber-500/30 bg-amber-50 p-6 text-center">
               <p className="text-sm leading-6 text-amber-800">This reset link is invalid or incomplete.</p>
-              <Link href="/forgot-password" className="mt-4 inline-block font-medium text-[#00a88a] hover:underline">
+              <Link href="/forgot-password" className="mt-4 inline-block font-medium text-[#087f6b] hover:underline">
                 Request a new link
               </Link>
             </div>
