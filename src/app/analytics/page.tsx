@@ -191,7 +191,7 @@ export default function AnalyticsPage() {
                   <div className="card rounded-xl p-6 text-center">
                         <h3 className="font-semibold text-[#16332f] mb-1 text-sm">Scenario analysis disabled</h3>
                         <p className="text-zinc-600 text-xs mb-3">Enable to review descriptive allocation scenarios</p>
-                    <Link href="/settings" className="text-xs text-[#00d4aa] hover:underline">Enable in Settings</Link>
+                    <Link href="/settings" className="text-xs text-[#087f6b] hover:underline">Enable in Settings</Link>
                   </div>
                 ) : recommendation ? (
                   <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-xl shadow-sm p-5 border border-blue-500/20">

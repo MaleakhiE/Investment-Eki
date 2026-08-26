@@ -366,7 +366,7 @@ export default function GoalsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full ${getPriorityColor(goal.priority)}`}>{getPriorityLabel(goal.priority)}</span>
-                            <button onClick={() => loadGoal(goal)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>
+                            <button onClick={() => loadGoal(goal)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#087f6b]">Edit</button>
                             <button onClick={() => handleDelete(goal.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Delete</button>
                           </div>
                         </div>
@@ -442,7 +442,7 @@ export default function GoalsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => toggleComplete(goal)} className="text-xs text-zinc-500 hover:text-[#00d4aa]">Reopen</button>
+                          <button onClick={() => toggleComplete(goal)} className="text-xs text-zinc-500 hover:text-[#087f6b]">Reopen</button>
                           <button onClick={() => handleDelete(goal.id)} className="text-xs text-zinc-500 hover:text-red-400">Delete</button>
                         </div>
                       </div>

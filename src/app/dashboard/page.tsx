@@ -333,7 +333,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-[#16332f]">Portfolio</h3>
                 </div>
-                <Link href="/investments" className="text-xs text-[#00d4aa] hover:underline">View details</Link>
+                <Link href="/investments" className="text-xs text-[#087f6b] hover:underline">View details</Link>
               </div>
               
               <div className="flex items-end justify-between mb-4">
@@ -378,7 +378,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-[#16332f]">Recent transactions</h3>
               </div>
-              <Link href="/cashflow" className="text-xs text-[#00d4aa] hover:underline">View all</Link>
+              <Link href="/cashflow" className="text-xs text-[#087f6b] hover:underline">View all</Link>
             </div>
             
             {transactionsStatus === 'error' ? (
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                 <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">💸</div>
                 <h3 className="font-semibold text-[#16332f]">Belum ada transaksi</h3>
                 <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat transaksi pertama Anda untuk mulai melihat ringkasan keuangan.</p>
-                <Link href="/cashflow" className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
+                <Link href="/cashflow" className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#087f6b] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">
                   Add transaction
                 </Link>
               </div>
@@ -451,7 +451,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-[#16332f]">Active goals</h3>
                 </div>
-                <Link href="/goals" className="text-xs text-[#00d4aa] hover:underline">View all</Link>
+                <Link href="/goals" className="text-xs text-[#087f6b] hover:underline">View all</Link>
               </div>
               
               <div className="space-y-3">
@@ -459,7 +459,7 @@ export default function DashboardPage() {
                   <div key={goal.id} className="p-4 rounded-2xl bg-[#f5fbf9] border border-[#dcece8]">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-[#16332f]">{goal.name}</span>
-                      <span className="text-sm font-bold text-[#00d4aa]">{goal.percentage.toFixed(0)}%</span>
+                      <span className="text-sm font-bold text-[#087f6b]">{goal.percentage.toFixed(0)}%</span>
                     </div>
                     <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden mb-2">
                       <div className="h-full bg-gradient-to-r from-[#00d4aa] to-[#00ffcc] rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, goal.percentage)}%` }}></div>
