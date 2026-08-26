@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 113 — PR #128 merged at `eccdc45`.
-Current branch: `docs/iteration-113-reconciliation` (documentation reconciliation only).
-Current iteration: 113 — associate auth form labels (WCAG 1.3.1 / 4.1.2).
+Latest verified merged iteration: 114 — PR #130 merged at `f9c1c32`.
+Current branch: `docs/iteration-114-reconciliation` (documentation reconciliation only).
+Current iteration: 114 — CurrencyInput label association (WCAG 1.3.1 / in-app forms).
 Base branch: `main`.
 
 ## Reconciliation
@@ -21,13 +21,15 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #124 (iteration 111) — global keyboard focus-visible indicator (WCAG 2.4.7) — merged at `59ccf64`.
 - PR #126 (iteration 112) — focus-ring hardening: exclude tabindex=-1 targets + dark-surface light-ring variant — merged at `c37fa20`.
 - PR #128 (iteration 113) — associate login/register auth form labels via htmlFor+id (WCAG 1.3.1 / 4.1.2) — merged at `eccdc45`.
+- PR #130 (iteration 114) — fix CurrencyInput label association in accounts page for WCAG 1.3.1 — merged at `f9c1c32`.
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 - PR #121 — documentation reconciliation for iterations 108–109 — merged.
 - PR #123 — documentation reconciliation for iteration 110 — merged at `8df4f9a`.
 - PR #125 — documentation reconciliation for iteration 111 — merged at `dd3b33f`.
 - PR #127 — documentation reconciliation for iteration 112 — merged at `5ed718d`.
+- PR #129 — documentation reconciliation for iteration 113 — merged at `24c16d5`.
 
-`main` currently points to merge commit `eccdc45` for PR #128.
+`main` currently points to merge commit `f9c1c32` for PR #130.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
@@ -116,6 +118,15 @@ Reviewed SHA `3fe0eae4b51b1cd54fe6fb1f1f81e339f2448f56`:
 - Frontend Engineer — APPROVE (diff is association attributes only; no className/placeholder/handler/visible-text change; no duplicate ids within a form; focus-visible styling from iterations 111–112 unaffected)
 - CTO / Principal Engineer — APPROVE_AND_MERGE (purely declarative `htmlFor`/`id`; `htmlFor`/`id` cannot alter submission, validation, or auth logic, so no security surface is affected; mergeable CLEAN, all checks SUCCESS)
 
+## Review evidence (iteration 114)
+
+Reviewed SHA `3465f1444d593eede2e2432f5853c67ee18de9d7`:
+
+- Accessibility Reviewer — APPROVE (both fixes correctly split label and CurrencyInput: `<label htmlFor="account-opening-balance">Opening balance</label>` + `<CurrencyInput id="account-opening-balance" … />` and `<label htmlFor="transfer-amount">Amount</label>` + `<CurrencyInput id="transfer-amount" … />`; confirmed zero labels wrap custom components; IDs unique and forwarded by CurrencyInput)
+- QA / Test Engineer — APPROVE (140 suites / 1145 tests; a11y gate green; mutation-tested — reverting one fix trips the 'no custom component wrapped by <label>' assertion; restored clean)
+- Frontend Engineer — APPROVE (diff is label htmlFor / CurrencyInput id only; no className/placeholder/handler/logic/visible-text change; CurrencyInput forwards id to inner input; focus-visible styling from iterations 111–112 unaffected)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (purely declarative htmlFor/id; cannot alter form submission/validation/auth logic; mergeable CLEAN, all checks SUCCESS)
+
 ## Exact next action
 
-Iteration 113 is merged at `eccdc45`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 114). Candidates carried forward: (a) extend the label-association sweep from the auth forms to the in-app forms — `settings/page.tsx` (3 labels, 0 `htmlFor`), `accounts/page.tsx` (2 labels, 0 `htmlFor`), and `superadmin/smtp/page.tsx` (6 labels, 0 `htmlFor`) are the largest remaining WCAG 1.3.1 gaps, and `cashflow/page.tsx` has 7 labels with only 5 associated; (b) WCAG 2.5.8 target size (minimum) audit on icon-only buttons and compact table actions; (c) WCAG 1.3.5 `autocomplete` token coverage on financial inputs. Pick the highest-value gap from a fresh audit. The one remaining sub-3:1 non-text token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
+Iteration 114 is merged at `f9c1c32`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 115). Candidates carried forward: (a) WCAG 2.5.8 target size (minimum) audit on icon-only buttons and compact table actions; (b) WCAG 1.3.5 `autocomplete` token coverage on financial inputs; (c) complete the label-association sweep on any remaining in-app forms where native controls lack explicit or implicit association. Pick the highest-value gap from a fresh audit. The one remaining sub-3:1 non-text token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
