@@ -84,8 +84,9 @@ export default function RegisterPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2">Email</label>
+            <label htmlFor="email" className="block text-sm font-medium text-zinc-400 mb-2">Email</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -97,8 +98,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-zinc-400 mb-2">Password</label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -110,8 +112,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2">Confirm password</label>
+            <label htmlFor="confirm-password" className="block text-sm font-medium text-zinc-400 mb-2">Confirm password</label>
             <input
+              id="confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
