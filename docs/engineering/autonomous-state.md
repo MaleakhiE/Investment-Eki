@@ -122,6 +122,24 @@ Reviewed SHA `3fe0eae4b51b1cd54fe6fb1f1f81e339f2448f56`:
 - Frontend Engineer — APPROVE (diff is association attributes only; no className/placeholder/handler/visible-text change; no duplicate ids within a form; focus-visible styling from iterations 111–112 unaffected)
 - CTO / Principal Engineer — APPROVE_AND_MERGE (purely declarative `htmlFor`/`id`; `htmlFor`/`id` cannot alter submission, validation, or auth logic, so no security surface is affected; mergeable CLEAN, all checks SUCCESS)
 
+## Review evidence (iteration 114)
+
+Reviewed SHA `3465f1444d593eede2e2432f5853c67ee18de9d7`:
+
+- Accessibility Reviewer — APPROVE (both fixes split label + CurrencyInput with explicit `htmlFor`/`id`: `account-opening-balance`, `transfer-amount`; zero labels wrap a custom component; ids unique and forwarded by CurrencyInput)
+- QA / Test Engineer — APPROVE (140 suites / 1145 tests; a11y gate green; mutation-tested — reverting one fix trips the 'no custom component wrapped by <label>' assertion; restored clean)
+- Frontend Engineer — APPROVE (diff is label htmlFor / CurrencyInput id only; no className/placeholder/handler/logic change; CurrencyInput forwards id to inner input)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (purely declarative htmlFor/id; cannot alter submission/validation/auth; mergeable CLEAN, all checks SUCCESS)
+
+## Review evidence (iteration 115)
+
+Reviewed SHA `e1faae884f954d1b178ee6a6ac297ed2311cebc5`:
+
+- Accessibility Reviewer — APPROVE (all five sub-24px settings buttons raised to min-h-[32px]/min-h-[36px]/min-h-11; text bumped to text-xs; regression test enforces ≥24px)
+- QA / Test Engineer — APPROVE (141 suites / 1148 tests; mutation-tested — reverting low-balance Save min-h fails both target-size assertions; restored clean)
+- Frontend Engineer — APPROVE (class-only edits + text size bump; no handler/logic change; flex/grid rows accommodate taller buttons)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (purely presentational Tailwind target-size classes; mergeable CLEAN, all checks SUCCESS)
+
 ## Review evidence (iteration 116)
 
 Reviewed SHA `45c72269887b1b14c4920f94378731b56b82e085`:
