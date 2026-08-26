@@ -96,7 +96,7 @@ function LoginForm() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label htmlFor="password" className="block text-sm font-medium text-zinc-400">Password</label>
-            <Link href="/forgot-password" className="text-sm font-medium text-[#00a88a] hover:underline">
+            <Link href="/forgot-password" className="text-sm font-medium text-[#087f6b] hover:underline">
               Forgot password?
             </Link>
           </div>
