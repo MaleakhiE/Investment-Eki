@@ -296,7 +296,7 @@ export default function InvestmentsPage() {
           <section role="alert" className="card mx-auto max-w-xl rounded-2xl border border-red-200 p-6 text-center">
             <h3 className="font-semibold text-[#16332f]">Investment data is unavailable</h3>
             <p className="mt-2 text-sm text-zinc-600">We could not load your complete investment history. Your saved records have not been changed.</p>
-            <button type="button" onClick={() => void fetchSnapshots()} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-5 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Try again</button>
+            <button type="button" onClick={() => void fetchSnapshots()} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-5 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2">Try again</button>
           </section>
         ) : (
           <div className="space-y-6">
@@ -455,7 +455,7 @@ export default function InvestmentsPage() {
                   <div role="status" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-5 text-center">
                     <h4 className="font-semibold text-[#16332f]">No gold snapshots yet</h4>
                     <p className="mt-1 text-sm text-zinc-600">Add a monthly record to start tracking your gold progress.</p>
-                    <button type="button" onClick={() => { setSelectedType('GOLD'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Add your first gold snapshot</button>
+                    <button type="button" onClick={() => { setSelectedType('GOLD'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2">Add your first gold snapshot</button>
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-lg border border-[#dcece8] max-h-[300px] overflow-y-auto">
@@ -478,7 +478,7 @@ export default function InvestmentsPage() {
                   <div role="status" className="rounded-2xl border border-dashed border-[#b9ddd4] bg-[#f5fbf9] p-5 text-center">
                     <h4 className="font-semibold text-[#16332f]">No mutual fund snapshots yet</h4>
                     <p className="mt-1 text-sm text-zinc-600">Add a monthly record to start tracking your mutual fund progress.</p>
-                    <button type="button" onClick={() => { setSelectedType('MUTUAL_FUND'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2">Add your first mutual fund snapshot</button>
+                    <button type="button" onClick={() => { setSelectedType('MUTUAL_FUND'); document.getElementById('investment-snapshot-form')?.scrollIntoView({ block: 'start' }); document.getElementById('investment-snapshot-form-title')?.focus({ preventScroll: true }); }} className="mt-4 min-h-11 rounded-xl bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00a88a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2">Add your first mutual fund snapshot</button>
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-lg border border-[#dcece8] max-h-[300px] overflow-y-auto">

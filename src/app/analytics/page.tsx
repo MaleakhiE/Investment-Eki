@@ -155,7 +155,7 @@ export default function AnalyticsPage() {
           <div className="space-y-4">
         <div role="tablist" aria-label="Analytics views" className="mb-4 flex max-w-full gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm sm:w-fit">
           {ANALYTICS_TABS.map(tab => (
-            <button key={tab} id={`analytics-tab-${tab}`} type="button" role="tab" aria-selected={activeTab === tab} aria-controls={`analytics-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1} onKeyDown={(event) => handleTabKeyDown(event, tab)} onClick={() => setActiveTab(tab)} className={`min-h-11 shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008f78] focus-visible:ring-offset-2 ${activeTab === tab ? 'bg-[#00d4aa] text-[#16332f]' : 'text-zinc-600 hover:bg-[#e9f5f2]'}`}>
+            <button key={tab} id={`analytics-tab-${tab}`} type="button" role="tab" aria-selected={activeTab === tab} aria-controls={`analytics-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1} onKeyDown={(event) => handleTabKeyDown(event, tab)} onClick={() => setActiveTab(tab)} className={`min-h-11 shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087f6b] focus-visible:ring-offset-2 ${activeTab === tab ? 'bg-[#00d4aa] text-[#16332f]' : 'text-zinc-600 hover:bg-[#e9f5f2]'}`}>
               {tab === 'overview' ? 'Overview' : tab === 'cashflow' ? 'Cashflow' : 'Investment'}
             </button>
           ))}

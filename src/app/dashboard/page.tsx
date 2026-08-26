@@ -234,7 +234,7 @@ export default function DashboardPage() {
           <section className="min-w-0 animate-fade-in" aria-labelledby="account-balances-title">
             <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
               <div className="min-w-0"><h2 id="account-balances-title" className="truncate font-semibold text-[#16332f]">Accounts and wallets</h2><p className="text-xs text-zinc-500">Individual available balances</p></div>
-              <Link href="/accounts" className="shrink-0 text-xs font-semibold text-[#008f78]">Manage</Link>
+              <Link href="/accounts" className="shrink-0 text-xs font-semibold text-[#087f6b]">Manage</Link>
             </div>
             {accountsStatus === 'error' ? <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><p className="font-medium">Account data is unavailable</p><Link href="/accounts" className="mt-2 inline-block font-semibold underline">Retry in Accounts</Link></div> : accounts.length > 0 ? <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">{accounts.map((account) => <div key={account.id} className="w-[min(82vw,280px)] shrink-0 snap-start"><AccountCard account={account} /></div>)}</div> : <Link href="/accounts" className="card block min-w-0 rounded-3xl p-5 text-sm text-zinc-500"><span className="break-words">Create your first bank account, wallet, or cash balance.</span></Link>}
           </section>
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                 <h2 id="budget-overview-title" className="font-semibold text-[#16332f]">Budget overview</h2>
                 <p className="mt-1 text-xs text-zinc-500">Spending compared with your active limits</p>
               </div>
-              <Link href="/budget" className="shrink-0 text-xs font-semibold text-[#008f78] hover:underline">Open budgets</Link>
+              <Link href="/budget" className="shrink-0 text-xs font-semibold text-[#087f6b] hover:underline">Open budgets</Link>
             </div>
             {budgetStatus === 'error' ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -271,7 +271,7 @@ export default function DashboardPage() {
                 <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">🎯</div>
                 <h3 className="font-semibold text-[#16332f]">Belum ada anggaran aktif</h3>
                 <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Buat batas pengeluaran untuk menjaga keuangan Anda tetap terkendali.</p>
-                <Link href="/budget" className="mt-3 inline-block font-semibold text-[#008f78] underline underline-offset-2">Set up your first budget</Link>
+                <Link href="/budget" className="mt-3 inline-block font-semibold text-[#087f6b] underline underline-offset-2">Set up your first budget</Link>
               </div>
             ) : (
               <div className="space-y-3" aria-live="polite">
@@ -304,7 +304,7 @@ export default function DashboardPage() {
               <div className="mb-4"><h2 className="font-semibold text-[#16332f]">Savings opportunities</h2></div>
               {suggestions.length > 0 ? <div className="space-y-3">{suggestions.slice(0, 3).map((item) => {
                 const saving = item.potential_saving ?? 0;
-                return <div key={item.category} className="min-w-0 rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 break-words text-xs leading-relaxed text-zinc-500">{item.message ?? `Return to your three-month average to save ${formatCurrency(saving)}.`}</p></div><span className="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#008f78]">{formatCompact(saving)}</span></div></div>;
+                return <div key={item.category} className="min-w-0 rounded-2xl bg-[#00d4aa]/10 p-4"><div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-[#16332f]">{item.category}</p><p className="mt-1 break-words text-xs leading-relaxed text-zinc-500">{item.message ?? `Return to your three-month average to save ${formatCurrency(saving)}.`}</p></div><span className="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-bold text-[#087f6b]">{formatCompact(saving)}</span></div></div>;
               })}</div> : <p className="text-sm text-zinc-500">No overspending patterns need attention right now.</p>}
             </section>
 

@@ -186,7 +186,7 @@ export default function SuperadminSmtpPage() {
       <main className="app-page smtp-page p-4 pb-28 lg:ml-64 lg:p-8">
         <div className="mx-auto max-w-4xl space-y-5">
           <header>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#008f78]">Superadmin</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#087f6b]">Superadmin</p>
             <h1 className="mt-1 text-2xl font-bold text-[#16332f]">Global SMTP Configuration</h1>
             <p className="mt-1 text-sm text-zinc-600">Manage the mail server used by every account.</p>
           </header>
@@ -210,7 +210,7 @@ export default function SuperadminSmtpPage() {
                 <label className="block text-sm font-medium text-[#16332f]">Password<input type="password" autoComplete="new-password" required={!settings.configured} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={settings.configured ? 'Leave blank to keep the current password' : 'Enter SMTP password'} className="mt-1 w-full rounded-lg border border-[#dcece8] bg-white px-3 py-2 text-sm font-normal outline-none focus:border-[#00d4aa]" /></label>
                 <div className="flex flex-wrap gap-3 pt-1">
                   <button type="submit" disabled={activeAction !== null} className="rounded-lg bg-[#00d4aa] px-4 py-2 text-sm font-semibold text-[#16332f] hover:bg-[#00b995] disabled:cursor-not-allowed disabled:opacity-50">{activeAction === 'save' ? 'Saving...' : 'Save'}</button>
-                  <button type="button" onClick={() => void runAction('verify')} disabled={activeAction !== null} className="rounded-lg border border-[#00a88a] px-4 py-2 text-sm font-semibold text-[#008f78] hover:bg-[#e9f8f4] disabled:cursor-not-allowed disabled:opacity-50">{activeAction === 'verify' ? 'Verifying...' : 'Verify Connection'}</button>
+                  <button type="button" onClick={() => void runAction('verify')} disabled={activeAction !== null} className="rounded-lg border border-[#00a88a] px-4 py-2 text-sm font-semibold text-[#087f6b] hover:bg-[#e9f8f4] disabled:cursor-not-allowed disabled:opacity-50">{activeAction === 'verify' ? 'Verifying...' : 'Verify Connection'}</button>
                 </div>
               </form>
             )}
