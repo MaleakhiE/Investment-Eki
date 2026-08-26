@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 112 — PR #126 merged at `c37fa20`.
-Current branch: `docs/iteration-112-reconciliation` (documentation reconciliation only).
-Current iteration: 112 — focus-ring hardening (tabindex=-1 exclusion + dark-surface variant).
+Latest verified merged iteration: 113 — PR #128 merged at `eccdc45`.
+Current branch: `docs/iteration-113-reconciliation` (documentation reconciliation only).
+Current iteration: 113 — associate auth form labels (WCAG 1.3.1 / 4.1.2).
 Base branch: `main`.
 
 ## Reconciliation
@@ -20,12 +20,14 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #122 (iteration 110) — non-text & identity color contrast audit (charts, meters, legends, donut, identity accents) to WCAG 1.4.11 / 1.4.3 — merged at `dc5fde5`.
 - PR #124 (iteration 111) — global keyboard focus-visible indicator (WCAG 2.4.7) — merged at `59ccf64`.
 - PR #126 (iteration 112) — focus-ring hardening: exclude tabindex=-1 targets + dark-surface light-ring variant — merged at `c37fa20`.
+- PR #128 (iteration 113) — associate login/register auth form labels via htmlFor+id (WCAG 1.3.1 / 4.1.2) — merged at `eccdc45`.
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 - PR #121 — documentation reconciliation for iterations 108–109 — merged.
 - PR #123 — documentation reconciliation for iteration 110 — merged at `8df4f9a`.
 - PR #125 — documentation reconciliation for iteration 111 — merged at `dd3b33f`.
+- PR #127 — documentation reconciliation for iteration 112 — merged at `5ed718d`.
 
-`main` currently points to merge commit `c37fa20` for PR #126.
+`main` currently points to merge commit `eccdc45` for PR #128.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
@@ -96,6 +98,24 @@ Reviewed SHA `b1af8f5f4a952a9aacf40be612a636f8d59e0527`:
 - Frontend Engineer — verified cascade correct (later-source `:focus-visible` wins over un-`!important` `outline:none`); requested two Low-severity refinements — components with `focus:outline-none` should pair a `focus-visible` ring, and `[tabindex]:focus-visible` should not target `tabIndex={-1}` programmatic-focus elements
 - CTO / Principal Engineer — APPROVE_AND_MERGE (purely presentational; cascade confirmed functional not a no-op; all required GitHub checks SUCCESS; frontend refinements judged Low-severity polish, not blockers, deferred to iteration 112)
 
+## Review evidence (iteration 112)
+
+Reviewed SHA `2b3aaed972694ac7063f7f58744d080e7ea599f6`:
+
+- Accessibility Reviewer — APPROVE (`--accent-light` #d8f7ef measures 11.64:1 on `--ink` #17352f, resolving the 2.68:1 defect from iteration 111; confirmed only the two `tabIndex={-1}` targets exist and neither now receives a ring)
+- QA / Test Engineer — APPROVE (139 suites / 1131 tests; a11y gate green; mutation-tested — removing `[tabindex="0"]` or the dark-surface block makes the regression test fail; restored clean)
+- Frontend Engineer — APPROVE (`:where(...)` pins specificity to 0,0,0 so Tailwind `focus-visible:ring-*` utilities win on source order without `!important`; dark rule correctly overrides only `outline-color`)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (both iteration-111 carry-over findings genuinely fixed in the diff, not merely documented; all required GitHub checks SUCCESS)
+
+## Review evidence (iteration 113)
+
+Reviewed SHA `3fe0eae4b51b1cd54fe6fb1f1f81e339f2448f56`:
+
+- Accessibility Reviewer — APPROVE (every `<label>` on login/register now carries `htmlFor` with a matching control `id`; no control relies on `placeholder` alone; the password flex-row association verified intact; forgot-password/reset-password already compliant and untouched)
+- QA / Test Engineer — APPROVE (140 suites / 1143 tests; a11y gate green; mutation-tested — removing one `htmlFor` fails both `labelForMatches.length` and `named` assertions; restored clean)
+- Frontend Engineer — APPROVE (diff is association attributes only; no className/placeholder/handler/visible-text change; no duplicate ids within a form; focus-visible styling from iterations 111–112 unaffected)
+- CTO / Principal Engineer — APPROVE_AND_MERGE (purely declarative `htmlFor`/`id`; `htmlFor`/`id` cannot alter submission, validation, or auth logic, so no security surface is affected; mergeable CLEAN, all checks SUCCESS)
+
 ## Exact next action
 
-Iteration 111 is merged at `59ccf64`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 112). Strong candidates carried from iteration 111 review: (a) refine the focus-visible selector so `[tabindex="-1"]` programmatic-focus targets (AccessibleDialog container, the investment form-title h2) do not get an unwanted ring, and add a dark-surface focus-ring variant (light ring) for controls over --ink #17352f (auth story panel, brand mark) where #087f6b only reaches 2.68:1; (b) WCAG 1.3.1 explicit form-label associations / fieldset-legend grouping; (c) WCAG 2.5.8 target size. Pick the highest-value gap from a fresh audit. The one remaining sub-3:1 non-text token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
+Iteration 113 is merged at `eccdc45`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 114). Candidates carried forward: (a) extend the label-association sweep from the auth forms to the in-app forms — `settings/page.tsx` (3 labels, 0 `htmlFor`), `accounts/page.tsx` (2 labels, 0 `htmlFor`), and `superadmin/smtp/page.tsx` (6 labels, 0 `htmlFor`) are the largest remaining WCAG 1.3.1 gaps, and `cashflow/page.tsx` has 7 labels with only 5 associated; (b) WCAG 2.5.8 target size (minimum) audit on icon-only buttons and compact table actions; (c) WCAG 1.3.5 `autocomplete` token coverage on financial inputs. Pick the highest-value gap from a fresh audit. The one remaining sub-3:1 non-text token is the brand mint `#00d4aa`, deferred as a deliberate brand-palette decision.
