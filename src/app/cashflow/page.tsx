@@ -367,7 +367,7 @@ export default function CashflowPage() {
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-[#16332f] text-sm sm:text-base">Transaction history</h3>
-                  {transactions.length > 5 && <button onClick={() => setShowAllModal(true)} className="text-[10px] sm:text-xs text-[#00d4aa] hover:underline">View all</button>}
+                  {transactions.length > 5 && <button onClick={() => setShowAllModal(true)} className="text-[10px] sm:text-xs text-[#087f6b] hover:underline">View all</button>}
                 </div>
                 {/* Search and Filter */}
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -400,7 +400,7 @@ export default function CashflowPage() {
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2">
                           <p className={`text-xs sm:text-sm font-semibold ${tx.type === 'INCOME' ? 'text-green-600' : tx.type === 'TRANSFER' ? 'text-blue-600' : 'text-red-500'}`}>{tx.type === 'INCOME' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{fmtC(tx.amount)}</p>
-                          {tx.type !== 'TRANSFER' && <button onClick={() => loadTransaction(tx)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#00d4aa]">Edit</button>}
+                          {tx.type !== 'TRANSFER' && <button onClick={() => loadTransaction(tx)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-[#087f6b]">Edit</button>}
                           <button onClick={() => handleDelete(tx.id)} className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600">Delete</button>
                         </div>
                       </div>
@@ -417,7 +417,7 @@ export default function CashflowPage() {
                     <div aria-hidden="true" className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#dff5ef] text-xl">💸</div>
                     <h3 className="font-semibold text-[#16332f]">Belum ada transaksi</h3>
                     <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-500">Catat transaksi pertama Anda untuk mulai melihat riwayat keuangan.</p>
-                    <Link href="/cashflow" className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#00d4aa] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">Add transaction</Link>
+                    <Link href="/cashflow" className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00d4aa]/10 text-[#087f6b] text-sm font-medium hover:bg-[#00d4aa]/20 transition-colors">Add transaction</Link>
                   </div>
                 )}
               </div>

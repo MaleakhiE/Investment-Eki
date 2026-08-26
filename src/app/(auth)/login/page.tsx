@@ -136,7 +136,7 @@ function LoginForm() {
       <div className="mt-8 text-center">
         <p className="text-zinc-500">
           New to FinTrack?{' '}
-          <Link href="/register" className="text-[#00d4aa] hover:underline font-medium">
+          <Link href="/register" className="text-[#087f6b] hover:underline font-medium">
             Create account
           </Link>
         </p>
