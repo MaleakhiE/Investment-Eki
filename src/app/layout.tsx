@@ -16,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased">
+        <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
         <SessionProvider>
           <FeedbackProvider>{children}</FeedbackProvider>
         </SessionProvider>
