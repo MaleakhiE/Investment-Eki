@@ -294,28 +294,28 @@ export default function GoalsPage() {
                   <h3 id="goal-dialog-title" className="font-semibold text-[#16332f] text-lg mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                      <label htmlFor="goal-name" className="block text-xs text-zinc-400 mb-1">Goal name</label>
+                      <label htmlFor="goal-name" className="block text-xs text-zinc-600 mb-1">Goal name</label>
                       <input id="goal-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Six-month emergency fund" className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="goal-target" className="block text-xs text-zinc-400 mb-1">Target</label>
+                        <label htmlFor="goal-target" className="block text-xs text-zinc-600 mb-1">Target</label>
                         <CurrencyInput id="goal-target" value={targetAmount} onChange={setTargetAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                       </div>
                       <div>
-                        <label htmlFor="goal-current" className="block text-xs text-zinc-400 mb-1">Current</label>
+                        <label htmlFor="goal-current" className="block text-xs text-zinc-600 mb-1">Current</label>
                         <CurrencyInput id="goal-current" value={currentAmount} onChange={setCurrentAmount} className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="goal-category" className="block text-xs text-zinc-400 mb-1">Category</label>
+                        <label htmlFor="goal-category" className="block text-xs text-zinc-600 mb-1">Category</label>
                         <select id="goal-category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                           {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="goal-priority" className="block text-xs text-zinc-400 mb-1">Priority</label>
+                        <label htmlFor="goal-priority" className="block text-xs text-zinc-600 mb-1">Priority</label>
                         <select id="goal-priority" value={priority} onChange={e => setPriority(parseInt(e.target.value))} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                           <option value={1}>High</option>
                           <option value={2}>Medium</option>
@@ -324,12 +324,12 @@ export default function GoalsPage() {
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="goal-deadline" className="block text-xs text-zinc-400 mb-1">Deadline (optional)</label>
+                      <label htmlFor="goal-deadline" className="block text-xs text-zinc-600 mb-1">Deadline (optional)</label>
                       <input id="goal-deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div className="flex gap-2 pt-2">
                       <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : editingId ? 'Update' : 'Create'}</button>
-                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
+                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-600 rounded-lg text-sm">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -383,7 +383,7 @@ export default function GoalsPage() {
                           </div>
                           <span className="text-sm font-bold text-zinc-600 w-12 text-right">{goal.percentage.toFixed(0)}%</span>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-zinc-400">
+                        <div className="flex items-center justify-between text-xs text-zinc-600">
                           <span>{fmt(goal.current_amount)} / {fmt(goal.target_amount)}</span>
                           <span>Remaining: {fmtC(goal.remaining)}</span>
                         </div>
@@ -411,7 +411,7 @@ export default function GoalsPage() {
                                 {addAmountError && <p className="mt-1 text-xs text-red-500">{addAmountError}</p>}
                               </div>
                               <button onClick={() => handleAddAmount(goal.id)} disabled={isSaving} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg">Add</button>
-                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); setAddAmountError(''); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg">Cancel</button>
+                              <button onClick={() => { setAddAmountId(null); setAddAmount(''); setAddAmountError(''); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-600 text-xs rounded-lg">Cancel</button>
                             </div>
                           ) : (
                             <>

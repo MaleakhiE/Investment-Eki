@@ -226,7 +226,7 @@ export default function AnalyticsPage() {
                         <p className="text-lg font-bold text-blue-700">{recommendation.mutual_fund_percentage}%</p>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{recommendation.reasoning}</p>
+                    <p className="text-xs text-zinc-600 leading-relaxed">{recommendation.reasoning}</p>
                     <p className="mt-3 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-zinc-500">Descriptive analysis only. Review the assumptions, fees, and your own circumstances before acting; this is not financial advice.</p>
                   </div>
                 ) : null}

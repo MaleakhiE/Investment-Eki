@@ -80,7 +80,7 @@ function LoginForm() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-zinc-400 mb-2">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium text-zinc-600 mb-2">Email</label>
           <input
             id="email"
             type="email"
@@ -95,7 +95,7 @@ function LoginForm() {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-400">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-zinc-600">Password</label>
             <Link href="/forgot-password" className="text-sm font-medium text-[#087f6b] hover:underline">
               Forgot password?
             </Link>
@@ -127,7 +127,7 @@ function LoginForm() {
 
       <div className="my-6 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-[#dcece8]" />
-        <span className="text-xs font-medium uppercase tracking-[0.16em] text-zinc-400">or</span>
+        <span className="text-xs font-medium uppercase tracking-[0.16em] text-zinc-600">or</span>
         <span className="h-px flex-1 bg-[#dcece8]" />
       </div>
 

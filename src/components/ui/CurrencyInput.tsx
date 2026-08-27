@@ -59,7 +59,7 @@ export default function CurrencyInput({
 
   return (
     <div className="relative">
-      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs pointer-events-none select-none">
+      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-600 text-xs pointer-events-none select-none">
         Rp
       </span>
       <input
