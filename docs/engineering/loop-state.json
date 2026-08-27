@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "runId": "iteration-123-skip-link",
   "targetIteration": 123,
-  "latestCompletedIteration": 123,
+  "latestCompletedIteration": 122,
   "currentIteration": 123,
   "branch": "docs/iteration-123-reconciliation",
   "baseBranch": "main",
