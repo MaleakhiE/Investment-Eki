@@ -263,7 +263,7 @@ export default function CashflowPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="app-page activity-page lg:ml-64 p-3 sm:p-4 lg:p-6">
+      <main className="app-page activity-page lg:ml-64 p-3 sm:p-4 lg:p-6" id="main-content">
         <PageHeader
           eyebrow="Activity"
           title="Transactions"

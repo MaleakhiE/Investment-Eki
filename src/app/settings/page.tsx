@@ -202,7 +202,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="app-page settings-page lg:ml-64 p-3 sm:p-4 lg:p-8">
+      <main className="app-page settings-page lg:ml-64 p-3 sm:p-4 lg:p-8" id="main-content">
         <PageHeader
           eyebrow="Account"
           title="Settings"

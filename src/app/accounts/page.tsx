@@ -142,7 +142,7 @@ export default function AccountsPage() {
 
   return <div className="min-h-screen bg-[#f3faf8]">
     <Sidebar />
-    <main className="app-page lg:ml-64 p-4 lg:p-6">
+    <main className="app-page lg:ml-64 p-4 lg:p-6" id="main-content">
       <header className="mb-5 min-w-0"><p className="app-eyebrow">Money storage</p><h1 className="break-words text-2xl font-bold text-[#16332f]">Accounts and wallets</h1><p className="text-sm text-zinc-500">Manage balances across banks, wallets, and cash.</p></header>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]">
         <section className="min-w-0 space-y-4">

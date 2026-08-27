@@ -278,7 +278,7 @@ export default function InvestmentsPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="app-page investments-page lg:ml-64 p-4 lg:p-8">
+      <main className="app-page investments-page lg:ml-64 p-4 lg:p-8" id="main-content">
         <div className="investment-page-header">
           <div>
             <h1>Investasi</h1>

@@ -153,7 +153,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#f3faf8]">
         <Sidebar />
-        <main className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
+        <main id="main-content" className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
           <div className="space-y-4">
             <div className="skeleton h-48 rounded-3xl"></div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -169,7 +169,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#f3faf8]">
       <Sidebar />
-      <main className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
+      <main id="main-content" className="app-page dashboard-page lg:ml-64 p-4 lg:p-6">
         {/* Greeting */}
         <div className="mb-6 animate-fade-in">
           <p className="text-zinc-500 text-sm">{periodLabel}</p>

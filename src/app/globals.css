@@ -4,6 +4,29 @@
  * macrostructure: Split Studio · tone: soft-utilitarian · anchor hue: mint
  */
 
+/* WCAG 2.4.1 Bypass Blocks — skip link, hidden until focused */
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: -56px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 10px 18px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--accent-dark);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(15, 53, 47, 0.16);
+  transition: top 0.18s ease;
+}
+.skip-link:focus-visible {
+  top: 12px;
+  outline: 3px solid var(--accent-dark);
+  outline-offset: 2px;
+}
+
 :root {
   --background: #f1f8f5;
   --foreground: #17352f;
