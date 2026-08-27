@@ -208,7 +208,7 @@ export default function SettingsPage() {
           title="Settings"
           description="Manage your preferences"
         />
-        {error && <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-[#b84c49]">{error}</div>}
+        {error && <div role="alert" aria-live="assertive" className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded-xl text-xs text-[#b84c49]">{error}</div>}
         {isLoading ? <div className="flex items-center justify-center h-64 text-zinc-600">Loading...</div> : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
