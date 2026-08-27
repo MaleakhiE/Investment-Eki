@@ -336,7 +336,7 @@ export default function CashflowPage() {
                   </label>
                 </div>
                 {isScanning && <div role="status" className="mb-3 rounded-xl border border-[#bce9de] bg-[#eaf8f4] px-3 py-2 text-xs text-[#087f6b]">{getOcrProgressMessage(scanElapsed)}</div>}
-                {error && <div className="mb-2 p-2 bg-red-500/20 text-[#b84c49] text-xs rounded-lg">{error}</div>}
+                {error && <div role="alert" aria-live="assertive" className="mb-2 p-2 bg-red-500/20 text-[#b84c49] text-xs rounded-lg">{error}</div>}
                 <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div><label htmlFor="transaction-date" className="block text-[10px] sm:text-xs text-zinc-600 mb-1">Date</label><input id="transaction-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-[#dcece8] rounded-lg text-xs sm:text-sm" required /></div>
