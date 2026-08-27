@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 119 — PR #139 merged at `6fcdc40`.
-Current branch: `ux/iteration-120-loop-close` (finalizing documentation reconciliation).
-Current iteration: 119 — swap secondary accent #00a88a text roles to accessible #087f6b (WCAG 1.4.3 / 1.4.11).
+Latest verified merged iteration: 122 — PR #142 merged at `994c850`.
+Current branch: `docs/iteration-122-reconciliation` (documentation reconciliation only).
+Current iteration: 122 — raise shared --muted token #6a817c → #52655f (WCAG 1.4.3).
 Base branch: `main`.
 
 ## Reconciliation
@@ -24,16 +24,21 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #130 (iteration 114) — fix CurrencyInput label association in accounts page for WCAG 1.3.1 — merged at `f9c1c32`.
 - PR #132 (iteration 115) — raise settings notification control target sizes to WCAG 2.5.8 minimum — merged at `e209969`.
 - PR #134 (iteration 116) — swap failing accent token #008f78 → accessible #087f6b on text/focus rings (WCAG 1.4.3 / 1.4.11) — merged at `3bd4d7a`.
+- PR #136 (iteration 117) — add autoComplete="email" tokens to SMTP From/Recipient inputs (WCAG 1.3.5) — merged at `590e61d`.
+- PR #138 (iteration 118) — remove brand mint #00d4aa from text roles on light surfaces (WCAG 1.4.3) — merged at `5ad1e3f`.
+- PR #139 (iteration 119) — swap secondary accent #00a88a text roles → accessible #087f6b (WCAG 1.4.3) — merged at `6fcdc40`.
+- PR #141 (iteration 121) — raise muted secondary text zinc-400 → AA-conformant zinc-600 (WCAG 1.4.3) — merged at `4ba9c8c`.
+- PR #142 (iteration 122) — raise shared --muted token #6a817c → #52655f (WCAG 1.4.3) — merged at `994c850`.
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 - PR #121 — documentation reconciliation for iterations 108–109 — merged.
 - PR #123 — documentation reconciliation for iteration 110 — merged at `8df4f9a`.
 - PR #125 — documentation reconciliation for iteration 111 — merged at `dd3b33f`.
 - PR #127 — documentation reconciliation for iteration 112 — merged at `5ed718d`.
 - PR #129 — documentation reconciliation for iteration 113 — merged at `24c16d5`.
-- PR #131 — documentation reconciliation for iteration 114 — open (docs branch, pending merge).
-- PR #133 — documentation reconciliation for iteration 115 — open (docs branch, pending merge).
+- PR #135 — documentation reconciliation for iterations 114–116 — merged at `267940a` (superseded #131/#133).
+- PR #140 — documentation reconciliation for iterations 117–120 — merged at `4fcbfd5` (superseded #137).
 
-`main` currently points to merge commit `3bd4d7a` for PR #134.
+`main` currently points to merge commit `994c850` for PR #142.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
@@ -149,6 +154,14 @@ Reviewed SHA `45c72269887b1b14c4920f94378731b56b82e085`:
 - Frontend Engineer — APPROVE (purely Tailwind color-token swaps; no structural/handler/logic change; `#087f6b` visually consistent with the established `--accent-dark`; focus-visible rings still apply)
 - CTO / Principal Engineer — APPROVE_AND_MERGE (color tokens cannot alter submission/validation/persistence/security; mergeable CLEAN, all checks SUCCESS)
 
+## Review evidence (iterations 117–122)
+
+- **Iteration 117** (PR #136, SHA `60139e0`) — add `autoComplete="email"` to SMTP From/Recipient inputs (WCAG 1.3.5). Accessibility APPROVE, QA APPROVE (143 suites / 1160 tests; mutation-tested), Frontend APPROVE, CTO APPROVE_AND_MERGE.
+- **Iteration 118** (PR #138, SHA `f8ac233`) — remove brand mint `#00d4aa` from text roles on light surfaces, retained as graphical fill (WCAG 1.4.3, 1.8:1 → 4.7:1). Accessibility APPROVE, QA APPROVE (144 suites / 1176 tests; mutation-tested), Frontend APPROVE, CTO APPROVE_AND_MERGE.
+- **Iteration 119** (PR #139, SHA `a3eec34`) — swap secondary accent `#00a88a` text roles → `#087f6b` (WCAG 1.4.3, 2.85–3.01:1 → 4.66–4.93:1); decorative SVG strokes exempt. Accessibility APPROVE, QA APPROVE (145 suites; mutation-tested), Frontend APPROVE, CTO APPROVE_AND_MERGE.
+- **Iteration 121** (PR #141, SHA `d07d812`) — raise muted secondary text `text-zinc-400` → `text-zinc-600` across 10 files (WCAG 1.4.3, 2.4:1 → ~7:1); dark-hero override preserved. Accessibility APPROVE, QA APPROVE (146 suites / 1194 tests; mutation-tested), Frontend APPROVE, CTO APPROVE_AND_MERGE.
+- **Iteration 122** (PR #142, SHA `318463c`) — raise shared `--muted` token `#6a817c` → `#52655f` (WCAG 1.4.3, 3.73–4.16:1 → 5.56–6.20:1); governs ~24 direct rules + the zinc-500/600 bridge; dark-hero remap preserved. Accessibility APPROVE, QA APPROVE (147 suites / 1199 tests; mutation-tested 2/5 assertions fail on revert), Frontend APPROVE, CTO APPROVE_AND_MERGE.
+
 ## Exact next action
 
-Iteration 116 is merged at `3bd4d7a`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 117). Candidates carried forward: (a) WCAG 1.3.5 `autocomplete` token coverage — the SMTP superadmin "From address"/"Recipient email" inputs (`type="email"`) lack `autoComplete`, and the auth forms already have tokens (good baseline to lock in with a regression test); (b) extend the WCAG 2.5.8 target-size sweep to compact controls on cashflow/goals; (c) WCAG 2.4.6 descriptive headings/labels audit across modal dialogs. Pick the highest-value gap from a fresh audit. The remaining sub-3:1 tokens (brand mint `#00d4aa`, `#00a88a` secondary border) are deferred as deliberate brand-palette decisions.
+Iteration 122 is merged at `994c850`. The next scheduler invocation should select the next bounded objective (HIGHEST_ASSIGNED_ITERATION + 1 = 123) from a fresh audit. Candidates carried forward: (a) direct `text-zinc-500` (`#71717a`, ~4.33:1 on the `#e9f5f2` chip surface — passes AA but thin margin) could migrate onto the now-safe `--muted` token for consistency; (b) WCAG 2.4.6 descriptive headings/labels audit across modal dialogs; (c) extend the WCAG 2.5.8 target-size sweep to compact controls on cashflow/goals. Pick the highest-value gap from a fresh audit.
