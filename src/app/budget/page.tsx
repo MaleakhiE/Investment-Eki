@@ -177,17 +177,17 @@ export default function BudgetPage() {
                   <h3 id="budget-dialog-title" className="font-semibold text-[#16332f] text-lg mb-4">Create budget</h3>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                      <label htmlFor="budget-category" className="block text-xs text-zinc-400 mb-1">Category</label>
+                      <label htmlFor="budget-category" className="block text-xs text-zinc-600 mb-1">Category</label>
                       <select id="budget-category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                         {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="budget-amount" className="block text-xs text-zinc-400 mb-1">Budget amount</label>
+                      <label htmlFor="budget-amount" className="block text-xs text-zinc-600 mb-1">Budget amount</label>
                       <CurrencyInput id="budget-amount" value={amount} onChange={setAmount} required className="w-full py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]" />
                     </div>
                     <div>
-                      <label htmlFor="budget-period" className="block text-xs text-zinc-400 mb-1">Period</label>
+                      <label htmlFor="budget-period" className="block text-xs text-zinc-600 mb-1">Period</label>
                       <select id="budget-period" value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full px-3 py-2 border border-[#dcece8] rounded-lg text-sm bg-[#f3faf8] text-[#16332f]">
                         <option value="WEEKLY">Weekly</option>
                         <option value="MONTHLY">Monthly</option>
@@ -196,7 +196,7 @@ export default function BudgetPage() {
                     </div>
                     <div className="flex gap-2 pt-2">
                       <button type="submit" disabled={isSaving} className="flex-1 py-2 bg-[#00d4aa] text-[#16332f] rounded-lg text-sm font-medium hover:bg-[#00a88a] disabled:opacity-50">{isSaving ? '...' : 'Save'}</button>
-                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-400 rounded-lg text-sm">Cancel</button>
+                      <button type="button" data-dialog-initial-focus onClick={() => setShowForm(false)} className="px-4 py-2 bg-[#e9f5f2] text-zinc-600 rounded-lg text-sm">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -225,7 +225,7 @@ export default function BudgetPage() {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-[#16332f]">{budget.category}</span>
-                          <span className="text-[10px] px-2 py-0.5 bg-[#e9f5f2] text-zinc-400 rounded-full">{getPeriodLabel(budget.period)}</span>
+                          <span className="text-[10px] px-2 py-0.5 bg-[#e9f5f2] text-zinc-600 rounded-full">{getPeriodLabel(budget.period)}</span>
                           {budget.isOverBudget && <span className="text-[10px] px-2 py-0.5 bg-red-500 text-white rounded-full">Over Budget!</span>}
                           {!budget.isOverBudget && budget.percentage >= 80 && <span className="text-[10px] px-2 py-0.5 bg-amber-500 text-[#16332f] rounded-full">Warning</span>}
                         </div>
@@ -246,7 +246,7 @@ export default function BudgetPage() {
                         </div>
                         <span className={`text-sm font-bold w-14 text-right ${budget.isOverBudget ? 'text-[#b84c49]' : 'text-zinc-600'}`}>{budget.percentage.toFixed(0)}%</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-zinc-400">
+                      <div className="flex items-center justify-between text-xs text-zinc-600">
                         <span>Spent: {fmt(budget.spent)}</span>
                         <span>Budget: {fmt(budget.amount)}</span>
                         <span
@@ -268,7 +268,7 @@ export default function BudgetPage() {
                 <h3 className="font-semibold text-[#16332f] mb-3">Categories without budgets</h3>
                 <div className="flex flex-wrap gap-2">
                   {unbugdetedCategories.map(cat => (
-                    <button key={cat} onClick={() => { setCategory(cat); setShowForm(true); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-400 text-xs rounded-lg hover:bg-white/20">
+                    <button key={cat} onClick={() => { setCategory(cat); setShowForm(true); }} className="px-3 py-1.5 bg-[#e9f5f2] text-zinc-600 text-xs rounded-lg hover:bg-white/20">
                       {cat}
                     </button>
                   ))}

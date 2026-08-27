@@ -187,7 +187,7 @@ export default function DashboardPage() {
             
             <div className="relative">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-zinc-400 text-sm">Cashflow periode ini</span>
+                <span className="text-zinc-600 text-sm">Cashflow periode ini</span>
                 <span className="px-2 py-0.5 rounded-full bg-[#00d4aa]/10 text-[#087f6b] text-xs font-medium">Net balance</span>
               </div>
               {summaryStatus === 'error' ? (
@@ -203,13 +203,13 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 text-xs">Income</span>
+                    <span className="text-zinc-600 text-xs">Income</span>
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(income)}</p>
                 </div>
                 <div className="bg-[#f5fbf9] rounded-2xl p-4 border border-[#dcece8]">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 text-xs">Expenses</span>
+                    <span className="text-zinc-600 text-xs">Expenses</span>
                   </div>
                   <p className="text-xl font-bold text-[#16332f]">{formatCompact(expense)}</p>
                 </div>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
               {income > 0 && (
                 <div className="mt-4">
                   <div className="flex justify-between text-xs mb-2">
-                    <span className="text-zinc-400">Tingkat Tabungan</span>
+                    <span className="text-zinc-600">Tingkat Tabungan</span>
                     <span className={savingsRate >= 20 ? 'text-[#087f6b]' : savingsRate >= 0 ? 'text-amber-700' : 'text-[#b84c49]'}>{savingsRate.toFixed(0)}%</span>
                   </div>
                   <div className="h-2 bg-[#e9f5f2] rounded-full overflow-hidden">
@@ -359,12 +359,12 @@ export default function DashboardPage() {
                 <div className="flex justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-400 to-amber-500"></div>
-                    <span className="text-xs text-zinc-400">Gold</span>
+                    <span className="text-xs text-zinc-600">Gold</span>
                     <span className="text-xs font-medium text-[#16332f]">{formatCompact(goldVal)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500"></div>
-                    <span className="text-xs text-zinc-400">Reksa Dana</span>
+                    <span className="text-xs text-zinc-600">Reksa Dana</span>
                     <span className="text-xs font-medium text-[#16332f]">{formatCompact(mfVal)}</span>
                   </div>
                 </div>
@@ -434,11 +434,11 @@ export default function DashboardPage() {
               <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#00d4aa] to-[#00ffcc]"></div>
-                  <span className="text-xs text-zinc-400">Income</span>
+                  <span className="text-xs text-zinc-600">Income</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-400"></div>
-                  <span className="text-xs text-zinc-400">Expenses</span>
+                  <span className="text-xs text-zinc-600">Expenses</span>
                 </div>
               </div>
             </div>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-[#16332f] mb-2">Mulai Perjalanan Finansialmu!</h3>
-              <p className="text-zinc-400 text-sm mb-6 max-w-sm mx-auto leading-relaxed">Add your first transaction and start managing your money with clarity</p>
+              <p className="text-zinc-600 text-sm mb-6 max-w-sm mx-auto leading-relaxed">Add your first transaction and start managing your money with clarity</p>
               <Link href="/cashflow" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-accent text-[#16332f] font-semibold text-sm hover:opacity-90 transition-opacity shadow-md shadow-[#00d4aa]/20">
                 Add your first transaction
               </Link>

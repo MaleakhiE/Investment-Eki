@@ -476,7 +476,7 @@ export default function CashflowPage() {
                 ))}
               </div>
               <div className="p-4 border-t border-[#dcece8] flex justify-between text-sm">
-                <span className="text-zinc-400">{transactions.length} transactions</span>
+                <span className="text-zinc-600">{transactions.length} transactions</span>
                 <span className={`font-semibold ${net >= 0 ? 'text-[#087f6b]' : 'text-[#b84c49]'}`}>Net: {fmt(net)}</span>
               </div>
             </div>
