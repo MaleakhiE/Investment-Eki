@@ -4,9 +4,9 @@ Last updated: 2026-08-20
 
 ## Current run
 
-Latest verified merged iteration: 122 — PR #142 merged at `994c850`.
-Current branch: `docs/iteration-122-reconciliation` (documentation reconciliation only).
-Current iteration: 122 — raise shared --muted token #6a817c → #52655f (WCAG 1.4.3).
+Latest verified merged iteration: 123 — PR #144 merged at `5d025a3`.
+Current branch: `docs/iteration-123-reconciliation` (documentation reconciliation only).
+Current iteration: 123 — WCAG 2.4.1 skip link bypass.
 Base branch: `main`.
 
 ## Reconciliation
@@ -29,6 +29,8 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #139 (iteration 119) — swap secondary accent #00a88a text roles → accessible #087f6b (WCAG 1.4.3) — merged at `6fcdc40`.
 - PR #141 (iteration 121) — raise muted secondary text zinc-400 → AA-conformant zinc-600 (WCAG 1.4.3) — merged at `4ba9c8c`.
 - PR #142 (iteration 122) — raise shared --muted token #6a817c → #52655f (WCAG 1.4.3) — merged at `994c850`.
+- PR #144 (iteration 123) — add WCAG 2.4.1 skip link bypass for persistent navigation — merged at `5d025a3`.
+- PR #143 — documentation reconciliation for iteration 122 — merged at `f7b08e0` (superseded #140).
 - PR #118 — documentation reconciliation for iterations 106–107 — merged at `b08d47d`.
 - PR #121 — documentation reconciliation for iterations 108–109 — merged.
 - PR #123 — documentation reconciliation for iteration 110 — merged at `8df4f9a`.
@@ -38,7 +40,7 @@ GitHub verifies the default branch (`main`) advanced through:
 - PR #135 — documentation reconciliation for iterations 114–116 — merged at `267940a` (superseded #131/#133).
 - PR #140 — documentation reconciliation for iterations 117–120 — merged at `4fcbfd5` (superseded #137).
 
-`main` currently points to merge commit `994c850` for PR #142.
+`main` currently points to merge commit `5d025a3` for PR #144.
 
 Iteration 106 converted the gold and mutual-fund snapshot history lists in `src/app/investments/page.tsx` from stacked `<div>` blocks to semantic `<table>` markup (`<caption>` sr-only, `<thead>` with `<th scope="col">`, `<tbody>` rows with `<th scope="row">`), matching the analytics-page pattern. WCAG 1.4.1 / 2.4.3.
 
